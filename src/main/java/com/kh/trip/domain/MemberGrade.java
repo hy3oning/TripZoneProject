@@ -24,7 +24,7 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class MemberGrades extends BaseTimeEntity {
+public class MemberGrade extends BaseTimeEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MEMBER_GRADES")
 	@SequenceGenerator(name = "SEQ_MEMBER_GRADES", sequenceName = "SEQ_MEMBER_GRADES", allocationSize = 1)

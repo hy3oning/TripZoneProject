@@ -30,7 +30,7 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Coupons extends BaseTimeEntity{
+public class Coupon extends BaseTimeEntity{
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_COUPONS")
 	@SequenceGenerator(name = "SEQ_COUPONS", sequenceName = "SEQ_COUPONS", allocationSize = 1)
@@ -84,10 +84,4 @@ public class Coupons extends BaseTimeEntity{
 	    public abstract Long calculate(Long price, Long discount);
 	}
 	
-	public enum CouponStatus {
-	    ACTIVE,    // 활성
-	    INACTIVE,  // 비활성(startDate전)
-	    DELETE,    // 삭제
-	    EXPIRATION // 만료
-	}
 }
