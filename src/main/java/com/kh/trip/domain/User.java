@@ -47,5 +47,4 @@ public class User extends BaseTimeEntity {
 	@Builder.Default
 	@Column(name = "ENABLED", nullable = false, length = 1)
 	private String enabled = "1";
-
 }
