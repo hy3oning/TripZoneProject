@@ -2,8 +2,6 @@ package com.kh.trip.domain;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.SQLRestriction;
-
 import com.kh.trip.domain.common.BaseTimeEntity;
 
 import jakarta.persistence.Column;
@@ -32,7 +30,6 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@SQLRestriction("status != 'DELETE'")
 public class Coupons extends BaseTimeEntity{
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_COUPONS")
@@ -57,9 +54,10 @@ public class Coupons extends BaseTimeEntity{
 	@Column(name = "END_DATE", nullable = false)
 	private LocalDateTime endDate;
 	
+	@Enumerated(EnumType.STRING)
 	@Column(name = "STATUS", nullable = false)
 	@Builder.Default
-	private CouponStatus status = CouponStatus.ACTIVE; // active, delete, expiration
+	private CouponStatus status = CouponStatus.INACTIVE; // active, inactive, delete, expiration
 	
 	@PrePersist
 	@PreUpdate
@@ -88,6 +86,7 @@ public class Coupons extends BaseTimeEntity{
 	
 	public enum CouponStatus {
 	    ACTIVE,    // 활성
+	    INACTIVE,  // 비활성(startDate전)
 	    DELETE,    // 삭제
 	    EXPIRATION // 만료
 	}
