@@ -1,4 +1,4 @@
-package com.kh.trip.domain;
+package com.kh.trip.domain.enums;
 
 public enum CouponStatus {
 	ACTIVE, // 활성

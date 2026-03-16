@@ -2,6 +2,8 @@ package com.kh.trip.domain;
 
 import java.time.LocalDateTime;
 
+import com.kh.trip.domain.enums.CouponStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -63,15 +65,15 @@ public class UserCoupon {
 		// 2. 사용 전이라면 원본 쿠폰(Master)의 상태를 따라감
 		return this.coupon.getStatus();
 	}
-	
-	public void restore() {
-        // 이미 사용 가능 상태라면 복구할 필요가 없음 (방어 코드)
-        if (this.status == CouponStatus.ACTIVE) {
-            return;
-        }
 
-        // 사용 완료된 쿠폰만 복구 가능하게 제한을 둘 수도 있습니다.
-        this.status = CouponStatus.ACTIVE;
-        this.usedAt = null; // 사용 일시 초기화
-    }
+	public void restore() {
+		// 이미 사용 가능 상태라면 복구할 필요가 없음 (방어 코드)
+		if (this.status == CouponStatus.ACTIVE) {
+			return;
+		}
+
+		// 사용 완료된 쿠폰만 복구 가능하게 제한을 둘 수도 있습니다.
+		this.status = CouponStatus.ACTIVE;
+		this.usedAt = null; // 사용 일시 초기화
+	}
 }

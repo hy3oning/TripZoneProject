@@ -1,4 +1,4 @@
-package com.kh.trip.domain;
+ package com.kh.trip.domain;
 
 import java.time.LocalDateTime;
 
