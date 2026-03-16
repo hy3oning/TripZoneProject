@@ -47,7 +47,7 @@ public class MemberGrade extends BaseTimeEntity {
 	@Column(name = "MILEAGE_RATE", nullable = false)
 	@Builder.Default
 	@Min(0)
-	private double mileageRate = 0.0; 
+	private Double mileageRate = 0.0; 
 	
 	@Column(name = "BENEFIT_DESC", length = 500)
 	private String benefitDESC;
@@ -56,4 +56,28 @@ public class MemberGrade extends BaseTimeEntity {
 	@Builder.Default
 	private boolean status = true; //삭제시 false
 	
+	
+	public void changeName(String gradeName) {
+		this.gradeName = gradeName;
+	}
+	
+	public void changeMinAmount(Long amount) {
+		this.minTotalAmount = amount;
+	}
+	
+	public void changeMinStayCount(Long count) {
+		this.minStayCount = count;
+	}
+	
+	public void changeMileageRate(Double rate) {
+		this.mileageRate = rate;
+	}
+	
+	public void changeBenefitDESC(String benefit) {
+		this.benefitDESC = benefit;
+	}
+	
+	public void changeStatus(boolean status) {
+		this.status = status;
+	}
 }
