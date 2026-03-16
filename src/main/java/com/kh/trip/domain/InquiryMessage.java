@@ -1,6 +1,9 @@
 package com.kh.trip.domain;
 
+import org.hibernate.annotations.Check;
+
 import com.kh.trip.domain.common.BaseTimeEntity;
+import com.kh.trip.domain.enums.InquiryMessageSenderType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,6 +29,7 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@Check(constraints = "MESSAGE_CONTENT IS NOT NULL OR IMAGE_URL IS NOT NULL")
 public class InquiryMessage extends BaseTimeEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_INQUIRY_MESSAGES")
@@ -37,11 +41,12 @@ public class InquiryMessage extends BaseTimeEntity {
 	@JoinColumn(name = "INQUIRY_ROOM_NO", nullable = false)
 	private InquiryRoom inquiryRoom;
 	
-	@Column(name = "SENDER_USER_NO", nullable = false)
-	private Long senderUserNo;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "SENDER_USER_NO", nullable = false)
+	private User senderUser;
 	
 	@Column(name = "SENDER_TYPE", nullable = false, length = 20)
-	private String senderType;
+	private InquiryMessageSenderType senderType;
 	
 	@Column(name = "MESSAGE_CONTENT", length = 2000)
 	private String messageContent;
@@ -51,5 +56,5 @@ public class InquiryMessage extends BaseTimeEntity {
 	
 	@Builder.Default
 	@Column(name = "READ_CHECK", nullable = false)
-	private boolean readcheck = false;//읽으면 TRUE, 안읽으면 false
+	private boolean readCheck = false; //읽으면 TRUE, 안읽으면 false
 }

@@ -1,5 +1,9 @@
 package com.kh.trip.domain;
 
+import com.kh.trip.domain.enums.InquiryRoomStatus;
+import com.kh.trip.domain.enums.InquiryRoomTargetType;
+import com.kh.trip.domain.enums.InquiryRoomInquiryType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -35,9 +39,24 @@ public class InquiryRoom {
 	@JoinColumn(name = "USER_NO", nullable = false)
 	private User user;
 	
-	@Column(name ="TARGET_TYPE", nullable = false, length = 20)
-	private String targetType;
+	@Column(name = "TARGET_TYPE", nullable = false, length = 20)
+	private InquiryRoomTargetType targetType;
 	
+	@Column(name = "INQUIRY_TYPE", nullable = false, length = 30)
+	private InquiryRoomInquiryType inquiryType;
 	
+	@Column(name = "TITLE", nullable = false, length = 200)
+	private String title;
 	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ADMIN_USER_NO", nullable = false)
+	private User adminUser;
+	
+//	@ManyToOne(fetch = FetchType.LAZY)
+//	@JoinColumn(name = "LODGING_NO", nullable = false)
+//	private Lodging lodging;
+	
+	@Builder.Default
+	@Column(name = "STATUS ", nullable = false, length = 20)
+	private InquiryRoomStatus status = InquiryRoomStatus.OPEN;
 }
