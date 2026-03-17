@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import com.kh.trip.domain.common.BaseTimeEntity;
+import com.kh.trip.domain.enums.ApprovalStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -45,15 +46,14 @@ public class HostProfiles extends BaseTimeEntity {
 
 	@Column(name = "OWNER_NAME", nullable = false, length = 100)
 	private String ownerName;
-	
+
 	@ElementCollection(fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<ApprovalStatus> approvalStatusList = new ArrayList<>();
-	
+
 	public void addStatus(ApprovalStatus approvalStatus) {
 		approvalStatusList.add(approvalStatus);
 	}
-	
 
 	@Column(name = "APPROVED_BY")
 	private Long approvedBy;
