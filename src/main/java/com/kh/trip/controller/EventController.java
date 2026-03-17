@@ -1,6 +1,13 @@
 package com.kh.trip.controller;
 
+import java.util.Map;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,5 +32,28 @@ public class EventController {
 	public PageResponseDTO<EventDTO> list(PageRequestDTO pageRequestDTO) {
 		log.info(pageRequestDTO);
 		return service.list(pageRequestDTO);
+	}
+	//이벤트변경,새로운거 저장
+	@PostMapping("/")
+	public Map<String, Long> save(@RequestBody EventDTO eventDTO){
+		log.info("EventDTO:"+eventDTO);
+		Long eno = service.save(eventDTO);
+		return Map.of("ENO",eno);
+	}
+	//수정
+	@PutMapping("/{eno}")
+	public Map<String, String> update(@PathVariable (name="eno") Long eno, @RequestBody EventDTO eventDTO){
+		eventDTO.setEventNo(eno);
+		log.info("Update:"+eventDTO);
+		service.update(eventDTO);
+		
+		return Map.of("RESULT","SUCCESS");
+	}
+	//삭제
+	@DeleteMapping("/{eno}")
+	public Map<String, String> delete(@PathVariable Long eno) {
+		log.info("Delete: " + eno);
+		service.delete(eno);
+		return Map.of("RESULT", "SUCCESS");
 	}
 }
