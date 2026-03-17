@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class EventDTO {
 	private Long eventNo;
+	private Long adminUserNo;
     private String title;
     private String content;
     private String thumbnailUrl;

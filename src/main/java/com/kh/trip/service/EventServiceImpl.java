@@ -12,10 +12,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.kh.trip.domain.Event;
+import com.kh.trip.domain.User;
 import com.kh.trip.dto.EventDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.repository.EventRepository;
+import com.kh.trip.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class EventServiceImpl implements EventService {
 	private final EventRepository eventRepository;
+	private final UserRepository userRepository;
 	private final ModelMapper modelMapper;
 
 	// list
@@ -51,10 +54,11 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public Long save(EventDTO eventDTO) {
 		log.info(".........");
+		User user = userRepository.findById(eventDTO.getAdminUserNo()).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 관리자 번호입니다."));
 		Event event = Event.builder().title(eventDTO.getTitle()).content(eventDTO.getContent())
 				.thumbnailUrl(eventDTO.getThumbnailUrl()).startDate(eventDTO.getStartDate())
 				.endDate(eventDTO.getEndDate()).viewCount((long) eventDTO.getViewCount())
-				// 만약 adminUserNo가 필요하다면 여기서 추가 설정
+				.adminUserNo(user)
 				.build();
 		Event savedEvent = eventRepository.save(event);
 		return savedEvent.getEventNo();

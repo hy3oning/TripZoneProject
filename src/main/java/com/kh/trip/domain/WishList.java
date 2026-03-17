@@ -40,8 +40,8 @@ public class WishList extends BaseTimeEntity{
 	@ManyToOne  //외래키
 	private User user;
 	
-	//@JoinColumn(name = "LODGING_NO",nullable = false)
-	//@ManyToOne
-	//private Lodging lodging; //아직Lodging이 생성이 안됨
+	@JoinColumn(name = "LODGING_NO",nullable = false)
+	@ManyToOne
+	private Lodging lodging;
 	
 }
