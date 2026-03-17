@@ -86,4 +86,15 @@ public class LodgingServiceImpl implements LodgingService {
 		return lodgingRepository.findAll();
 	}
 
+	// 지역으로 숙소 목록 조회
+	@Override
+	@Transactional(readOnly = true)
+	public List<Lodging> getLodgingsByRegion(String region) {
+		if (region == null || region.isBlank()) {
+			throw new IllegalArgumentException("지역 값이 비어 있습니다.");
+		}
+
+		return lodgingRepository.findByRegion(region);
+	}
+
 }

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -68,6 +69,18 @@ public class LodgingController {
 	@GetMapping // 화면은 바뀌지 않으므로 경로 x
 	public List<LodgingDTO> getAllLodgings() {
 		return lodgingService.getAllLodgings().stream().map(LodgingDTO::fromEntity).toList();
+	}
+	
+	/**
+	 * 지역으로 숙소 목록 조회
+	 * 
+	 * 요청 예시: GET /api/lodgings/region?region=서울
+	 * 
+	 * @RequestParam - URL 쿼리스트링 값을 받아온다.
+	 */
+	@GetMapping("/region")
+	public List<LodgingDTO> getLodgingsByRegion(@RequestParam String region) {
+		return lodgingService.getLodgingsByRegion(region).stream().map(LodgingDTO::fromEntity).toList();
 	}
 
 }
