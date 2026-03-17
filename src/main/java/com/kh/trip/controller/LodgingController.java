@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -94,6 +95,23 @@ public class LodgingController {
 	@GetMapping("/search")
 	public List<LodgingDTO> searchLodgingsByName(@RequestParam String keyword) {
 		return lodgingService.searchLodgingsByName(keyword).stream().map(LodgingDTO::fromEntity).toList();
+	}
+
+	/**
+	 * 숙소 수정
+	 * 
+	 * 요청 예시: PUT /api/lodgings/1
+	 * 
+	 * Body(JSON): { "lodgingName": "수정된 숙소명", "region": "부산" }
+	 * 
+	 * 흐름: 1. URL에서 수정할 숙소 번호를 받는다. 2. Body에서 수정할 값을 DTO로 받는다. 3. DTO를 Entity로 변환한다.
+	 * 4. Service에서 기존 데이터와 비교해서 수정한다. 5. 수정 결과를 DTO로 변환해 반환한다.
+	 */
+	@PutMapping("/{lodgingNo}")
+	public LodgingDTO updateLodging(@PathVariable Long lodgingNo, @RequestBody LodgingDTO lodgingDTO) {
+		Lodging lodging = lodgingDTO.toEntity();
+		Lodging updatedLodging = lodgingService.updateLodging(lodgingNo, lodging);
+		return LodgingDTO.fromEntity(updatedLodging);
 	}
 
 }

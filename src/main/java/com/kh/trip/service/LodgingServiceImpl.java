@@ -107,5 +107,40 @@ public class LodgingServiceImpl implements LodgingService {
 
 		return lodgingRepository.findByLodgingNameContaining(keyword);
 	}
+	
+	// 숙소 수정
+		@Override
+		public Lodging updateLodging(Long lodgingNo, Lodging lodging) {
+
+			Lodging findLodging = lodgingRepository.findById(lodgingNo)
+					.orElseThrow(() -> new NoSuchElementException("수정할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
+
+			Lodging updateLodging = Lodging.builder().lodgingNo(findLodging.getLodgingNo())
+					.hostNo(lodging.getHostNo() != null ? lodging.getHostNo() : findLodging.getHostNo())
+					.lodgingName(lodging.getLodgingName() != null && !lodging.getLodgingName().isBlank()
+							? lodging.getLodgingName()
+							: findLodging.getLodgingName())
+					.lodgingType(lodging.getLodgingType() != null && !lodging.getLodgingType().isBlank()
+							? lodging.getLodgingType()
+							: findLodging.getLodgingType())
+					.region(lodging.getRegion() != null && !lodging.getRegion().isBlank() ? lodging.getRegion()
+							: findLodging.getRegion())
+					.address(lodging.getAddress() != null && !lodging.getAddress().isBlank() ? lodging.getAddress()
+							: findLodging.getAddress())
+					.detailAddress(lodging.getDetailAddress() != null ? lodging.getDetailAddress()
+							: findLodging.getDetailAddress())
+					.zipCode(lodging.getZipCode() != null ? lodging.getZipCode() : findLodging.getZipCode())
+					.latitude(lodging.getLatitude() != null ? lodging.getLatitude() : findLodging.getLatitude())
+					.longitude(lodging.getLongitude() != null ? lodging.getLongitude() : findLodging.getLongitude())
+					.description(lodging.getDescription() != null ? lodging.getDescription() : findLodging.getDescription())
+					.checkInTime(lodging.getCheckInTime() != null ? lodging.getCheckInTime() : findLodging.getCheckInTime())
+					.checkOutTime(
+							lodging.getCheckOutTime() != null ? lodging.getCheckOutTime() : findLodging.getCheckOutTime())
+					.status(lodging.getStatus() != null && !lodging.getStatus().isBlank() ? lodging.getStatus()
+							: findLodging.getStatus())
+					.build();
+
+			return lodgingRepository.save(updateLodging);
+		}
 
 }

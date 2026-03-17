@@ -21,4 +21,7 @@ public interface LodgingService {
 	// 숙소명 키워드 검색
 	public List<Lodging> searchLodgingsByName(String keyword);
 
+	// 숙소 수정
+	public Lodging updateLodging(Long lodgingNo, Lodging lodging);
+
 }
