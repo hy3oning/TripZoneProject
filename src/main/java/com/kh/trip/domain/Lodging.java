@@ -102,4 +102,96 @@ public class Lodging extends BaseTimeEntity {
 	@Builder.Default
 	@Column(name = "STATUS", nullable = false, length = 20)
 	private String status = "ACTIVE";
+	
+	/**
+	 * 숙소 수정 메서드
+	 *
+	 * Service에서 기존 엔티티(findLodging)를 조회한 후
+	 * 필요한 값만 변경하기 위해 사용한다.
+	 *
+	 * Builder로 새 객체를 만들면 BaseTimeEntity의
+	 * regDate / updDate 값이 null이 되는 문제가 생기므로
+	 * 기존 객체를 직접 수정하는 방식으로 처리한다.
+	 */
+	public void updateLodging(
+	        Long hostNo,
+	        String lodgingName,
+	        String lodgingType,
+	        String region,
+	        String address,
+	        String detailAddress,
+	        String zipCode,
+	        Double latitude,
+	        Double longitude,
+	        String description,
+	        String checkInTime,
+	        String checkOutTime,
+	        String status
+	) {
+
+	    // hostNo 값이 들어왔을 때만 수정
+	    if (hostNo != null) {
+	        this.hostNo = hostNo;
+	    }
+
+	    // 숙소 이름 수정
+	    if (lodgingName != null && !lodgingName.isBlank()) {
+	        this.lodgingName = lodgingName;
+	    }
+
+	    // 숙소 유형 수정
+	    if (lodgingType != null && !lodgingType.isBlank()) {
+	        this.lodgingType = lodgingType;
+	    }
+
+	    // 지역 수정
+	    if (region != null && !region.isBlank()) {
+	        this.region = region;
+	    }
+
+	    // 주소 수정
+	    if (address != null && !address.isBlank()) {
+	        this.address = address;
+	    }
+
+	    // 상세주소 수정
+	    if (detailAddress != null) {
+	        this.detailAddress = detailAddress;
+	    }
+
+	    // 우편번호 수정
+	    if (zipCode != null) {
+	        this.zipCode = zipCode;
+	    }
+
+	    // 위도 수정
+	    if (latitude != null) {
+	        this.latitude = latitude;
+	    }
+
+	    // 경도 수정
+	    if (longitude != null) {
+	        this.longitude = longitude;
+	    }
+
+	    // 설명 수정
+	    if (description != null) {
+	        this.description = description;
+	    }
+
+	    // 체크인 시간 수정
+	    if (checkInTime != null) {
+	        this.checkInTime = checkInTime;
+	    }
+
+	    // 체크아웃 시간 수정
+	    if (checkOutTime != null) {
+	        this.checkOutTime = checkOutTime;
+	    }
+
+	    // 상태 수정
+	    if (status != null && !status.isBlank()) {
+	        this.status = status;
+	    }
+	}
 }
