@@ -1,5 +1,7 @@
 package com.kh.trip.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,6 +52,22 @@ public class LodgingController {
 	public LodgingDTO getLodging(@PathVariable Long lodgingNo) {
 		Lodging lodging = lodgingService.getLodging(lodgingNo);
 		return LodgingDTO.fromEntity(lodging);
+	}
+
+	/**
+	 * 숙소 전체 목록 조회
+	 * 
+	 * 요청 예시: GET /api/lodgings
+	 * 
+	 * 동작: - DB에 있는 숙소 전체 목록을 조회 - Entity 리스트를 DTO 리스트로 변환해서 응답
+	 * 
+	 * stream() - 리스트 안의 데이터를 하나씩 꺼내서 가공할 때 사용 map(...) - 각 Lodging 객체를 LodgingDTO로
+	 * 바꾼다 toList() - 다시 리스트로 모은다
+	 */
+
+	@GetMapping // 화면은 바뀌지 않으므로 경로 x
+	public List<LodgingDTO> getAllLodgings() {
+		return lodgingService.getAllLodgings().stream().map(LodgingDTO::fromEntity).toList();
 	}
 
 }
