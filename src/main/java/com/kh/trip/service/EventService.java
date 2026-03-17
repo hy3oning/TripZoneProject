@@ -9,7 +9,13 @@ import com.kh.trip.dto.PageResponseDTO;
 
 @Transactional
 public interface EventService {
-
-	PageResponseDTO<EventDTO> list(PageRequestDTO pageRequestDTO);
+	//가로로보이는 리스트
+	PageResponseDTO<EventDTO> findAll(PageRequestDTO pageRequestDTO);
+	//save
+	Long save(EventDTO eventDTO);
+	//update
+	void update(EventDTO eventDTO);
+	//delete
+	void delete(Long eno);
 	
 }

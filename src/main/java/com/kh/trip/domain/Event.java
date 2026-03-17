@@ -25,56 +25,69 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+
 @Entity
-@Table(name="EVENT")
+@Table(name = "EVENT")
 @Getter
 @ToString
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class Event extends BaseTimeEntity{
+public class Event extends BaseTimeEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_EVENT")
 	@SequenceGenerator(name = "SEQ_EVENT", sequenceName = "SEQ_EVENT", allocationSize = 1)
 	@Column(name = "EVENT_NO")
 	private Long eventNo;
-	
-	@ManyToOne     //외래키
-	@JoinColumn(name = "ADMIN_USER_NO" ,nullable = false)
+
+	@ManyToOne // 외래키
+	@JoinColumn(name = "ADMIN_USER_NO", nullable = false)
 	private User adminUserNo;
-	
-	@Column(name = "TITLE" , nullable = false)
+
+	@Column(name = "TITLE", nullable = false)
 	private String title;
-	
-	@Column(name = "CONTENT" , nullable = false)
+
+	@Column(name = "CONTENT", nullable = false)
 	private String content;
-	
+
 	@Column(name = "THUMBNAIL_URL")
 	private String thumbnailUrl;
-	
-	@Column(name = "START_DATE" , nullable = false)
+
+	@Column(name = "START_DATE", nullable = false)
 	private LocalDateTime startDate;
-	
-	@Column(name = "END_DATE" , nullable = false)
+
+	@Column(name = "END_DATE", nullable = false)
 	private LocalDateTime endDate;
-	
+
 	@Enumerated(EnumType.STRING)
-	@Column(name = "EVENT_STATUS" , nullable = false)
+	@Column(name = "EVENT_STATUS", nullable = false)
 	@Builder.Default
-	private EventStatus status =  EventStatus.DRAFT;
-	
+	private EventStatus status = EventStatus.DRAFT;
+
 	@PositiveOrZero
-	@Column(name = "VIEW_COUNT" , nullable = false)
+	@Column(name = "VIEW_COUNT", nullable = false)
 	private Long viewCount;
-	
+
 	@PrePersist
 	@PreUpdate
 	public void validateDates() {
-		if (startDate !=null&& endDate != null) {
+		if (startDate != null && endDate != null) {
 			if (!endDate.isAfter(startDate)) {
 				throw new IllegalStateException("종료 일시는 시작 일시보다 최소 1초 이상 뒤여야 합니다.");
 			}
 		}
 	}
-	
+	// 제목 수정용 메서드
+	public void changeTitle(String title) {
+		this.title = title;
+	}
+	// 내용 수정용 메서드
+	public void changeContent(String content) {
+		this.content = content;
+	}
+	// 썸네일 URL 수정용 메서드
+	public void changeThumbnailUrl(String thumbnailUrl) {
+		this.thumbnailUrl = thumbnailUrl;
+	}
+
 }
