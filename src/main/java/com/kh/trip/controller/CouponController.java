@@ -18,9 +18,6 @@ import com.kh.trip.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
-
-
-
 @RestController
 @RequiredArgsConstructor
 @Log4j2
