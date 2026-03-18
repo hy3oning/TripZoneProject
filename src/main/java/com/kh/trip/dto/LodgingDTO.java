@@ -1,6 +1,8 @@
 package com.kh.trip.dto;
 
 import com.kh.trip.domain.Lodging;
+import com.kh.trip.domain.enums.LodgingStatus;
+import com.kh.trip.domain.enums.LodgingType;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -26,7 +28,7 @@ public class LodgingDTO {
 	private Long lodgingNo;
 	private Long hostNo;
 	private String lodgingName;
-	private String lodgingType;
+	private LodgingType lodgingType;
 	private String region;
 	private String address;
 	private String detailAddress;
@@ -36,7 +38,7 @@ public class LodgingDTO {
 	private String description;
 	private String checkInTime;
 	private String checkOutTime;
-	private String status;
+	private LodgingStatus status;
 
 	/**
 	 * Entity → DTO 변환 메서드
