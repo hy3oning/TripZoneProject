@@ -1,6 +1,7 @@
 package com.kh.trip.security;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -26,26 +27,48 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		System.out.println("username = [" + username + "]");
-		// loginId로 인증 수단 정보를 조회한다.
-		UserAuthProvider authProvider = userAuthProviderRepository.findByLoginId(username)
-				.orElseThrow(() -> new UsernameNotFoundException("LoginId Not Found"));
 
-		 // 로그인 정보 테이블에서 찾은 USER_NO를 이용해
-        // 회원 기본 정보(이름, 이메일, 활성 여부 등)를 조회한다.
+		// 일반 로그인용: loginId 또는 email -> LOCAL 계정 조회
+		Optional<UserAuthProvider> authProviderOpt = userAuthProviderRepository.findByLoginId(username);
+
+		if (authProviderOpt.isEmpty()) {
+			User userByEmail = userRepository.findByEmail(username)
+					.orElseThrow(() -> new UsernameNotFoundException("LoginId Or Email Not Found"));
+
+			authProviderOpt = userAuthProviderRepository.findByUserNoAndProviderCode(userByEmail.getUserNo(), "LOCAL");
+		}
+
+		UserAuthProvider authProvider = authProviderOpt
+				.orElseThrow(() -> new UsernameNotFoundException("Local Auth Provider Not Found"));
+
 		User user = userRepository.findById(authProvider.getUserNo())
 				.orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
 
-		// USER_NO로 회원 권한 목록을 조회한다.
 		List<UserRole> userRoles = userRoleRepository.findByUserNo(user.getUserNo());
-
-		 // 시큐리티가 사용할 수 있도록 권한 코드만 문자열 목록으로 변환한다.
 		List<String> roleNames = userRoles.stream().map(UserRole::getRoleCode).toList();
-		// 시큐리티에서 사용할 인증 객체로 변환한다.
+
 		return new AuthUserPrincipal(user.getUserNo(), authProvider.getLoginId(), authProvider.getPasswordHash(),
 				user.getUserName(), user.getEmail(), user.getPhone(), user.getEnabled(), roleNames);
 	}
-	
-	
+
+	public AuthUserPrincipal loadUserByUserNo(Long userNo) {
+
+		User user = userRepository.findById(userNo).orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
+
+		List<UserRole> userRoles = userRoleRepository.findByUserNo(userNo);
+		List<String> roleNames = userRoles.stream().map(UserRole::getRoleCode).toList();
+
+		// JWT 재인증용: loginId가 없을 수도 있으니 있으면 쓰고, 없으면 email 사용
+		Optional<UserAuthProvider> authProviderOpt = userAuthProviderRepository.findByUserNo(userNo).stream()
+				.findFirst();
+
+		String loginId = authProviderOpt.map(UserAuthProvider::getLoginId)
+				.filter(value -> value != null && !value.isBlank()).orElse(user.getEmail());
+
+		String passwordHash = authProviderOpt.map(UserAuthProvider::getPasswordHash).orElse("");
+
+		return new AuthUserPrincipal(user.getUserNo(), loginId, passwordHash, user.getUserName(), user.getEmail(),
+				user.getPhone(), user.getEnabled(), roleNames);
+	}
 
 }
