@@ -1,18 +1,24 @@
 package com.kh.trip.domain;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.kh.trip.domain.common.BaseTimeEntity;
 import com.kh.trip.domain.enums.ApprovalStatus;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -35,8 +41,9 @@ public class HostProfiles extends BaseTimeEntity {
 	@Column(name = "HOST_NO")
 	private Long hostNo;
 
-	@Column(name = "USER_NO", nullable = false, unique = true)
-	private Long userNo;
+	@OneToOne
+	@JoinColumn(name = "USER_NO", nullable = false, unique = true)
+	private User user;
 
 	@Column(name = "BUSINESS_NAME", nullable = false, length = 100)
 	private String businessName;
@@ -48,6 +55,8 @@ public class HostProfiles extends BaseTimeEntity {
 	private String ownerName;
 
 	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "HOST_PROFILE_APPROVAL_STATUS", joinColumns = @JoinColumn(name = "HOST_NO"))
+	@Enumerated(EnumType.STRING)
 	@Builder.Default
 	private List<ApprovalStatus> approvalStatusList = new ArrayList<>();
 
@@ -59,7 +68,7 @@ public class HostProfiles extends BaseTimeEntity {
 	private Long approvedBy;
 
 	@Column(name = "APPROVED_AT")
-	private java.util.Date approvedAt;
+	private LocalDateTime approvedAt;
 
 	@Column(name = "REJECT_REASON", length = 300)
 	private String rejectReason;
