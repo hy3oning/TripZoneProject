@@ -45,7 +45,7 @@ public class Coupon extends BaseTimeEntity {
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
 	@JoinColumn(name = "ISSUED_BY_USER_NO", nullable = false) // 실제 DB의 FK 컬럼명
 	private User user;
-
+	
 	@Column(name = "COUPON_NAME", length = 100, unique = true, nullable = false)
 	private String couponName;
 
