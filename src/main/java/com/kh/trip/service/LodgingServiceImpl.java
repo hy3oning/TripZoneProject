@@ -7,9 +7,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.trip.domain.Lodging;
+import com.kh.trip.domain.LodgingImage;
+import com.kh.trip.domain.Room;
 import com.kh.trip.domain.enums.LodgingStatus;
 import com.kh.trip.dto.LodgingDTO;
+import com.kh.trip.dto.LodgingDetailDTO;
+import com.kh.trip.dto.LodgingImageDTO;
+import com.kh.trip.dto.RoomSummaryDTO;
+import com.kh.trip.repository.LodgingImageRepository;
 import com.kh.trip.repository.LodgingRepository;
+import com.kh.trip.repository.RoomRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,6 +39,8 @@ import lombok.RequiredArgsConstructor;
 public class LodgingServiceImpl implements LodgingService {
 
 	private final LodgingRepository lodgingRepository;
+	private final LodgingImageRepository lodgingImageRepository;
+	private final RoomRepository roomRepository;
 
 	// 숙소 등록
 	@Override
@@ -56,7 +65,6 @@ public class LodgingServiceImpl implements LodgingService {
 			throw new IllegalArgumentException("주소는 필수입니다.");
 		}
 
-		
 		if (lodging.getStatus() == null) {
 			lodging.setStatus(LodgingStatus.ACTIVE);
 		}
@@ -113,9 +121,8 @@ public class LodgingServiceImpl implements LodgingService {
 		return lodgingRepository.save(findLodging);
 	}
 
-	
 	// 숙소 수정값 반영 메서드 domain에 있던 수정 기능을 Service로 옮긴 버전
-	 
+
 	private void applyLodgingUpdate(Lodging findLodging, LodgingDTO lodgingDTO) {
 
 		if (lodgingDTO.getHostNo() != null) {
@@ -179,6 +186,46 @@ public class LodgingServiceImpl implements LodgingService {
 				.orElseThrow(() -> new NoSuchElementException("삭제할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
 
 		lodgingRepository.delete(findLodging);
+	}
+
+	// 숙소 상세보기용
+	@Override
+	@Transactional(readOnly = true)
+	public LodgingDetailDTO getLodgingDetail(Long lodgingNo) {
+
+		// 1. 숙소 기본 정보 조회
+		Lodging lodging = lodgingRepository.findById(lodgingNo)
+				.orElseThrow(() -> new NoSuchElementException("해당 숙소를 찾을 수 없습니다. lodgingNo=" + lodgingNo));
+
+		// 2. 숙소 이미지 목록 조회 (정렬 순서대로)
+		List<LodgingImage> images = lodgingImageRepository.findByLodgingNoOrderBySortOrderAsc(lodgingNo);
+
+		// 3. 객실 목록 조회
+		List<Room> rooms = roomRepository.findByLodgingNo(lodgingNo);
+
+		// 4. Lodging,Images,Rooms를 하나의 상세 DTO로 묶어서 반환
+		return LodgingDetailDTO.builder().lodgingNo(lodging.getLodgingNo()) // 숙소 번호
+				.hostNo(lodging.getHostNo()) // 호스트 번호
+				.lodgingName(lodging.getLodgingName()) // 숙소명
+				.lodgingType(lodging.getLodgingType()) // 숙소 유형
+				.region(lodging.getRegion()) // 지역
+				.address(lodging.getAddress()) // 주소
+				.detailAddress(lodging.getDetailAddress()) // 상세 주소
+				.zipCode(lodging.getZipCode()) // 우편번호
+				.latitude(lodging.getLatitude()) // 위도
+				.longitude(lodging.getLongitude()) // 경도
+				.description(lodging.getDescription()) // 설명
+				.checkInTime(lodging.getCheckInTime()) // 체크인 시간
+				.checkOutTime(lodging.getCheckOutTime()) // 체크아웃 시간
+				.status(lodging.getStatus()) // 숙소 상태
+
+				// 이미지 엔티티 리스트를 DTO 리스트로 변환
+				.images(images.stream().map(LodgingImageDTO::fromEntity).toList())
+
+				// 객실 엔티티 리스트를 DTO 리스트로 변환
+				.rooms(rooms.stream().map(RoomSummaryDTO::fromEntity).toList())
+
+				.build(); // 최종 상세 DTO 생성
 	}
 
 }
