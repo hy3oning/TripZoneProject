@@ -6,6 +6,8 @@ import com.kh.trip.domain.enums.InquiryRoomInquiryType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,9 +41,11 @@ public class InquiryRoom {
 	@JoinColumn(name = "USER_NO", nullable = false)
 	private User user;
 	
+	@Enumerated(EnumType.STRING)
 	@Column(name = "TARGET_TYPE", nullable = false, length = 20)
 	private InquiryRoomTargetType targetType;
 	
+	@Enumerated(EnumType.STRING)
 	@Column(name = "INQUIRY_TYPE", nullable = false, length = 30)
 	private InquiryRoomInquiryType inquiryType;
 	
@@ -52,11 +56,12 @@ public class InquiryRoom {
 	@JoinColumn(name = "ADMIN_USER_NO", nullable = false)
 	private User adminUser;
 	
-//	@ManyToOne(fetch = FetchType.LAZY)
-//	@JoinColumn(name = "LODGING_NO", nullable = false)
-//	private Lodging lodging;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "LODGING_NO", nullable = false)
+	private Lodging lodging;
 	
+	@Enumerated(EnumType.STRING)
 	@Builder.Default
-	@Column(name = "STATUS ", nullable = false, length = 20)
+	@Column(name = "STATUS", nullable = false, length = 20)
 	private InquiryRoomStatus status = InquiryRoomStatus.OPEN;
 }

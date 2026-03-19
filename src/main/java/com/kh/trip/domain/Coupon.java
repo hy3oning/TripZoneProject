@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.kh.trip.domain.common.BaseTimeEntity;
 import com.kh.trip.domain.enums.CouponStatus;
+import com.kh.trip.domain.enums.DiscountType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,7 +45,7 @@ public class Coupon extends BaseTimeEntity {
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
 	@JoinColumn(name = "ISSUED_BY_USER_NO", nullable = false) // 실제 DB의 FK 컬럼명
 	private User user;
-
+	
 	@Column(name = "COUPON_NAME", length = 100, unique = true, nullable = false)
 	private String couponName;
 
@@ -67,6 +68,30 @@ public class Coupon extends BaseTimeEntity {
 	@Builder.Default
 	private CouponStatus status = CouponStatus.INACTIVE; // active, inactive, delete, expiration
 
+	public void changeCouponName(String couponName) {
+		this.couponName = couponName;
+	}
+	
+	public void changeDiscountType(DiscountType discountType) {
+		this.discountType = discountType;
+	}
+	
+	public void changeDiscountValue(Long discountValue) {
+		this.discountValue = discountValue;
+	}
+	
+	public void changeStartDate(LocalDateTime startDate) {
+		this.startDate = startDate;
+	}
+	
+	public void changeEndDate(LocalDateTime endDate) {
+		this.endDate = endDate;
+	}
+	
+	public void changeStatus(CouponStatus status) {
+		this.status = status;
+	}
+	
 	@PrePersist
 	@PreUpdate
 	public void validateDates() {
@@ -76,24 +101,6 @@ public class Coupon extends BaseTimeEntity {
 				throw new IllegalStateException("종료 일시는 시작 일시보다 최소 1초 이상 뒤여야 합니다.");
 			}
 		}
-	}
-
-	public enum DiscountType {
-		AMOUNT {
-			@Override
-			public Long calculate(Long price, Long discount) {
-				return price - discount;
-			}
-		},
-		PERCENT {
-			@Override
-			public Long calculate(Long price, Long discount) {
-				return price - (price * discount / 100);
-			}
-		};
-
-		// 추상 메서드를 선언해서 각 항목이 직접 계산하게 함
-		public abstract Long calculate(Long price, Long discount);
 	}
 
 }

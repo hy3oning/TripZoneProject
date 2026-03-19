@@ -41,8 +41,8 @@ public class Booking {
 	private Long bookingNo;
 	
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
-	@JoinColumn(name = "COUPON_NO", nullable = false) // 실제 DB의 FK 컬럼명
-	private Coupon coupon;
+	@JoinColumn(name = "USER_NO", nullable = false) // 실제 DB의 FK 컬럼명
+	private User user;
 	
 //	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
 //	@JoinColumn(name = "ROOM_NO", nullable = false) // 실제 DB의 FK 컬럼명

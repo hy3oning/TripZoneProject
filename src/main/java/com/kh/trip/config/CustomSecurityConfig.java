@@ -1,0 +1,46 @@
+package com.kh.trip.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.kh.trip.security.JwtAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
+
+@Configuration
+@RequiredArgsConstructor
+public class CustomSecurityConfig {
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+	@Bean
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http
+				// JWT 기반 인증이므로 CORS 설정을 활성화한다.
+				.cors(cors -> {
+				})
+				// REST API 방식에서는 CSRF를 비활성화한다.
+				.csrf(csrf -> csrf.disable())
+				// 세션을 사용하지 않고 요청마다 토큰으로 인증한다.
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authorizeHttpRequests(auth -> auth
+						// 로그인/로그아웃/재발급 경로는 인증 없이 접근 가능하다.
+						.requestMatchers("/**", "/", "/error","/api/auth/register", "/api/auth/login", "/api/auth/logout")
+						.permitAll()
+						// JWT 필터 적용 전이므로 현재는 전체 요청을 임시 허용한다.
+						.anyRequest().authenticated())
+				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+		return http.build();
+	}
+
+	@Bean
+	PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+}

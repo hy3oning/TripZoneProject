@@ -3,6 +3,7 @@ package com.kh.trip.service;
 import java.util.List;
 
 import com.kh.trip.domain.Lodging;
+import com.kh.trip.dto.LodgingDTO;
 
 public interface LodgingService {
 
@@ -22,7 +23,7 @@ public interface LodgingService {
 	public List<Lodging> searchLodgingsByName(String keyword);
 
 	// 숙소 수정
-	public Lodging updateLodging(Long lodgingNo, Lodging lodging);
+	public Lodging updateLodging(Long lodgingNo, LodgingDTO lodgingDTO);
 
 	// 숙소 삭제
 	public void deleteLodging(Long lodgingNo);

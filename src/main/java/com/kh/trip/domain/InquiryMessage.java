@@ -7,6 +7,8 @@ import com.kh.trip.domain.enums.InquiryMessageSenderType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -45,6 +47,7 @@ public class InquiryMessage extends BaseTimeEntity {
 	@JoinColumn(name = "SENDER_USER_NO", nullable = false)
 	private User senderUser;
 	
+	@Enumerated(EnumType.STRING)
 	@Column(name = "SENDER_TYPE", nullable = false, length = 20)
 	private InquiryMessageSenderType senderType;
 	

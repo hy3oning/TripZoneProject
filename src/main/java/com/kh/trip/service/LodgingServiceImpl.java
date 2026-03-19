@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.trip.domain.Lodging;
+import com.kh.trip.domain.enums.LodgingStatus;
+import com.kh.trip.dto.LodgingDTO;
 import com.kh.trip.repository.LodgingRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -45,8 +47,8 @@ public class LodgingServiceImpl implements LodgingService {
 		}
 
 		// 지역 필수 체크
-		if (lodging.getRegion() == null || lodging.getRegion().isBlank()) {
-			throw new IllegalArgumentException("지역 정보는 필수입니다.");
+		if (lodging.getLodgingType() == null) {
+			throw new IllegalArgumentException("숙소 유형은 필수입니다.");
 		}
 
 		// 주소 필수 체크
@@ -54,21 +56,12 @@ public class LodgingServiceImpl implements LodgingService {
 			throw new IllegalArgumentException("주소는 필수입니다.");
 		}
 
-		// 상태값이 비어있으면 기본값 ACTIVE로 저장
-		// 엔티티에서 @Builder.Default를 설정했더라도
-		// 혹시 외부에서 null로 넣어오는 경우를 방어하기 위해 한번 더 체크한다.
-		Lodging saveLodging = lodging;
-
-		if (lodging.getStatus() == null || lodging.getStatus().isBlank()) {
-			saveLodging = Lodging.builder().lodgingNo(lodging.getLodgingNo()).hostNo(lodging.getHostNo())
-					.lodgingName(lodging.getLodgingName()).lodgingType(lodging.getLodgingType())
-					.region(lodging.getRegion()).address(lodging.getAddress()).detailAddress(lodging.getDetailAddress())
-					.zipCode(lodging.getZipCode()).latitude(lodging.getLatitude()).longitude(lodging.getLongitude())
-					.description(lodging.getDescription()).checkInTime(lodging.getCheckInTime())
-					.checkOutTime(lodging.getCheckOutTime()).status("ACTIVE").build();
+		
+		if (lodging.getStatus() == null) {
+			lodging.setStatus(LodgingStatus.ACTIVE);
 		}
 
-		return lodgingRepository.save(saveLodging);
+		return lodgingRepository.save(lodging);
 	}
 
 	// 숙소 단건 조회
@@ -110,37 +103,72 @@ public class LodgingServiceImpl implements LodgingService {
 
 	// 숙소 수정
 	@Override
-	public Lodging updateLodging(Long lodgingNo, Lodging lodging) {
+	public Lodging updateLodging(Long lodgingNo, LodgingDTO lodgingDTO) {
 
 		Lodging findLodging = lodgingRepository.findById(lodgingNo)
 				.orElseThrow(() -> new NoSuchElementException("수정할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
 
-		Lodging updateLodging = Lodging.builder().lodgingNo(findLodging.getLodgingNo())
-				.hostNo(lodging.getHostNo() != null ? lodging.getHostNo() : findLodging.getHostNo())
-				.lodgingName(lodging.getLodgingName() != null && !lodging.getLodgingName().isBlank()
-						? lodging.getLodgingName()
-						: findLodging.getLodgingName())
-				.lodgingType(lodging.getLodgingType() != null && !lodging.getLodgingType().isBlank()
-						? lodging.getLodgingType()
-						: findLodging.getLodgingType())
-				.region(lodging.getRegion() != null && !lodging.getRegion().isBlank() ? lodging.getRegion()
-						: findLodging.getRegion())
-				.address(lodging.getAddress() != null && !lodging.getAddress().isBlank() ? lodging.getAddress()
-						: findLodging.getAddress())
-				.detailAddress(lodging.getDetailAddress() != null ? lodging.getDetailAddress()
-						: findLodging.getDetailAddress())
-				.zipCode(lodging.getZipCode() != null ? lodging.getZipCode() : findLodging.getZipCode())
-				.latitude(lodging.getLatitude() != null ? lodging.getLatitude() : findLodging.getLatitude())
-				.longitude(lodging.getLongitude() != null ? lodging.getLongitude() : findLodging.getLongitude())
-				.description(lodging.getDescription() != null ? lodging.getDescription() : findLodging.getDescription())
-				.checkInTime(lodging.getCheckInTime() != null ? lodging.getCheckInTime() : findLodging.getCheckInTime())
-				.checkOutTime(
-						lodging.getCheckOutTime() != null ? lodging.getCheckOutTime() : findLodging.getCheckOutTime())
-				.status(lodging.getStatus() != null && !lodging.getStatus().isBlank() ? lodging.getStatus()
-						: findLodging.getStatus())
-				.build();
+		applyLodgingUpdate(findLodging, lodgingDTO);
 
-		return lodgingRepository.save(updateLodging);
+		return lodgingRepository.save(findLodging);
+	}
+
+	
+	// 숙소 수정값 반영 메서드 domain에 있던 수정 기능을 Service로 옮긴 버전
+	 
+	private void applyLodgingUpdate(Lodging findLodging, LodgingDTO lodgingDTO) {
+
+		if (lodgingDTO.getHostNo() != null) {
+			findLodging.setHostNo(lodgingDTO.getHostNo());
+		}
+
+		if (lodgingDTO.getLodgingName() != null && !lodgingDTO.getLodgingName().isBlank()) {
+			findLodging.setLodgingName(lodgingDTO.getLodgingName());
+		}
+
+		if (lodgingDTO.getLodgingType() != null) {
+			findLodging.setLodgingType(lodgingDTO.getLodgingType());
+		}
+
+		if (lodgingDTO.getRegion() != null && !lodgingDTO.getRegion().isBlank()) {
+			findLodging.setRegion(lodgingDTO.getRegion());
+		}
+
+		if (lodgingDTO.getAddress() != null && !lodgingDTO.getAddress().isBlank()) {
+			findLodging.setAddress(lodgingDTO.getAddress());
+		}
+
+		if (lodgingDTO.getDetailAddress() != null) {
+			findLodging.setDetailAddress(lodgingDTO.getDetailAddress());
+		}
+
+		if (lodgingDTO.getZipCode() != null) {
+			findLodging.setZipCode(lodgingDTO.getZipCode());
+		}
+
+		if (lodgingDTO.getLatitude() != null) {
+			findLodging.setLatitude(lodgingDTO.getLatitude());
+		}
+
+		if (lodgingDTO.getLongitude() != null) {
+			findLodging.setLongitude(lodgingDTO.getLongitude());
+		}
+
+		if (lodgingDTO.getDescription() != null) {
+			findLodging.setDescription(lodgingDTO.getDescription());
+		}
+
+		if (lodgingDTO.getCheckInTime() != null) {
+			findLodging.setCheckInTime(lodgingDTO.getCheckInTime());
+		}
+
+		if (lodgingDTO.getCheckOutTime() != null) {
+			findLodging.setCheckOutTime(lodgingDTO.getCheckOutTime());
+		}
+
+		if (lodgingDTO.getStatus() != null) {
+			findLodging.setStatus(lodgingDTO.getStatus());
+		}
 	}
 
 	// 숙소 삭제

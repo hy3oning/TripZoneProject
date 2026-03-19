@@ -3,7 +3,6 @@ package com.kh.trip.dto;
 import java.time.LocalDateTime;
 
 import com.kh.trip.domain.enums.CouponStatus;
-import com.kh.trip.domain.enums.DiscountType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,15 +13,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CouponDTO {
+public class UserCouponDTO {
+	private Long userCouponNo;
+	private Long userNo;
 	private Long couponNo;
-	private Long adminUserNo;
-	private String couponName;
-	private DiscountType discountType;
-	private Long discountValue;
-	private LocalDateTime startDate;
-	private LocalDateTime endDate;
+	private LocalDateTime issuedAt;
+	private LocalDateTime usedAt;
 	private CouponStatus status;
-	private LocalDateTime regDate;
-	private LocalDateTime updDate;
 }

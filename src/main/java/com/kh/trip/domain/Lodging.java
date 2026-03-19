@@ -1,26 +1,31 @@
 package com.kh.trip.domain;
 
 import com.kh.trip.domain.common.BaseTimeEntity;
+import com.kh.trip.domain.enums.LodgingStatus;
+import com.kh.trip.domain.enums.LodgingType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 //DB 테이블과 매핑되는 클래스
 @Entity
 
 //LODGINGS 테이블과 매핑된다.
 @Table(name = "LODGINGS")
+@Setter
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -49,8 +54,9 @@ public class Lodging extends BaseTimeEntity {
 
 	// 숙소 유형
 	// 예: HOTEL, PENSION, GUESTHOUSE, MOTEL 등
+	@Enumerated(EnumType.STRING)
 	@Column(name = "LODGING_TYPE", nullable = false, length = 50)
-	private String lodgingType;
+	private LodgingType lodgingType;
 
 	// 숙소 지역
 	// 예: 서울, 부산, 제주
@@ -99,7 +105,9 @@ public class Lodging extends BaseTimeEntity {
 	// INACTIVE : 비활성화
 	// DELETED : 삭제
 	// Builder 사용 시 기본값 ACTIVE
+	@Enumerated(EnumType.STRING)
 	@Builder.Default
 	@Column(name = "STATUS", nullable = false, length = 20)
-	private String status = "ACTIVE";
+	private LodgingStatus status = LodgingStatus.ACTIVE;
+
 }

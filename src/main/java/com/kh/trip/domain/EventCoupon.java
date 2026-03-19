@@ -1,9 +1,5 @@
 package com.kh.trip.domain;
 
-import java.time.LocalDateTime;
-
-import com.kh.trip.domain.Coupon.DiscountType;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
