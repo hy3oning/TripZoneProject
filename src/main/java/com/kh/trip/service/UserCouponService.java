@@ -11,6 +11,6 @@ public interface UserCouponService {
 
 	Long save(UserCouponDTO userCouponDTO);
 
-	PageResponseDTO<UserCouponDTO> findAll(PageRequestDTO pageRequestDTO);
+	PageResponseDTO<UserCouponDTO> findAll(Long userNo, PageRequestDTO pageRequestDTO);
 
 }

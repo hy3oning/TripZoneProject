@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.trip.domain.Coupon;
 import com.kh.trip.domain.User;
 import com.kh.trip.domain.UserCoupon;
+import com.kh.trip.dto.CouponDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.UserCouponDTO;
@@ -55,19 +56,28 @@ public class UserCouponServiceImpl implements UserCouponService{
 	}
 
 	@Override
-	public PageResponseDTO<UserCouponDTO> findAll(PageRequestDTO pageRequestDTO) {
+	public PageResponseDTO<UserCouponDTO> findAll(Long userNo,PageRequestDTO pageRequestDTO) {
 		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, pageRequestDTO.getSize(),
 				Sort.by("userCouponNo").descending());
 		
-		Page<UserCoupon> result = repository.findAll(pageable);
+		Page<UserCoupon> result = repository.findByUser(userNo, pageable);
 		
 		List<UserCouponDTO> dtoList = result.getContent().stream().map(userCoupon-> {
-			return UserCouponDTO.builder().userCouponNo(userCoupon.getUserCouponNo())
-					.userNo(userCoupon.getUser() != null? userCoupon.getUser().getUserNo() : null)
-					.couponNo(userCoupon.getCoupon() != null? userCoupon.getCoupon().getCouponNo() : null)
-					.issuedAt(userCoupon.getIssuedAt()).usedAt(userCoupon.getUsedAt()).status(userCoupon.getStatus())
-					.build();
-		}).collect(Collectors.toList());
+			CouponDTO couponDTO = CouponDTO.builder().couponName(userCoupon.getCoupon().getCouponName())
+					.discountType(userCoupon.getCoupon().getDiscountType())
+					.discountValue(userCoupon.getCoupon().getDiscountValue())
+					.startDate(userCoupon.getCoupon().getStartDate())
+					.endDate(userCoupon.getCoupon().getEndDate())
+					.status(userCoupon.getCoupon().getStatus()).build();
+			return UserCouponDTO.builder()
+					.userCouponNo(userCoupon.getUserCouponNo())
+					.userNo(userCoupon.getUser().getUserNo())
+					.couponDTO(couponDTO)
+					.issuedAt(userCoupon.getIssuedAt())
+					.usedAt(userCoupon.getUsedAt())
+					.status(userCoupon.determineFinalStatus())
+					.build();}).collect(Collectors.toList());
+
 		
 		Long totalCount = result.getTotalElements();
 		

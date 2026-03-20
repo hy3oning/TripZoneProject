@@ -3,6 +3,7 @@ package com.kh.trip.controller;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,9 +33,9 @@ public class UserCouponController {
 		return Map.of("userCouponNo", ucno);
 	}
 	
-	@GetMapping("/list")
-	public PageResponseDTO<UserCouponDTO> findAll(PageRequestDTO pageRequestDTO) {
+	@GetMapping("/list/{uno}")
+	public PageResponseDTO<UserCouponDTO> findAll(@PathVariable(name = "uno") Long userNo , PageRequestDTO pageRequestDTO) {
 		log.info("findAll() = " + pageRequestDTO);
-		return service.findAll(pageRequestDTO);
+		return service.findAll(userNo, pageRequestDTO);
 	}
 }
