@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.dto.LodgingDTO;
+import com.kh.trip.dto.LodgingDetailDTO;
 import com.kh.trip.service.LodgingService;
 
 import lombok.RequiredArgsConstructor;
@@ -99,16 +100,10 @@ public class LodgingController {
 	}
 
 	/**
-	 * 숙소 수정
-	 * 요청 예시: PUT /api/lodgings/1
-	 * Body(JSON): { "lodgingName": "수정된 숙소명", "region": "부산" }
-	 흐름: 
-	 * 1. URL에서 수정할 숙소 번호(lodgingNo)를 받는다. 
-	 * 2. Body에서 수정할 값을 DTO로 받는다. 
-	 * 3.Service에서 기존 데이터를 조회한다. 
-	 * 4. DTO 값 중 null이 아닌 값만 기존 Entity에 반영한다. 
-	 * 5. 수정된 Entity를 저장한다. 
-	 * 6. 결과를 DTO로 변환해 반환한다.
+	 * 숙소 수정 요청 예시: PUT /api/lodgings/1 Body(JSON): { "lodgingName": "수정된 숙소명",
+	 * "region": "부산" } 흐름: 1. URL에서 수정할 숙소 번호(lodgingNo)를 받는다. 2. Body에서 수정할 값을
+	 * DTO로 받는다. 3.Service에서 기존 데이터를 조회한다. 4. DTO 값 중 null이 아닌 값만 기존 Entity에 반영한다.
+	 * 5. 수정된 Entity를 저장한다. 6. 결과를 DTO로 변환해 반환한다.
 	 */
 	@PatchMapping("/{lodgingNo}")
 	public LodgingDTO updateLodging(@PathVariable Long lodgingNo, @RequestBody LodgingDTO lodgingDTO) {
@@ -127,6 +122,19 @@ public class LodgingController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteLodging(@PathVariable Long lodgingNo) {
 		lodgingService.deleteLodging(lodgingNo);
+	}
+
+	/**
+	 * 숙소 상세보기 API
+	 * 
+	 * 요청 예시: GET /api/v1/lodgings/1/detail
+	 * 
+	 * 흐름: 1. URL에서 lodgingNo를 받는다. 2. Service에서 숙소 기본 정보 + 이미지 목록 + 객실 목록을 조회한다. 3.
+	 * 하나의 LodgingDetailDTO로 묶는다. 4. JSON 형태로 반환한다.
+	 */
+	@GetMapping("/{lodgingNo}/detail") // 상세보기 전용 API
+	public LodgingDetailDTO getLodgingDetail(@PathVariable Long lodgingNo) {
+		return lodgingService.getLodgingDetail(lodgingNo); // 상세 DTO 반환
 	}
 
 }
