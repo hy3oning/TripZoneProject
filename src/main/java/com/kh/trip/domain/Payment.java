@@ -3,6 +3,8 @@ package com.kh.trip.domain;
 import java.time.LocalDateTime;
 
 import com.kh.trip.domain.common.BaseTimeEntity;
+import com.kh.trip.domain.enums.PaymentPayMethod;
+import com.kh.trip.domain.enums.PaymentStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -60,14 +62,14 @@ public class Payment extends BaseTimeEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "PAY_METHOD", nullable = false, length = 30)
-	private String payMethod; // 결제 수단
+	private PaymentPayMethod payMethod; // 결제 수단
 
 	@Column(name = "PG_PROVIDER", length = 30)
 	private String pgProvider; // PG 제공사
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "PAYMENT_STATUS", nullable = false, length = 20)
-	private String paymentStatus; // 결제 상태
+	private PaymentStatus paymentStatus; // 결제 상태
 
 	@Column(name = "APPROVED_AT")
 	private LocalDateTime approvedAt; // 결제 승인 일시
