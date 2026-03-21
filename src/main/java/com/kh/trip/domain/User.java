@@ -47,5 +47,13 @@ public class User extends BaseTimeEntity {
 	@Builder.Default
 	@Column(name = "ENABLED", nullable = false, length = 1)
 	private String enabled = "1";
+	
+	public void changeName(String userName) {
+		this.userName = userName;
+	}
+
+	public void changeEnabled(String enabled) {
+		this.enabled = enabled;
+	}
 
 }
