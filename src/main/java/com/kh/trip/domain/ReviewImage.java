@@ -1,0 +1,51 @@
+package com.kh.trip.domain;
+
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "REVIEW_IMAGES")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
+public class ReviewImage {
+
+	@Id // 기본키
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_review_images") // 시퀀스 사용
+	@SequenceGenerator(name = "seq_review_images", // JPA 내부 시퀀스 이름
+			sequenceName = "SEQ_REVIEW_IMAGES", // 실제 DB 시퀀스 이름
+			allocationSize = 1 // 1씩 증가
+	)
+	@Column(name = "REVIEW_IMAGE_NO") // REVIEW_IMAGE_NO 컬럼과 연결
+	private Long reviewImageNo; // 리뷰 이미지 번호
+
+	@Column(name = "REVIEW_NO", nullable = false) // 어떤 리뷰에 속한 이미지인지
+	private Long reviewNo; // 리뷰 번호 FK
+
+	@Column(name = "IMAGE_URL", nullable = false, length = 300) // 이미지 경로
+	private String imageUrl; // 리뷰 이미지 URL
+
+	@Column(name = "SORT_ORDER", nullable = false) // 정렬 순서
+	private Integer sortOrder; // 리뷰 이미지 순서
+
+	@CreationTimestamp // INSERT 시 현재 시간이 자동으로 들어감
+	@Column(name = "REG_DATE", updatable = false) // REG_DATE 컬럼과 매핑, 수정은 불가
+	private LocalDateTime regDate; // 등록일
+}
