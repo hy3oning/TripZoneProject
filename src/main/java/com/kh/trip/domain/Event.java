@@ -95,4 +95,7 @@ public class Event extends BaseTimeEntity {
 		this.status = status;
 	}
 
+	public void changeViewCount(Long viewCount) {
+		this.viewCount = viewCount;
+	}
 }
