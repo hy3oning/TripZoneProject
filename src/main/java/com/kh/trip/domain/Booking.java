@@ -1,4 +1,4 @@
- package com.kh.trip.domain;
+package com.kh.trip.domain;
 
 import java.time.LocalDateTime;
 
@@ -51,7 +51,7 @@ public class Booking {
 	private Room room;
 	
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
-	@JoinColumn(name = "USER_COUPON_NO", nullable = false) // 실제 DB의 FK 컬럼명
+	@JoinColumn(name = "USER_COUPON_NO") // 실제 DB의 FK 컬럼명
 	private UserCoupon userCoupon;
 	
 	@Column(name = "CHECK_IN_DATE", nullable = false)
@@ -89,6 +89,7 @@ public class Booking {
     @CreationTimestamp
 	private LocalDateTime regDate;
 	
+    
 	@PrePersist
 	public void validateNewBooking() {
 	    // 1. 체크아웃 > 체크인 검증
@@ -106,9 +107,6 @@ public class Booking {
 	}
 	
 	public void cancel() {
-        if (this.status == BookingStatus.CONFIRMED) {
-            throw new IllegalStateException("이미 확정된 예약은 자동으로 취소할 수 없습니다.");
-        }
         this.status = BookingStatus.CANCELED;
         
         // 연관된 쿠폰이 있다면 복구
