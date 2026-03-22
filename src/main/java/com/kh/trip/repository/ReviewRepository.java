@@ -1,6 +1,8 @@
 package com.kh.trip.repository;
 
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.kh.trip.domain.Review;
 
@@ -11,4 +13,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
 	// 같은 예약번호로 이미 리뷰가 있는지 확인
 	boolean existsByBookingNo(Long bookingNo);
+
+	// 리뷰 번호로 단건 조회
+	Optional<Review> findByReviewNo(Long reviewNo);
 }
