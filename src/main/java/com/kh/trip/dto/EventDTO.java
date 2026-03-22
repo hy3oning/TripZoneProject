@@ -2,6 +2,7 @@ package com.kh.trip.dto;
 
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,4 +24,5 @@ public class EventDTO {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private int viewCount;
+    private List<Long> coupons;
 }

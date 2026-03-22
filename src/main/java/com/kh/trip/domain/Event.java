@@ -3,6 +3,7 @@ package com.kh.trip.domain;
 import java.time.LocalDateTime;
 
 import com.kh.trip.domain.common.BaseTimeEntity;
+import com.kh.trip.domain.enums.CouponStatus;
 import com.kh.trip.domain.enums.EventStatus;
 
 import jakarta.persistence.Column;
@@ -88,6 +89,10 @@ public class Event extends BaseTimeEntity {
 	// 썸네일 URL 수정용 메서드
 	public void changeThumbnailUrl(String thumbnailUrl) {
 		this.thumbnailUrl = thumbnailUrl;
+	}
+	
+	public void changeStatus(EventStatus status) {
+		this.status = status;
 	}
 
 }

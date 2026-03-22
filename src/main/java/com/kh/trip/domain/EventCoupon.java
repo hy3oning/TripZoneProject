@@ -28,10 +28,10 @@ public class EventCoupon {
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_EVENT_COUPONS")
 	@SequenceGenerator(name = "SEQ_EVENT_COUPONS", sequenceName = "SEQ_EVENT_COUPONS", allocationSize = 1)
 	private Long eventCouponNo;
-//	
-//	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
-//	@JoinColumn(name = "EVENT_NO", nullable = false) // 실제 DB의 FK 컬럼명
-//	private Event event;
+	
+	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
+	@JoinColumn(name = "EVENT_NO", nullable = false) // 실제 DB의 FK 컬럼명
+	private Event event;
 
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
 	@JoinColumn(name = "COUPON_NO", nullable = false) // 실제 DB의 FK 컬럼명

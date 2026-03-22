@@ -4,18 +4,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.kh.trip.domain.Coupon;
 import com.kh.trip.domain.Event;
+import com.kh.trip.domain.EventCoupon;
 import com.kh.trip.domain.User;
+import com.kh.trip.domain.enums.EventStatus;
 import com.kh.trip.dto.EventDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
+import com.kh.trip.repository.CouponRepository;
+import com.kh.trip.repository.EventCouponRepository;
 import com.kh.trip.repository.EventRepository;
 import com.kh.trip.repository.UserRepository;
 
@@ -28,7 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 public class EventServiceImpl implements EventService {
 	private final EventRepository eventRepository;
 	private final UserRepository userRepository;
-	private final ModelMapper modelMapper;
+	private final EventCouponRepository eventCouponRepository;
+	private final CouponRepository couponRepository;
 
 	// list
 	@Override
@@ -73,6 +78,13 @@ public class EventServiceImpl implements EventService {
 				.adminUserNo(user)
 				.build();
 		Event savedEvent = eventRepository.save(event);
+		List<Long> coupons = eventDTO.getCoupons();
+		if(coupons != null && !coupons.isEmpty()) { 
+			List<EventCoupon> eventCouponList = coupons.stream().map(cno -> {
+				Coupon coupon = couponRepository.findById(cno).orElseThrow();
+				return EventCoupon.builder().event(savedEvent).coupon(coupon).build();}).collect(Collectors.toList());
+			eventCouponRepository.saveAll(eventCouponList);
+			};
 		return savedEvent.getEventNo();
 
 	}
@@ -81,7 +93,7 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public void update(EventDTO eventDTO) {
 		Optional<Event> result = eventRepository.findById(eventDTO.getEventNo());
-		Event event = eventRepository.findById(eventDTO.getEventNo())
+		Event event = result
 				.orElseThrow(() -> new RuntimeException("해당 ID 없음: " + eventDTO.getEventNo()));
 
 		event.changeTitle(eventDTO.getTitle());
@@ -95,13 +107,10 @@ public class EventServiceImpl implements EventService {
 	// delete
 	@Override
 	public void delete(Long eno) {
-		eventRepository.deleteById(eno);
-	
-	
+		Optional<Event> result = eventRepository.findById(eno);
+		Event event = result
+				.orElseThrow(() -> new RuntimeException("해당 ID 없음: " + eno));
+		event.changeStatus(EventStatus.HIDDEN);
+		eventRepository.save(event);
 	}
-
-	
-
-	
-
 }

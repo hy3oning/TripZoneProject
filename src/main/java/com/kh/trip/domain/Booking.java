@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.kh.trip.domain.enums.BookingStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -44,9 +46,9 @@ public class Booking {
 	@JoinColumn(name = "USER_NO", nullable = false) // 실제 DB의 FK 컬럼명
 	private User user;
 	
-//	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
-//	@JoinColumn(name = "ROOM_NO", nullable = false) // 실제 DB의 FK 컬럼명
-//	private Room room;
+	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
+	@JoinColumn(name = "ROOM_NO", nullable = false) // 실제 DB의 FK 컬럼명
+	private Room room;
 	
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
 	@JoinColumn(name = "USER_COUPON_NO", nullable = false) // 실제 DB의 FK 컬럼명
@@ -101,13 +103,6 @@ public class Booking {
 	    if (checkInDate.isBefore(LocalDateTime.now())) {
 	        throw new IllegalStateException("과거 날짜로는 예약할 수 없습니다.");
 	    }
-	}
-	
-	public enum BookingStatus {
-		PENDING, // 예약대기
-		CONFIRMED, // 예약승인
-		CANCELED, // 취소
-		COMPLETED  // 숙박완료
 	}
 	
 	public void cancel() {

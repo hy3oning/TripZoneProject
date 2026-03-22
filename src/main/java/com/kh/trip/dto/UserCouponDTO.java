@@ -1,6 +1,7 @@
 package com.kh.trip.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.kh.trip.domain.enums.CouponStatus;
 
@@ -17,6 +18,7 @@ public class UserCouponDTO {
 	private Long userCouponNo;
 	private Long userNo;
 	private Long couponNo;
+	private CouponDTO couponDTO;
 	private LocalDateTime issuedAt;
 	private LocalDateTime usedAt;
 	private CouponStatus status;

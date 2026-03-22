@@ -1,8 +1,6 @@
 package com.kh.trip.service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -10,10 +8,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.trip.domain.Coupon;
 import com.kh.trip.domain.User;
 import com.kh.trip.domain.UserCoupon;
+import com.kh.trip.dto.CouponDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.UserCouponDTO;
@@ -27,6 +27,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserCouponServiceImpl implements UserCouponService{
 
 	private final UserCouponRepository repository;
@@ -35,6 +36,12 @@ public class UserCouponServiceImpl implements UserCouponService{
 	
 	@Override
 	public Long save(UserCouponDTO userCouponDTO) {
+		boolean checkUserCoupon =repository.existenceCheck(userCouponDTO.getUserNo(), userCouponDTO.getCouponNo());
+		
+		if(checkUserCoupon) {
+			throw new IllegalStateException("이미 보유하고 계신 쿠폰번호입니다.");
+		}
+		
 		User user = userRepository.findById(userCouponDTO.getUserNo())
 				.orElseThrow(() -> new IllegalAccessError("존재하지 않는 관리자 번호입니다."));
 		
@@ -49,19 +56,28 @@ public class UserCouponServiceImpl implements UserCouponService{
 	}
 
 	@Override
-	public PageResponseDTO<UserCouponDTO> findAll(PageRequestDTO pageRequestDTO) {
+	public PageResponseDTO<UserCouponDTO> findAll(Long userNo,PageRequestDTO pageRequestDTO) {
 		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, pageRequestDTO.getSize(),
 				Sort.by("userCouponNo").descending());
 		
-		Page<UserCoupon> result = repository.findAll(pageable);
+		Page<UserCoupon> result = repository.findByUser(userNo, pageable);
 		
 		List<UserCouponDTO> dtoList = result.getContent().stream().map(userCoupon-> {
-			return UserCouponDTO.builder().userCouponNo(userCoupon.getUserCouponNo())
-					.userNo(userCoupon.getUser() != null? userCoupon.getUser().getUserNo() : null)
-					.couponNo(userCoupon.getCoupon() != null? userCoupon.getCoupon().getCouponNo() : null)
-					.issuedAt(userCoupon.getIssuedAt()).usedAt(userCoupon.getUsedAt()).status(userCoupon.getStatus())
-					.build();
-		}).collect(Collectors.toList());
+			CouponDTO couponDTO = CouponDTO.builder().couponName(userCoupon.getCoupon().getCouponName())
+					.discountType(userCoupon.getCoupon().getDiscountType())
+					.discountValue(userCoupon.getCoupon().getDiscountValue())
+					.startDate(userCoupon.getCoupon().getStartDate())
+					.endDate(userCoupon.getCoupon().getEndDate())
+					.status(userCoupon.getCoupon().getStatus()).build();
+			return UserCouponDTO.builder()
+					.userCouponNo(userCoupon.getUserCouponNo())
+					.userNo(userCoupon.getUser().getUserNo())
+					.couponDTO(couponDTO)
+					.issuedAt(userCoupon.getIssuedAt())
+					.usedAt(userCoupon.getUsedAt())
+					.status(userCoupon.determineFinalStatus())
+					.build();}).collect(Collectors.toList());
+
 		
 		Long totalCount = result.getTotalElements();
 		

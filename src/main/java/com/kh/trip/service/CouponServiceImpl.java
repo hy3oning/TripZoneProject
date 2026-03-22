@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.trip.domain.Coupon;
 import com.kh.trip.domain.User;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CouponServiceImpl implements CouponService {
 	private final CouponRepository repository;
 	private final UserRepository userRepository;
