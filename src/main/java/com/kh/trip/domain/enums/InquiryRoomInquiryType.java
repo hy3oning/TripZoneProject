@@ -6,5 +6,8 @@ public enum InquiryRoomInquiryType {
 	LODGING,
 	BOOKING,
 	PAYMENT,
-	ETC
+	ETC,
+	USER_TO_SELLER,
+	SELLER_TO_ADMIN,
+	COMMON_TO_ADMIN
 }
