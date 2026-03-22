@@ -46,45 +46,52 @@ public class EventServiceImpl implements EventService {
 
 		List<EventDTO> dtoList = result.getContent().stream().map(event -> {
 			return EventDTO.builder().eventNo(event.getEventNo()).title(event.getTitle()).content(event.getContent())
-					.thumbnailUrl(event.getThumbnailUrl()).startDate(event.getStartDate()).build();
+					.thumbnailUrl(event.getThumbnailUrl()).startDate(event.getStartDate())
+					.viewCount(event.getViewCount()).build();
 		}).collect(Collectors.toList());
 
-		long totalCount = result.getTotalElements();
+		Long totalCount = result.getTotalElements();
 
 		return PageResponseDTO.<EventDTO>withAll().dtoList(dtoList) // 위에서 만든 dtoList를 담아줍니다
 				.totalCount(totalCount).pageRequestDTO(pageRequestDTO).build();
 	}
 
-	//findById
+	// findById
 	@Override
 	public EventDTO findById(Long eno) {
 		log.info(".....................");
 		java.util.Optional<Event> result = eventRepository.findById(eno);
 		Event event = result.orElseThrow();
-
+		Long viewCount = event.getViewCount() + 1L;
+		event.changeViewCount(viewCount);
+		eventRepository.save(event);
+		List<EventCoupon> eventCoupons = eventCouponRepository.findAllById(eno);
+		List<String> couponNames = eventCoupons.stream().map(eventCoupon-> eventCoupon.getCoupon().getCouponName()).collect(Collectors.toList());
 		return EventDTO.builder().eventNo(event.getEventNo()).title(event.getTitle()).content(event.getContent())
 				.thumbnailUrl(event.getThumbnailUrl()).startDate(event.getStartDate())
-				.adminUserNo(event.getAdminUserNo()!=null?event.getAdminUserNo().getUserNo():null).build();
+				.adminUserNo(event.getAdminUserNo().getUserNo()).couponNames(couponNames).viewCount(event.getViewCount())
+				.build();
 	}
-		
+
 	// save
 	@Override
 	public Long save(EventDTO eventDTO) {
 		log.info(".........");
-		User user = userRepository.findById(eventDTO.getAdminUserNo()).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 관리자 번호입니다."));
+		User user = userRepository.findById(eventDTO.getAdminUserNo())
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 관리자 번호입니다."));
 		Event event = Event.builder().title(eventDTO.getTitle()).content(eventDTO.getContent())
 				.thumbnailUrl(eventDTO.getThumbnailUrl()).startDate(eventDTO.getStartDate())
-				.endDate(eventDTO.getEndDate()).viewCount((long) eventDTO.getViewCount())
-				.adminUserNo(user)
-				.build();
+				.endDate(eventDTO.getEndDate()).viewCount(0L).adminUserNo(user).build();
 		Event savedEvent = eventRepository.save(event);
 		List<Long> coupons = eventDTO.getCoupons();
-		if(coupons != null && !coupons.isEmpty()) { 
+		if (coupons != null && !coupons.isEmpty()) {
 			List<EventCoupon> eventCouponList = coupons.stream().map(cno -> {
 				Coupon coupon = couponRepository.findById(cno).orElseThrow();
-				return EventCoupon.builder().event(savedEvent).coupon(coupon).build();}).collect(Collectors.toList());
+				return EventCoupon.builder().event(savedEvent).coupon(coupon).build();
+			}).collect(Collectors.toList());
 			eventCouponRepository.saveAll(eventCouponList);
-			};
+		}
+		;
 		return savedEvent.getEventNo();
 
 	}
@@ -93,8 +100,7 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public void update(EventDTO eventDTO) {
 		Optional<Event> result = eventRepository.findById(eventDTO.getEventNo());
-		Event event = result
-				.orElseThrow(() -> new RuntimeException("해당 ID 없음: " + eventDTO.getEventNo()));
+		Event event = result.orElseThrow(() -> new RuntimeException("해당 ID 없음: " + eventDTO.getEventNo()));
 
 		event.changeTitle(eventDTO.getTitle());
 		event.changeContent(eventDTO.getContent());
@@ -108,8 +114,7 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public void delete(Long eno) {
 		Optional<Event> result = eventRepository.findById(eno);
-		Event event = result
-				.orElseThrow(() -> new RuntimeException("해당 ID 없음: " + eno));
+		Event event = result.orElseThrow(() -> new RuntimeException("해당 ID 없음: " + eno));
 		event.changeStatus(EventStatus.HIDDEN);
 		eventRepository.save(event);
 	}

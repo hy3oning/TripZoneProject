@@ -3,13 +3,14 @@ package com.kh.trip.service;
 import java.util.List;
 
 import com.kh.trip.domain.Lodging;
+import com.kh.trip.domain.Room;
 import com.kh.trip.dto.LodgingDTO;
 import com.kh.trip.dto.LodgingDetailDTO;
 
 public interface LodgingService {
 
 	// 숙소 등록
-	public Lodging createLodging(Lodging lodging);
+	public Lodging createLodging(Lodging lodging, List<Room> roomList);
 
 	// 숙소 단건 조회
 	public Lodging getLodging(Long lodgingNo);

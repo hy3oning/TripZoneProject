@@ -23,6 +23,7 @@ public class EventDTO {
     private String thumbnailUrl;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private int viewCount;
+    private Long viewCount;
     private List<Long> coupons;
+    private List<String> couponNames;
 }

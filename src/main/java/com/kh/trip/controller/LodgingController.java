@@ -1,6 +1,8 @@
 package com.kh.trip.controller;
 
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,8 +17,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.trip.domain.Lodging;
+import com.kh.trip.domain.Room;
 import com.kh.trip.dto.LodgingDTO;
 import com.kh.trip.dto.LodgingDetailDTO;
+import com.kh.trip.dto.RoomSummaryDTO;
 import com.kh.trip.service.LodgingService;
 
 import lombok.RequiredArgsConstructor;
@@ -36,11 +40,16 @@ public class LodgingController {
 	 * 
 	 * @ResponseStatus(HttpStatus.CREATED) - 등록 성공 시 201 Created 상태코드 반환
 	 */
-	@PostMapping
+	@PostMapping("/")
 	@ResponseStatus(HttpStatus.CREATED)
 	public LodgingDTO createLodging(@RequestBody LodgingDTO lodgingDTO) {
 		Lodging lodging = lodgingDTO.toEntity();
-		Lodging savedLodging = lodgingService.createLodging(lodging);
+		List<Room> roomList = lodgingDTO.getRoomDTO().stream().map(roomDTO -> {
+					Room room = RoomSummaryDTO.toEntity(roomDTO);
+					room.changeLodgingNo(lodging.getLodgingNo());
+					return room;
+				}).collect(Collectors.toList());
+		Lodging savedLodging = lodgingService.createLodging(lodging, roomList);
 		return LodgingDTO.fromEntity(savedLodging);
 	}
 
