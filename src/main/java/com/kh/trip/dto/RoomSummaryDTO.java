@@ -35,4 +35,17 @@ public class RoomSummaryDTO {
 				.status(room.getStatus()) // 상태
 				.build(); // DTO 생성
 	}
+	
+	// DTO -> Entity 변환
+	public static Room toEntity(RoomSummaryDTO roomDTO) {
+		return Room.builder().roomNo(roomDTO.getRoomNo()) // 객실 번호
+				.roomName(roomDTO.getRoomName()) // 객실명
+				.roomType(roomDTO.getRoomType()) // 객실 유형
+				.roomDescription(roomDTO.getRoomDescription()) // 설명
+				.maxGuestCount(roomDTO.getMaxGuestCount()) // 최대 인원
+				.pricePerNight(roomDTO.getPricePerNight()) // 가격
+				.roomCount(roomDTO.getRoomCount()) // 객실 수
+				.status(roomDTO.getStatus()) // 상태
+				.build(); // DTO 생성
+	}
 }

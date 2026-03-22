@@ -109,5 +109,9 @@ public class Lodging extends BaseTimeEntity {
 	@Builder.Default
 	@Column(name = "STATUS", nullable = false, length = 20)
 	private LodgingStatus status = LodgingStatus.ACTIVE;
+	
+	public void changeStatus(LodgingStatus status) {
+		this.status = status;
+	}
 
 }

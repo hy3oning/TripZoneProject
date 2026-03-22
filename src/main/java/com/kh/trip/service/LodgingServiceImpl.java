@@ -44,7 +44,7 @@ public class LodgingServiceImpl implements LodgingService {
 
 	// 숙소 등록
 	@Override
-	public Lodging createLodging(Lodging lodging) {
+	public Lodging createLodging(Lodging lodging, List<Room> roomList) {
 		// null 체크
 		if (lodging == null) {
 			throw new IllegalArgumentException("숙소 정보가 없습니다.");
@@ -66,10 +66,16 @@ public class LodgingServiceImpl implements LodgingService {
 		}
 
 		if (lodging.getStatus() == null) {
-			lodging.setStatus(LodgingStatus.ACTIVE);
+			lodging.changeStatus(LodgingStatus.ACTIVE);
 		}
 
-		return lodgingRepository.save(lodging);
+		Lodging savedLodging = lodgingRepository.save(lodging);
+		
+		if (roomList != null && !roomList.isEmpty()) {
+			roomList.forEach(room -> room.changeLodgingNo(savedLodging.getLodgingNo()));
+			roomRepository.saveAll(roomList);
+		}
+		return savedLodging;
 	}
 
 	// 숙소 단건 조회
@@ -185,7 +191,8 @@ public class LodgingServiceImpl implements LodgingService {
 		Lodging findLodging = lodgingRepository.findById(lodgingNo)
 				.orElseThrow(() -> new NoSuchElementException("삭제할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
 
-		lodgingRepository.delete(findLodging);
+		findLodging.changeStatus(LodgingStatus.INACTIVE);
+		lodgingRepository.save(findLodging);
 	}
 
 	// 숙소 상세보기용

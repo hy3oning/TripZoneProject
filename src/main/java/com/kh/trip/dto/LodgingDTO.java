@@ -1,5 +1,7 @@
 package com.kh.trip.dto;
 
+import java.util.List;
+
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.enums.LodgingStatus;
 import com.kh.trip.domain.enums.LodgingType;
@@ -39,6 +41,7 @@ public class LodgingDTO {
 	private String checkInTime;
 	private String checkOutTime;
 	private LodgingStatus status;
+	private List<RoomSummaryDTO> roomDTO;
 
 	/**
 	 * Entity → DTO 변환 메서드

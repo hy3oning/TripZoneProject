@@ -64,5 +64,7 @@ public class Room extends BaseTimeEntity{
     @Column(name = "STATUS", nullable = false, length = 20) // 객실 상태
     private RoomStatus status = RoomStatus.AVAILABLE;
 	
-
+    public void changeLodgingNo(Long lodgingNo) {
+    	this.lodgingNo = lodgingNo;
+    }
 }
