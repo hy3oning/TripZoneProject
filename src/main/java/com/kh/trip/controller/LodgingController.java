@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController // 이 클래스가 REST API 컨트롤러라는 뜻
 // 메서드 반환값을 JSON 형태로 응답
-@RequestMapping("/api/lodgings")
+@RequestMapping("/api/v1/lodgings")
 @RequiredArgsConstructor
 public class LodgingController {
 

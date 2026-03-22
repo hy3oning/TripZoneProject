@@ -19,17 +19,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity // JPA 엔티티 선언
-@Table(name = "LODGING_IMAGES") // LODGING_IMAGES 테이블과 매핑
-@Getter // getter 자동 생성
-@Setter // setter 자동 생성
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 protected
-@AllArgsConstructor // 전체 필드 생성자
-@Builder // builder 패턴 사용
+@Entity 
+@Table(name = "ROOMS") 
+@Getter 
+@Setter 
+@NoArgsConstructor(access = AccessLevel.PROTECTED) 
+@AllArgsConstructor
+@Builder
 public class Room extends BaseTimeEntity{
 	
-	@Id // 기본키
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_rooms") // 시퀀스 방식 PK 생성
+	@Id 
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_rooms") 
     @SequenceGenerator(
         name = "seq_rooms",      // JPA 내부 시퀀스 이름
         sequenceName = "SEQ_ROOMS", // 실제 DB 시퀀스 이름

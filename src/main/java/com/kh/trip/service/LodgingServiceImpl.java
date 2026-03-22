@@ -95,7 +95,7 @@ public class LodgingServiceImpl implements LodgingService {
 			throw new IllegalArgumentException("지역 값이 비어 있습니다.");
 		}
 
-		return lodgingRepository.findByRegion(region);
+		return lodgingRepository.findByRegionAndStatus(region, LodgingStatus.ACTIVE);
 	}
 
 	// 숙소명 키워드 검색
@@ -106,7 +106,7 @@ public class LodgingServiceImpl implements LodgingService {
 			throw new IllegalArgumentException("검색어가 비어 있습니다.");
 		}
 
-		return lodgingRepository.findByLodgingNameContaining(keyword);
+		return lodgingRepository.findByLodgingNameContainingAndStatus(keyword, LodgingStatus.ACTIVE);
 	}
 
 	// 숙소 수정
