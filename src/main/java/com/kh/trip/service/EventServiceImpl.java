@@ -46,8 +46,8 @@ public class EventServiceImpl implements EventService {
 
 		List<EventDTO> dtoList = result.getContent().stream().map(event -> {
 			return EventDTO.builder().eventNo(event.getEventNo()).title(event.getTitle()).content(event.getContent())
-					.thumbnailUrl(event.getThumbnailUrl()).startDate(event.getStartDate())
-					.viewCount(event.getViewCount()).build();
+					.thumbnailUrl(event.getThumbnailUrl()).startDate(event.getStartDate()).endDate(event.getEndDate())
+					.viewCount(event.getViewCount()).status(event.getStatus()).build();
 		}).collect(Collectors.toList());
 
 		Long totalCount = result.getTotalElements();
@@ -65,11 +65,12 @@ public class EventServiceImpl implements EventService {
 		Long viewCount = event.getViewCount() + 1L;
 		event.changeViewCount(viewCount);
 		eventRepository.save(event);
-		List<EventCoupon> eventCoupons = eventCouponRepository.findAllById(eno);
-		List<String> couponNames = eventCoupons.stream().map(eventCoupon-> eventCoupon.getCoupon().getCouponName()).collect(Collectors.toList());
+		List<Coupon> coupons = eventCouponRepository.findAllById(eno);
+		List<String> couponNames = coupons.stream().map(coupon-> coupon.getCouponName()).collect(Collectors.toList());
 		return EventDTO.builder().eventNo(event.getEventNo()).title(event.getTitle()).content(event.getContent())
-				.thumbnailUrl(event.getThumbnailUrl()).startDate(event.getStartDate())
-				.adminUserNo(event.getAdminUserNo().getUserNo()).couponNames(couponNames).viewCount(event.getViewCount())
+				.thumbnailUrl(event.getThumbnailUrl()).startDate(event.getStartDate()).endDate(event.getEndDate())
+				.adminUserNo(event.getAdminUserNo().getUserNo()).couponNames(couponNames).status(event.getStatus())
+				.viewCount(event.getViewCount())
 				.build();
 	}
 
@@ -81,7 +82,7 @@ public class EventServiceImpl implements EventService {
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 관리자 번호입니다."));
 		Event event = Event.builder().title(eventDTO.getTitle()).content(eventDTO.getContent())
 				.thumbnailUrl(eventDTO.getThumbnailUrl()).startDate(eventDTO.getStartDate())
-				.endDate(eventDTO.getEndDate()).viewCount(0L).adminUserNo(user).build();
+				.endDate(eventDTO.getEndDate()).viewCount(0L).adminUserNo(user).status(EventStatus.DRAFT).build();
 		Event savedEvent = eventRepository.save(event);
 		List<Long> coupons = eventDTO.getCoupons();
 		if (coupons != null && !coupons.isEmpty()) {

@@ -27,6 +27,7 @@ public class MemberGradeServiceImpl implements MemberGradeService{
 	@Override
 	public Long save(MemberGradeDTO memberGradeDTO) {
 		MemberGrade memberGrade = modelMapper.map(memberGradeDTO, MemberGrade.class);
+		memberGrade.changeStatus(true);
 		return repository.save(memberGrade).getGradeNo();
 	}
 

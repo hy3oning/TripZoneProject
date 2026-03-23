@@ -10,6 +10,7 @@ import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.LodgingImage;
 import com.kh.trip.domain.Room;
 import com.kh.trip.domain.enums.LodgingStatus;
+import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.LodgingDTO;
 import com.kh.trip.dto.LodgingDetailDTO;
 import com.kh.trip.dto.LodgingImageDTO;
@@ -70,7 +71,7 @@ public class LodgingServiceImpl implements LodgingService {
 		}
 
 		Lodging savedLodging = lodgingRepository.save(lodging);
-		
+
 		if (roomList != null && !roomList.isEmpty()) {
 			roomList.forEach(room -> room.changeLodgingNo(savedLodging.getLodgingNo()));
 			roomRepository.saveAll(roomList);
@@ -193,6 +194,12 @@ public class LodgingServiceImpl implements LodgingService {
 
 		findLodging.changeStatus(LodgingStatus.INACTIVE);
 		lodgingRepository.save(findLodging);
+		
+		List<Room> roomList = roomRepository.findByLodgingNo(lodgingNo);
+		if (roomList != null && !roomList.isEmpty()) {
+			roomList.forEach(room -> room.setStatus(RoomStatus.UNAVAILABLE));
+			roomRepository.saveAll(roomList);
+		}
 	}
 
 	// 숙소 상세보기용

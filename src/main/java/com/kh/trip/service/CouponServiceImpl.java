@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +33,8 @@ public class CouponServiceImpl implements CouponService {
 		Coupon coupon = Coupon.builder().user(user) 
 				.couponName(couponDTO.getCouponName()).discountType(couponDTO.getDiscountType())
 				.discountValue(couponDTO.getDiscountValue()).startDate(couponDTO.getStartDate())
-				.endDate(couponDTO.getEndDate()).status(couponDTO.getStatus()).build();
-
+				.endDate(couponDTO.getEndDate()).status(CouponStatus.INACTIVE).build();
+		
 		return repository.save(coupon).getCouponNo();
 	}
 
@@ -47,17 +46,12 @@ public class CouponServiceImpl implements CouponService {
 			CouponDTO dto = new CouponDTO();
 			dto.setCouponNo(coupon.getCouponNo());
 			dto.setCouponName(coupon.getCouponName());
-			// 참조된 userno의 정확한 정보를 확인
-			if (coupon.getUser() != null) {
-				dto.setAdminUserNo(coupon.getUser().getUserNo());
-			}
-
+			dto.setAdminUserNo(coupon.getUser().getUserNo());
 			dto.setDiscountType(coupon.getDiscountType());
 			dto.setDiscountValue(coupon.getDiscountValue());
 			dto.setStartDate(coupon.getStartDate());
 			dto.setEndDate(coupon.getEndDate());
 			dto.setStatus(coupon.getStatus());
-
 			return dto;
 		}).collect(Collectors.toList());
 		 return dtoList;

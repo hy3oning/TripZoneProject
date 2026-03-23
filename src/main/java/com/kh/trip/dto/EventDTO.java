@@ -4,6 +4,8 @@ package com.kh.trip.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.kh.trip.domain.enums.EventStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +26,7 @@ public class EventDTO {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Long viewCount;
+    private EventStatus status;
     private List<Long> coupons;
     private List<String> couponNames;
 }

@@ -54,7 +54,7 @@ public class MemberGrade extends BaseTimeEntity {
 	
 	@Column(name = "STATUS", nullable = false)
 	@Builder.Default
-	private boolean status = true; //삭제시 false
+	private boolean status = true; //삭제시 false == 0
 	
 	
 	public void changeName(String gradeName) {
