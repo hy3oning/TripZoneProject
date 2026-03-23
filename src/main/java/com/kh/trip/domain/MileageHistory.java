@@ -45,8 +45,9 @@ public class MileageHistory extends BaseTimeEntity {
 	@JoinColumn(name = "BOOKING_NO")
 	private Booking booking;
 
-//	@JoinColumn(name = "PAYMENT_NO")
-//	private Payment payment;
+	@ManyToOne
+	@JoinColumn(name = "PAYMENT_NO")
+	private Payment payment;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "CHANGE_TYPE", nullable = false, length = 20)
@@ -61,9 +62,10 @@ public class MileageHistory extends BaseTimeEntity {
 	@Column(name = "REASON", nullable = false, length = 200)
 	private String reason;
 
-	 @Enumerated(EnumType.STRING)
-	    @Column(name = "STATUS", nullable = false, length = 20)
-	private MileageStatus status;
+	@Builder.Default
+	@Enumerated(EnumType.STRING)
+	@Column(name = "STATUS", nullable = false, length = 20)
+	private MileageStatus status = MileageStatus.NORMAL;
 
 	@Column(name = "EXPIRED_AT")
 	private LocalDateTime expiredAt;
