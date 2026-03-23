@@ -47,45 +47,44 @@ public class BookingServiceImpl implements BookingService {
 
 		User user = userRepository.findById(bookingDTO.getUserNo())
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 정보입니다."));
-		
+
 		Room room = roomRepository.findById(bookingDTO.getRoomNo())
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 객실 정보입니다."));
 
-		if (room.getStatus().equals(RoomStatus.UNAVAILABLE)) throw new IllegalArgumentException("예약이 불가한 방입니다.");
-		
+		if (room.getStatus().equals(RoomStatus.UNAVAILABLE))
+			throw new IllegalArgumentException("예약이 불가한 방입니다.");
+
+		UserCoupon userCoupon = null;
 		// 숙박 일수 계산 (체크아웃 날짜 - 체크인 날짜)
 		Long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate(), bookingDTO.getCheckOutDate());
-		Long roomPrice = room.getPricePerNight() * daysBetween; 
-	    Long totalPrice = roomPrice;
-	    Long discountAmount = 0L;
-		
-		UserCoupon userCoupon = null;
+		Long roomPrice = room.getPricePerNight() * daysBetween;
+		Long totalPrice = roomPrice;
+		Long discountAmount = 0L;
+
 		if (bookingDTO.getUserCouponNo() != null) {
 			userCoupon = userCouponRepository.findById(bookingDTO.getUserCouponNo())
 					.orElseThrow(() -> new IllegalArgumentException("회원이 갖고 있지 않는 쿠폰번호입니다."));
-			if (!userCoupon.getStatus().equals(CouponStatus.ACTIVE)) throw new IllegalArgumentException("사용불가한 쿠폰입니다.");
-			
+			if (!userCoupon.getStatus().equals(CouponStatus.ACTIVE))
+				throw new IllegalArgumentException("사용불가한 쿠폰입니다.");
+
 			// enum에서 만든 로직 사용
 			DiscountType type = userCoupon.getCoupon().getDiscountType();
-	        Long discountValue = userCoupon.getCoupon().getDiscountValue();
+			Long discountValue = userCoupon.getCoupon().getDiscountValue();
 
-	        totalPrice = type.calculate(roomPrice, discountValue);
-	        
-	        // 0원 미만으로 떨어지는 것을 방지하는 안전장치
-	        if (totalPrice < 0) totalPrice = 0L;
-	        
-	        discountAmount = roomPrice - totalPrice;
+			totalPrice = type.calculate(roomPrice, discountValue);
+
+			// 0원 미만으로 떨어지는 것을 방지하는 안전장치
+			if (totalPrice < 0)
+				totalPrice = 0L;
+
+			discountAmount = roomPrice - totalPrice;
+			bookingDTO.setDiscountAmount(discountAmount);
+			bookingDTO.setTotalPrice(totalPrice);
 		}
-		
-		Booking booking = Booking.builder().user(user).userCoupon(userCoupon).room(room)
-				.checkInDate(bookingDTO.getCheckInDate()).checkOutDate(bookingDTO.getCheckOutDate())
-				.guestCount(bookingDTO.getGuestCount()).pricePerNight(bookingDTO.getPricePerNight())
-				.discountAmount(discountAmount).totalPrice(totalPrice).regDate(bookingDTO.getRegDate())
-				.status(BookingStatus.PENDING)
-				.build();
+		Booking booking = dtoToEntity(user, room, userCoupon, bookingDTO);
 		Long bookingNo = repository.save(booking).getBookingNo();
 
-		//변경해야할 부분
+		// 변경해야할 부분
 		room.setStatus(RoomStatus.UNAVAILABLE);
 		roomRepository.save(room);
 
@@ -128,17 +127,25 @@ public class BookingServiceImpl implements BookingService {
 		// 쿠폰복구 처리도 포함된 함수
 		booking.cancel();
 		repository.save(booking);
-		Optional<Room> resultRoom= roomRepository.findById(booking.getRoom().getRoomNo());
+		Optional<Room> resultRoom = roomRepository.findById(booking.getRoom().getRoomNo());
 		Room room = resultRoom.orElseThrow();
-		//변경해야할 부분
+		// 변경해야할 부분
 		room.setStatus(RoomStatus.AVAILABLE);
 		roomRepository.save(room);
-		
+
 		// 환불처리로직도 추가해야함.
 	}
 
+	public Booking dtoToEntity(User user, Room room, UserCoupon userCoupon, BookingDTO bookingDTO) {
+		return Booking.builder().user(user).userCoupon(userCoupon).room(room).checkInDate(bookingDTO.getCheckInDate())
+				.checkOutDate(bookingDTO.getCheckOutDate()).guestCount(bookingDTO.getGuestCount())
+				.pricePerNight(bookingDTO.getPricePerNight()).discountAmount(bookingDTO.getDiscountAmount())
+				.totalPrice(bookingDTO.getTotalPrice()).regDate(bookingDTO.getRegDate()).status(BookingStatus.PENDING)
+				.build();
+	}
+
 	public List<BookingDTO> entityToDTO(User user, Page<Booking> result) {
-		return result.get()
+		return result.stream()
 				.map(booking -> BookingDTO.builder().bookingNo(booking.getBookingNo()).userNo(user.getUserNo())
 						.userCouponNo(booking.getUserCoupon().getUserCouponNo()).checkInDate(booking.getCheckInDate())
 						.checkOutDate(booking.getCheckOutDate()).guestCount(booking.getGuestCount())
