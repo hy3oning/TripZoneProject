@@ -1,3 +1,4 @@
+
 package com.kh.trip.domain;
 
 import com.kh.trip.domain.common.BaseTimeEntity;
@@ -47,9 +48,9 @@ public class User extends BaseTimeEntity {
 	@Builder.Default
 	@Column(name = "ENABLED", nullable = false, length = 1)
 	private String enabled = "1";
-	
-	public void changeName(String userName) {
-		this.userName = userName;
+
+	public void changePhone(String phone) {
+		this.phone = phone;
 	}
 
 	public void changeEnabled(String enabled) {
