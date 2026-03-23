@@ -140,11 +140,12 @@ public class BookingServiceImpl implements BookingService {
 	public List<BookingDTO> entityToDTO(User user, Page<Booking> result) {
 		return result.get()
 				.map(booking -> BookingDTO.builder().bookingNo(booking.getBookingNo()).userNo(user.getUserNo())
-						.userCouponNo(booking.getUserCoupon().getUserCouponNo()).checkInDate(booking.getCheckInDate())
-						.checkOutDate(booking.getCheckOutDate()).guestCount(booking.getGuestCount())
-						.pricePerNight(booking.getPricePerNight()).discountAmount(booking.getDiscountAmount())
-						.totalPrice(booking.getTotalPrice()).status(booking.getStatus())
-						.requestMessage(booking.getRequestMessage()).regDate(booking.getRegDate()).build())
+						.roomNo(booking.getRoom().getRoomNo()).userCouponNo(booking.getUserCoupon().getUserCouponNo())
+						.checkInDate(booking.getCheckInDate()).checkOutDate(booking.getCheckOutDate())
+						.guestCount(booking.getGuestCount()).pricePerNight(booking.getPricePerNight())
+						.discountAmount(booking.getDiscountAmount()).totalPrice(booking.getTotalPrice())
+						.status(booking.getStatus()).requestMessage(booking.getRequestMessage())
+						.regDate(booking.getRegDate()).build())
 				.collect(Collectors.toList());
 	}
 }
