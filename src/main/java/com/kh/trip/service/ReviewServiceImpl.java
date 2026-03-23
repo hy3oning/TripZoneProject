@@ -1,17 +1,21 @@
 package com.kh.trip.service;
 
 import java.util.List;
+import java.util.stream.IntStream; // 이미지 순서(index) 처리용
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.trip.domain.Booking;
 import com.kh.trip.domain.Review;
+import com.kh.trip.domain.ReviewImage;
 import com.kh.trip.domain.enums.BookingStatus;
 import com.kh.trip.dto.ReviewCreateDTO;
+import com.kh.trip.dto.ReviewImageDTO;
 import com.kh.trip.dto.ReviewSummaryDTO;
 import com.kh.trip.dto.ReviewUpdateDTO;
 import com.kh.trip.repository.BookingRepository;
+import com.kh.trip.repository.ReviewImageRepository; 
 import com.kh.trip.repository.ReviewRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -23,6 +27,7 @@ public class ReviewServiceImpl implements ReviewService {
 
 	private final ReviewRepository reviewRepository; // 리뷰 저장/조회 repository
 	private final BookingRepository bookingRepository; // 예약 정보 검증용 repository
+	private final ReviewImageRepository reviewImageRepository; // 리뷰 이미지 저장,조회,삭제 repository
 
 	@Override
 	public ReviewSummaryDTO createReview(Long loginUserNo, ReviewCreateDTO reviewCreateDTO) {
@@ -79,17 +84,27 @@ public class ReviewServiceImpl implements ReviewService {
 		}
 
 		// 리뷰 엔티티 생성
-		Review review = Review.builder().bookingNo(reviewCreateDTO.getBookingNo()) // 예약 번호 세팅
+		Review review = Review.builder()
+				.bookingNo(reviewCreateDTO.getBookingNo()) // 예약 번호 세팅
 				.userNo(loginUserNo) // 작성자는 로그인한 사용자 번호로 고정
 				.lodgingNo(reviewCreateDTO.getLodgingNo()) // 숙소 번호 세팅
 				.rating(reviewCreateDTO.getRating()) // 평점 세팅
-				.content(reviewCreateDTO.getContent()) // 리뷰 내용 세팅
+				.content(reviewCreateDTO.getContent().trim()) // 공백 제거 후 저장
 				.build(); // 엔티티 생성
 
 		// DB에 저장
 		Review savedReview = reviewRepository.save(review);
 
-		return ReviewSummaryDTO.fromEntity(savedReview, List.of());
+		// 리뷰 이미지 저장
+		saveReviewImages(savedReview.getReviewNo(), reviewCreateDTO.getImageUrls());
+
+		// 저장된 리뷰 이미지 목록 실제 조회
+		List<ReviewImageDTO> imageDTOs = reviewImageRepository.findByReviewNoOrderBySortOrderAsc(savedReview.getReviewNo())
+				.stream()
+				.map(this::toReviewImageDTO)
+				.toList();
+
+		return toReviewSummaryDTO(savedReview, imageDTOs); // 실제 이미지 목록 포함해서 반환
 	}
 
 	@Override
@@ -131,9 +146,22 @@ public class ReviewServiceImpl implements ReviewService {
 		// 수정
 		review.setRating(reviewUpdateDTO.getRating());
 		review.setContent(reviewUpdateDTO.getContent().trim());
+
 		Review updatedReview = reviewRepository.save(review);
 
-		return ReviewSummaryDTO.fromEntity(updatedReview, List.of());
+		// 수정 시 기존 이미지 전부 삭제
+		reviewImageRepository.deleteByReviewNo(reviewNo);
+
+		// 새 이미지 다시 저장
+		saveReviewImages(reviewNo, reviewUpdateDTO.getImageUrls());
+
+		// 수정 후 이미지 목록 실제 조회
+		List<ReviewImageDTO> imageDTOs = reviewImageRepository.findByReviewNoOrderBySortOrderAsc(reviewNo)
+				.stream()
+				.map(this::toReviewImageDTO)
+				.toList();
+
+		return toReviewSummaryDTO(updatedReview, imageDTOs); // 실제 이미지 목록 포함해서 반환
 	}
 
 	@Override
@@ -157,6 +185,8 @@ public class ReviewServiceImpl implements ReviewService {
 			throw new IllegalArgumentException("본인이 작성한 리뷰만 삭제할 수 있습니다.");
 		}
 
+		// 리뷰 삭제 전에 REVIEW_IMAGES부터 먼저 삭제
+		reviewImageRepository.deleteByReviewNo(reviewNo);
 		reviewRepository.delete(review);
 	}
 
@@ -169,9 +199,57 @@ public class ReviewServiceImpl implements ReviewService {
 			throw new IllegalArgumentException("숙소 번호는 필수입니다.");
 		}
 
-		// 특정 숙소의 리뷰들을 조회해서 DTO 리스트로 변환
+		// 특정 숙소의 리뷰들을 조회하면서, 각 리뷰의 이미지도 실제 조회해서 DTO에 포함
 		return reviewRepository.findByLodgingNoOrderByReviewNoDesc(lodgingNo).stream()
-				.map(review -> ReviewSummaryDTO.fromEntity(review, List.of())).toList();
+				.map(review -> {
+					List<ReviewImageDTO> imageDTOs = reviewImageRepository
+							.findByReviewNoOrderBySortOrderAsc(review.getReviewNo())
+							.stream()
+							.map(this::toReviewImageDTO)
+							.toList();
+
+					return toReviewSummaryDTO(review, imageDTOs);
+				})
+				.toList();
 	}
 
+	// ReviewImage 엔티티를 ReviewImageDTO로 변환
+	private ReviewImageDTO toReviewImageDTO(ReviewImage reviewImage) {
+		return ReviewImageDTO.builder()
+				.reviewImageNo(reviewImage.getReviewImageNo()) // 리뷰 이미지 번호 세팅
+				.imageUrl(reviewImage.getImageUrl()) // 이미지 URL 세팅
+				.sortOrder(reviewImage.getSortOrder()) // 정렬 순서 세팅
+				.build(); // DTO 생성
+	}
+
+	// Review 엔티티 + 리뷰 이미지 DTO 목록을 합쳐서 ReviewSummaryDTO로 변환
+	private ReviewSummaryDTO toReviewSummaryDTO(Review review, List<ReviewImageDTO> images) {
+		return ReviewSummaryDTO.builder() // builder 방식으로 생성
+				.reviewNo(review.getReviewNo()) // 리뷰 번호 세팅
+				.bookingNo(review.getBookingNo()) // 예약 번호 세팅
+				.userNo(review.getUserNo()) // 작성자 회원 번호 세팅
+				.lodgingNo(review.getLodgingNo()) // 숙소 번호 세팅
+				.rating(review.getRating()) // 평점 세팅
+				.content(review.getContent()) // 리뷰 내용 세팅
+				.regDate(review.getRegDate()) // 작성일 세팅
+				.updDate(review.getUpdDate()) // 수정일 세팅
+				.images(images) // [수정] 실제 조회한 이미지 목록 세팅
+				.build(); //최종 세팅
+	}
+
+	// 이미지 URL 리스트를 REVIEW_IMAGES 테이블에 저장하는 공통 메서드
+	private void saveReviewImages(Long reviewNo, List<String> imageUrls) {
+		if (imageUrls == null || imageUrls.isEmpty()) {
+			return;
+		}
+
+		// 전달받은 이미지 URL들을 순서대로 REVIEW_IMAGES에 저장
+		IntStream.range(0, imageUrls.size())
+				.mapToObj(index -> ReviewImage.builder()
+						.reviewNo(reviewNo) // 어떤 리뷰의 이미지인지
+						.imageUrl(imageUrls.get(index)) // 이미지 URL
+						.sortOrder(index + 1) // 정렬 순서 1부터 시작
+						.build())
+				.forEach(reviewImageRepository::save);
+	}
 }

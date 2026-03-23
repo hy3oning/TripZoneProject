@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 리뷰 컨트롤러
- * 
  * 리뷰 관련 요청을 처리하는 REST API 컨트롤러
  */
 @RestController
@@ -35,10 +34,7 @@ public class ReviewController {
 	// 리뷰 서비스 주입
 	private final ReviewService reviewService;
 
-	/**
-	 * 리뷰 등록
-	 * 
-	 */
+	// 리뷰 등록
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public ReviewSummaryDTO createReview(@AuthenticationPrincipal AuthUserPrincipal authUser,
@@ -53,9 +49,7 @@ public class ReviewController {
 		return reviewService.createReview(authUser.getUserNo(), reviewCreateDTO);
 	}
 
-	/**
-	 * 리뷰 수정
-	 */
+	// 리뷰 수정
 	@PatchMapping("/{reviewNo}")
 	public ReviewSummaryDTO updateReview(@PathVariable Long reviewNo,
 			@AuthenticationPrincipal AuthUserPrincipal authUser, @RequestBody ReviewUpdateDTO reviewUpdateDTO) {
@@ -67,9 +61,7 @@ public class ReviewController {
 		return reviewService.updateReview(authUser.getUserNo(), reviewNo, reviewUpdateDTO);
 	}
 
-	/**
-	 * 리뷰 삭제
-	 */
+	// 리뷰 삭제
 	@DeleteMapping("/{reviewNo}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteReview(@PathVariable Long reviewNo, @AuthenticationPrincipal AuthUserPrincipal authUser) {
@@ -81,9 +73,7 @@ public class ReviewController {
 		reviewService.deleteReview(authUser.getUserNo(), reviewNo);
 	}
 
-	/**
-	 * 숙소별 리뷰 목록 조회
-	 */
+	// 숙소별 리뷰 목록 조회
 	@GetMapping("/lodgings/{lodgingNo}")
 	public List<ReviewSummaryDTO> getReviewsByLodging(@PathVariable Long lodgingNo) {
 		return reviewService.getReviewsByLodging(lodgingNo);
