@@ -127,61 +127,28 @@ public class LodgingServiceImpl implements LodgingService {
 
 		return lodgingRepository.save(findLodging);
 	}
-
+	
 	// 숙소 수정값 반영 메서드 domain에 있던 수정 기능을 Service로 옮긴 버전
-
 	private void applyLodgingUpdate(Lodging findLodging, LodgingDTO lodgingDTO) {
 
-		if (lodgingDTO.getHostNo() != null) {
-			findLodging.setHostNo(lodgingDTO.getHostNo());
-		}
-
 		if (lodgingDTO.getLodgingName() != null && !lodgingDTO.getLodgingName().isBlank()) {
-			findLodging.setLodgingName(lodgingDTO.getLodgingName());
-		}
-
-		if (lodgingDTO.getLodgingType() != null) {
-			findLodging.setLodgingType(lodgingDTO.getLodgingType());
-		}
-
-		if (lodgingDTO.getRegion() != null && !lodgingDTO.getRegion().isBlank()) {
-			findLodging.setRegion(lodgingDTO.getRegion());
-		}
-
-		if (lodgingDTO.getAddress() != null && !lodgingDTO.getAddress().isBlank()) {
-			findLodging.setAddress(lodgingDTO.getAddress());
-		}
-
-		if (lodgingDTO.getDetailAddress() != null) {
-			findLodging.setDetailAddress(lodgingDTO.getDetailAddress());
-		}
-
-		if (lodgingDTO.getZipCode() != null) {
-			findLodging.setZipCode(lodgingDTO.getZipCode());
-		}
-
-		if (lodgingDTO.getLatitude() != null) {
-			findLodging.setLatitude(lodgingDTO.getLatitude());
-		}
-
-		if (lodgingDTO.getLongitude() != null) {
-			findLodging.setLongitude(lodgingDTO.getLongitude());
+			findLodging.changeLodgingName(lodgingDTO.getLodgingName()); // 수정 setLodgingName -> changeLodgingName
 		}
 
 		if (lodgingDTO.getDescription() != null) {
-			findLodging.setDescription(lodgingDTO.getDescription());
+			findLodging.changeDescription(lodgingDTO.getDescription()); // 수정 setDescription -> changeDescription
 		}
 
 		if (lodgingDTO.getCheckInTime() != null) {
-			findLodging.setCheckInTime(lodgingDTO.getCheckInTime());
+			findLodging.changeCheckInTime(lodgingDTO.getCheckInTime()); // 수정 setCheckInTime -> changeCheckInTime
 		}
 
 		if (lodgingDTO.getCheckOutTime() != null) {
-			findLodging.setCheckOutTime(lodgingDTO.getCheckOutTime());
+			findLodging.changeCheckOutTime(lodgingDTO.getCheckOutTime()); // 수정 setCheckOutTime -> changeCheckOutTime
 		}
 
 		if (lodgingDTO.getStatus() != null) {
-			findLodging.setStatus(lodgingDTO.getStatus());
+			findLodging.changeStatus(lodgingDTO.getStatus()); // 수정 setStatus -> changeStatus
 		}
 	}
 
@@ -194,10 +161,10 @@ public class LodgingServiceImpl implements LodgingService {
 
 		findLodging.changeStatus(LodgingStatus.INACTIVE);
 		lodgingRepository.save(findLodging);
-		
+
 		List<Room> roomList = roomRepository.findByLodgingNo(lodgingNo);
 		if (roomList != null && !roomList.isEmpty()) {
-			roomList.forEach(room -> room.setStatus(RoomStatus.UNAVAILABLE));
+			roomList.forEach(room -> room.changeStatus(RoomStatus.UNAVAILABLE));
 			roomRepository.saveAll(roomList);
 		}
 	}

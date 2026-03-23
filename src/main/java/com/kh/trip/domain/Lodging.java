@@ -18,14 +18,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 //DB 테이블과 매핑되는 클래스
 @Entity
 
 //LODGINGS 테이블과 매핑된다.
 @Table(name = "LODGINGS")
-@Setter
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -109,9 +107,30 @@ public class Lodging extends BaseTimeEntity {
 	@Builder.Default
 	@Column(name = "STATUS", nullable = false, length = 20)
 	private LodgingStatus status = LodgingStatus.ACTIVE;
-	
+
+	// 상태 변경
 	public void changeStatus(LodgingStatus status) {
 		this.status = status;
+	}
+
+	// 숙소명 변경
+	public void changeLodgingName(String lodgingName) {
+		this.lodgingName = lodgingName;
+	}
+
+	// 숙소 설명 변경
+	public void changeDescription(String description) {
+		this.description = description;
+	}
+
+	// 체크인 시간 변경
+	public void changeCheckInTime(String checkInTime) {
+		this.checkInTime = checkInTime;
+	}
+
+	// 체크아웃 시간 변경
+	public void changeCheckOutTime(String checkOutTime) {
+		this.checkOutTime = checkOutTime;
 	}
 
 }
