@@ -1,9 +1,9 @@
 package com.kh.trip.domain;
 
-import com.kh.trip.domain.enums.InquiryRoomStatus;
-import com.kh.trip.domain.enums.InquiryRoomTargetType;
 import com.kh.trip.domain.common.BaseTimeEntity;
 import com.kh.trip.domain.enums.InquiryRoomInquiryType;
+import com.kh.trip.domain.enums.InquiryRoomStatus;
+import com.kh.trip.domain.enums.InquiryRoomTargetType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,7 +34,7 @@ import lombok.ToString;
 public class InquiryRoom extends BaseTimeEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_INQUIRY_ROOMS")
-	@SequenceGenerator(name = "SEQ_INQUIRY_ROOMS", sequenceName = "SEQ_INQUIRY_ROOMS")
+	@SequenceGenerator(name = "SEQ_INQUIRY_ROOMS", sequenceName = "SEQ_INQUIRY_ROOMS", allocationSize = 1)
 	@Column(name = "INQUIRY_ROOM_NO")
 	private Long inquiryRoomNo;
 
