@@ -86,7 +86,7 @@ public class BookingServiceImpl implements BookingService {
 		Long bookingNo = repository.save(booking).getBookingNo();
 
 		//변경해야할 부분
-		room.setStatus(RoomStatus.UNAVAILABLE);
+		room.changeStatus(RoomStatus.UNAVAILABLE);
 		roomRepository.save(room);
 
 		userCoupon.changeUsedAt(LocalDateTime.now());
@@ -131,7 +131,7 @@ public class BookingServiceImpl implements BookingService {
 		Optional<Room> resultRoom= roomRepository.findById(booking.getRoom().getRoomNo());
 		Room room = resultRoom.orElseThrow();
 		//변경해야할 부분
-		room.setStatus(RoomStatus.AVAILABLE);
+		room.changeStatus(RoomStatus.AVAILABLE);
 		roomRepository.save(room);
 		
 		// 환불처리로직도 추가해야함.
