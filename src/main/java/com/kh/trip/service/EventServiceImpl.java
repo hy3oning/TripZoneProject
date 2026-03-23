@@ -83,6 +83,13 @@ public class EventServiceImpl implements EventService {
 		Event event = Event.builder().title(eventDTO.getTitle()).content(eventDTO.getContent())
 				.thumbnailUrl(eventDTO.getThumbnailUrl()).startDate(eventDTO.getStartDate())
 				.endDate(eventDTO.getEndDate()).viewCount(0L).adminUserNo(user).status(EventStatus.DRAFT).build();
+		// [추가] 2. 중복 검사 (방어 코드)
+	    // 같은 제목의 이벤트가 이미 있는지 확인합니다.
+	    boolean isExist = eventRepository.existsByTitle(eventDTO.getTitle());
+	    
+	    if (isExist) {
+	        throw new IllegalStateException("이미 동일한 제목의 이벤트가 존재합니다.");
+	    }
 		Event savedEvent = eventRepository.save(event);
 		List<Long> coupons = eventDTO.getCoupons();
 		if (coupons != null && !coupons.isEmpty()) {

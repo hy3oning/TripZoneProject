@@ -6,6 +6,8 @@ import com.kh.trip.domain.Event;
 
 public interface EventRepository extends JpaRepository<Event, Long>{
 
+	boolean existsByTitle(String title);
+
 
 	
 
