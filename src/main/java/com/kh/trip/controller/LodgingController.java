@@ -1,7 +1,6 @@
 package com.kh.trip.controller;
 
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -27,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController // 이 클래스가 REST API 컨트롤러라는 뜻
 // 메서드 반환값을 JSON 형태로 응답
-@RequestMapping("/api/v1/lodgings")
+@RequestMapping("/api/lodgings")
 @RequiredArgsConstructor
 public class LodgingController {
 

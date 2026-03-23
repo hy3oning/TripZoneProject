@@ -1,8 +1,11 @@
 package com.kh.trip.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,7 +28,7 @@ import lombok.RequiredArgsConstructor;
  * 리뷰 관련 요청을 처리하는 REST API 컨트롤러
  */
 @RestController
-@RequestMapping("/api/v1/reviews")
+@RequestMapping("/api/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
 
@@ -79,6 +82,14 @@ public class ReviewController {
 		}
 
 		reviewService.deleteReview(authUser.getUserNo(), reviewNo);
+	}
+	
+	/**
+	 * 숙소별 리뷰 목록 조회
+	 */
+	@GetMapping("/lodgings/{lodgingNo}")
+	public List<ReviewSummaryDTO> getReviewsByLodging(@PathVariable Long lodgingNo) {
+		return reviewService.getReviewsByLodging(lodgingNo);
 	}
 
 }

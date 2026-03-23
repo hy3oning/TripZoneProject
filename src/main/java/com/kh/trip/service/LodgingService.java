@@ -31,6 +31,6 @@ public interface LodgingService {
 	public void deleteLodging(Long lodgingNo);
 	
 	//숙소 상세조회 
-    LodgingDetailDTO getLodgingDetail(Long lodgingNo);
+    public LodgingDetailDTO getLodgingDetail(Long lodgingNo);
 
 }

@@ -1,5 +1,7 @@
 package com.kh.trip.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,5 +16,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long>{
 
 	@Query("select b from Booking b join b.room r join Lodging l on r.lodgingNo = l.lodgingNo where l.hostNo = :userNo")
 	Page<Booking> findByRoomId(@Param("userNo")Long userNo, Pageable pageable);
+	
+	     /**
+	      * 
+	      * @param bookingNo
+	      * @return
+	      * 
+	      * 리뷰 작성 검증용 상세 조회
+		  *  bookingNo로 예약 1건을 조회하면서 user, room 정보도 같이 가져온다
+		  * 1. 로그인한 사용자의 예약인지 확인
+		  * 2. 이 예약이 현재 숙소에 대한 예약인지 확인
+	      */
+	@Query("select b from Booking b	join fetch b.user u	join fetch b.room r	where b.bookingNo = :bookingNo")
+	Optional<Booking> findDetailByBookingNo(@Param("bookingNo") Long bookingNo);
 	
 }
