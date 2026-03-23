@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.trip.domain.Review;
 import com.kh.trip.dto.ReviewCreateDTO;
 import com.kh.trip.dto.ReviewSummaryDTO;
+import com.kh.trip.dto.ReviewUpdateDTO;
 import com.kh.trip.repository.ReviewRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -59,6 +60,75 @@ public class ReviewServiceImpl implements ReviewService {
 		Review savedReview = reviewRepository.save(review);
 
 		return ReviewSummaryDTO.fromEntity(savedReview, List.of());
+	}
+
+	@Override
+	public ReviewSummaryDTO updateReview(Long loginUserNo, Long reviewNo, ReviewUpdateDTO reviewUpdateDTO) {
+		// 로그인 사용자 번호가 없으면 리뷰 수정 불가
+		if (loginUserNo == null) {
+			throw new IllegalArgumentException("로그인한 사용자만 리뷰를 수정할 수 있습니다.");
+		}
+
+		// 리뷰 번호가 없으면 예외
+		if (reviewNo == null) {
+			throw new IllegalArgumentException("리뷰 번호는 필수입니다.");
+		}
+
+		// 수정 DTO가 없으면 예외
+		if (reviewUpdateDTO == null) {
+			throw new IllegalArgumentException("수정할 리뷰 정보가 없습니다.");
+		}
+
+		// 평점이 없거나 범위를 벗어나면 예외
+		if (reviewUpdateDTO.getRating() == null || reviewUpdateDTO.getRating() < 1 || reviewUpdateDTO.getRating() > 5) {
+			throw new IllegalArgumentException("평점은 1점부터 5점까지 가능합니다.");
+		}
+
+		// 리뷰 내용이 비어 있으면 예외
+		if (reviewUpdateDTO.getContent() == null || reviewUpdateDTO.getContent().isBlank()) {
+			throw new IllegalArgumentException("리뷰 내용은 필수입니다.");
+		}
+
+		// 리뷰 조회
+		Review review = reviewRepository.findByReviewNo(reviewNo)
+				.orElseThrow(() -> new IllegalArgumentException("해당 리뷰를 찾을 수 없습니다."));
+
+		// 본인 리뷰만 수정 가능
+		if (!review.getUserNo().equals(loginUserNo)) {
+			throw new IllegalArgumentException("본인이 작성한 리뷰만 수정할 수 있습니다.");
+		}
+
+		// 수정
+		review.setRating(reviewUpdateDTO.getRating());
+		review.setContent(reviewUpdateDTO.getContent().trim());
+
+		Review updatedReview = reviewRepository.save(review);
+
+		return ReviewSummaryDTO.fromEntity(updatedReview, List.of());
+	}
+
+	@Override
+	public void deleteReview(Long loginUserNo, Long reviewNo) {
+		// 로그인 사용자 번호가 없으면 리뷰 삭제 불가
+		if (loginUserNo == null) {
+			throw new IllegalArgumentException("로그인한 사용자만 리뷰를 삭제할 수 있습니다.");
+		}
+
+		// 리뷰 번호가 없으면 예외
+		if (reviewNo == null) {
+			throw new IllegalArgumentException("리뷰 번호는 필수입니다.");
+		}
+
+		// 리뷰 조회
+		Review review = reviewRepository.findByReviewNo(reviewNo)
+				.orElseThrow(() -> new IllegalArgumentException("해당 리뷰를 찾을 수 없습니다."));
+
+		// 본인 리뷰만 삭제 가능
+		if (!review.getUserNo().equals(loginUserNo)) {
+			throw new IllegalArgumentException("본인이 작성한 리뷰만 삭제할 수 있습니다.");
+		}
+
+		reviewRepository.delete(review);
 	}
 
 }
