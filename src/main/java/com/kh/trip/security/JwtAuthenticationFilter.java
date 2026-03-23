@@ -17,10 +17,11 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-	// JWT 토큰을 검증하고, 토큰 안의 값을 꺼낼 때 사용한다.
+
+	// JWT 토큰 생성/검증/claim 조회를 담당하는 객체
 	private final JwtProvider jwtProvider;
 
-	// 토큰 안에서 꺼낸 loginId로 실제 사용자 정보를 다시 조회할 때 사용한다.
+	// 토큰 안의 사용자 번호로 실제 사용자 정보를 다시 조회하는 서비스
 	private final CustomUserDetailsService customUserDetailsService;
 
 	@Override
@@ -30,42 +31,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		// 요청 헤더에서 Authorization 값을 꺼낸다.
 		String authorizationHeader = request.getHeader("Authorization");
 
-		// Authorization 헤더가 존재하고 Bearer 토큰 형식이면 JWT를 꺼낸다.
+		// Authorization 헤더가 있고 Bearer 토큰 형식이면 JWT를 꺼낸다.
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 			String token = authorizationHeader.substring(7);
 
-			// 토큰이 위조되지 않았고, 만료되지 않았는지 확인한다.
+			// 토큰 서명/만료 여부를 먼저 검증한다.
 			if (jwtProvider.validateToken(token)) {
 
-				// 이 토큰이 ACCESS 토큰인지, REFRESH 토큰인지 확인한다.
+				// 이 토큰이 ACCESS 토큰인지 REFRESH 토큰인지 구분한다.
 				String tokenType = jwtProvider.getTokenType(token);
 
-				// 보호된 API에는 ACCESS 토큰만 인증에 사용한다.
+				// 실제 API 인증에는 ACCESS 토큰만 사용한다.
 				if ("ACCESS".equals(tokenType)) {
 
-					// 토큰의 subject에 저장된 loginId를 꺼낸다.
-					String loginId = jwtProvider.getLoginId(token);
+					// 토큰 안에 저장된 사용자 번호를 꺼낸다.
+					// 소셜 로그인/일반 로그인 모두 공통으로 처리하기 위해 userNo 기준으로 조회한다.
+					Long userNo = jwtProvider.getUserNo(token);
 
-					// loginId로 DB에서 사용자 정보를 다시 조회한다.
-					AuthUserPrincipal authUser = (AuthUserPrincipal) customUserDetailsService
-							.loadUserByUsername(loginId);
+					// userNo로 실제 사용자 정보를 다시 조회해서 인증 객체를 만든다.
+					AuthUserPrincipal authUser = customUserDetailsService.loadUserByUserNo(userNo);
 
-					// 스프링 시큐리티가 사용할 인증 객체를 만든다.
+					// 스프링 시큐리티가 사용할 인증 객체 생성
 					UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 							authUser, null, authUser.getAuthorities());
 
-					// 현재 요청의 부가정보(IP 등)를 인증 객체에 담는다.
+					// 현재 요청의 부가 정보(IP, 세션 정보 등)를 인증 객체에 저장
 					authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-					// 인증 객체를 SecurityContext에 저장한다.
-					// 이 작업이 되어야 스프링 시큐리티가 "로그인된 사용자"로 인식한다.
+					// SecurityContext에 인증 정보를 넣어 현재 요청을 로그인 사용자로 처리하게 한다.
 					SecurityContextHolder.getContext().setAuthentication(authentication);
 				}
 			}
 		}
 
-		// 현재 필터 작업이 끝났으니 다음 필터로 요청을 넘긴다.
+		// 현재 필터 작업이 끝났으므로 다음 필터로 요청을 넘긴다.
 		filterChain.doFilter(request, response);
 	}
-
 }
