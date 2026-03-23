@@ -1,6 +1,7 @@
 package com.kh.trip.service.auth;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -230,8 +231,8 @@ public class AuthServiceImpl implements AuthService {
 
 		User user = userRepository.findById(userNo).orElseThrow(() -> new RuntimeException("User not found"));
 
-		var roles = userRoleRepository.findByUserNo(userNo);
-		var roleNames = roles.stream().map(UserRole::getRoleCode).toList();
+		List<UserRole> roles = userRoleRepository.findByUserNo(userNo);
+		List<String> roleNames = roles.stream().map(UserRole::getRoleCode).toList();
 
 		AuthUserPrincipal authUser = new AuthUserPrincipal(user.getUserNo(), user.getEmail(), "", user.getUserName(),
 				user.getEmail(), user.getPhone(), user.getEnabled(), roleNames);

@@ -15,7 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -38,8 +38,8 @@ public class Payment extends BaseTimeEntity {
 	@Column(name = "PAYMENT_NO")
 	private Long paymentNo; // 결제 번호
 
-	@OneToOne
-	@JoinColumn(name = "BOOKING_NO", nullable = false, unique = true)
+	@ManyToOne
+	@JoinColumn(name = "BOOKING_NO", nullable = false)
 	private Booking booking; // 예약 번호
 
 	@Column(name = "PAYMENT_ID", nullable = false, unique = true, length = 100)
@@ -88,4 +88,15 @@ public class Payment extends BaseTimeEntity {
 	@Column(name = "RAW_RESPONSE")
 	private String rawResponse; // 결제 응답 원본 데이터
 
+	public void changePaymentStatus(com.kh.trip.domain.enums.PaymentStatus paymentStatus) {
+		this.paymentStatus = paymentStatus;
+	}
+
+	public void changeCanceledAt(java.time.LocalDateTime canceledAt) {
+		this.canceledAt = canceledAt;
+	}
+
+	public void changeRefundAmount(Long refundAmount) {
+		this.refundAmount = refundAmount;
+	}
 }
