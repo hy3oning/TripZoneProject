@@ -10,12 +10,18 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.domain.Booking;
+import com.kh.trip.domain.MileageHistory;
 import com.kh.trip.domain.Payment;
+import com.kh.trip.domain.User;
+import com.kh.trip.domain.enums.MileageChangeType;
+import com.kh.trip.domain.enums.MileageStatus;
 import com.kh.trip.domain.enums.PaymentPayMethod;
 import com.kh.trip.domain.enums.PaymentStatus;
 import com.kh.trip.dto.PaymentDTO;
 import com.kh.trip.repository.BookingRepository;
+import com.kh.trip.repository.MileageHistoryRepository;
 import com.kh.trip.repository.PaymentRepository;
+import com.kh.trip.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,8 +30,10 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class PaymentServiceImpl implements PaymentService {
 
+	private final UserRepository userRepository;
 	private final PaymentRepository paymentRepository;
 	private final BookingRepository bookingRepository;
+	private final MileageHistoryRepository mileageHistoryRepository;
 
 	@Override
 	public Long save(PaymentDTO paymentDTO) {
@@ -57,20 +65,32 @@ public class PaymentServiceImpl implements PaymentService {
 
 	@Override
 	public void complete(Long paymentNo) {
-		Payment payment = paymentRepository.findById(paymentNo)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 결제입니다." + paymentNo));
+		Payment payment = paymentRepository.findById(paymentNo).orElseThrow(
+				() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 결제입니다. paymentNo=" + paymentNo));
 
 		if (payment.getPaymentStatus() == PaymentStatus.PAID) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 완료된 결제입니다." + paymentNo);
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 완료된 결제입니다. paymentNo=" + paymentNo);
 		}
+
 		if (payment.getPaymentStatus() == PaymentStatus.CANCELED) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "취소된 결제는 완료 처리할 수 없습니다." + paymentNo);
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "취소된 결제는 완료 처리할 수 없습니다. paymentNo=" + paymentNo);
 		}
 
 		payment.changePaymentStatus(PaymentStatus.PAID);
 		payment.changeApprovedAt(LocalDateTime.now());
 
+		Booking booking = payment.getBooking();
+		User user = booking.getUser();
+
+		Long earnedMileage = payment.getPaymentAmount() / 100;
+		user.addMileage(earnedMileage);
+
+		MileageHistory mileageHistory = MileageHistory.builder().user(user).booking(booking).payment(payment)
+				.changeType(MileageChangeType.EARN).changeAmount(earnedMileage).balanceAfter(user.getMileage())
+				.reason("결제 완료 마일리지 적립").status(MileageStatus.NORMAL).build();
+		mileageHistoryRepository.save(mileageHistory);
 		paymentRepository.save(payment);
+		userRepository.save(user);
 	}
 
 	@Override
@@ -82,13 +102,19 @@ public class PaymentServiceImpl implements PaymentService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 취소된 결제입니다. paymentNo=" + paymentNo);
 		}
 
-		if (payment.getPaymentStatus() == PaymentStatus.CANCELED) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 취소된 결제입니다. paymentNo=" + paymentNo);
-		}
-
 		if (payment.getPaymentStatus() != PaymentStatus.READY && payment.getPaymentStatus() != PaymentStatus.PAID) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT,
 					"결제 대기 또는 결제 완료 상태만 취소할 수 있습니다. paymentNo=" + paymentNo);
+		}
+
+		List<MileageHistory> histories = mileageHistoryRepository.findByPayment_PaymentNo(paymentNo);
+		for (MileageHistory history : histories) {
+			if (history.getChangeType() == MileageChangeType.EARN && history.getStatus() == MileageStatus.NORMAL) {
+				User user = history.getUser();
+				user.useMileage(history.getChangeAmount());
+				history.changeStatus(MileageStatus.CANCELED);
+				userRepository.save(user);
+			}
 		}
 		payment.changePaymentStatus(PaymentStatus.CANCELED);
 		payment.changeCanceledAt(LocalDateTime.now());
