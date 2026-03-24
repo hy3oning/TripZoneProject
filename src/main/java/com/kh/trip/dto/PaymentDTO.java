@@ -3,7 +3,6 @@ package com.kh.trip.dto;
 import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,8 +23,6 @@ public class PaymentDTO {
 	private String storeId;
 	private String channelKey;
 	private String orderName;
-	@NotNull(message = "paymentAmount는 필수입니다.")
-	@Positive(message = "paymentAmount는 0보다 커야 합니다.")
 	private Long paymentAmount;
 	private String currency;
 	private String payMethod;
