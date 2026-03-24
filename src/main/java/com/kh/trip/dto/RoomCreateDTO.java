@@ -11,15 +11,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RoomSummaryDTO {
+public class RoomCreateDTO {
 
-	private Long roomNo; // 객실 번호
-	private String roomName; // 객실명
-	private String roomType; // 객실 유형
+	private Long lodgingNo; // 어떤 숙소에 객실을 등록할지 숙소 번호 필요
+	private String roomName; // 객실 이름
+	private String roomType; // 객실 타입
 	private String roomDescription; // 객실 설명
 	private Integer maxGuestCount; // 최대 인원
 	private Integer pricePerNight; // 1박 가격
-	private Integer roomCount; // 객실 수
-	private RoomStatus status; // 객실 상태
+	private Integer roomCount; // 객실 개수
+	private RoomStatus status; // 상태값
 
 }
