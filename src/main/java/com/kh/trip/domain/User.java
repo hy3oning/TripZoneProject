@@ -64,6 +64,14 @@ public class User extends BaseTimeEntity {
 		this.phone = phone;
 	}
 
+	public void addMileage(Long amount) {
+		this.mileage += amount;
+	}
+
+	public void useMileage(Long amount) {
+		this.mileage -= amount;
+	}
+
 	public void changeEnabled(String enabled) {
 		this.enabled = enabled;
 	}

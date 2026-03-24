@@ -87,7 +87,7 @@ public class WishListServiceImpl implements WishListService {
 	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 숙소 입니다"));
 	    
 	    //[추가] "이미 찜했는지" DB에서 찾아보기
-	    java.util.Optional<WishList> found = wishListRepository.findByUserAndLodging(user, lodging);
+	    Optional<WishList> found = wishListRepository.findByUserAndLodging(user, lodging);
 	    
 	    //상황에 따라 다르게 행동하기
 	    if (found.isPresent()) {
