@@ -56,7 +56,7 @@ public class BookingServiceImpl implements BookingService {
 			throw new IllegalArgumentException("예약이 불가한 방입니다.");
 
 		// 숙박 일수 계산 (체크아웃 날짜 - 체크인 날짜)
-		Long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate(), bookingDTO.getCheckOutDate());
+		Long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate().toLocalDate(), bookingDTO.getCheckOutDate().toLocalDate());
 		Long roomPrice = room.getPricePerNight() * daysBetween;
 		Long totalPrice = roomPrice;
 		Long discountAmount = 0L;
