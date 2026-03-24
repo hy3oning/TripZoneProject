@@ -15,5 +15,4 @@ public class WishListDTO {
 	private Long wishListNo;
 	private Long userNo;
 	private Long lodgingNo;
-	private LodgingDTO lodgingDTO;
 }
