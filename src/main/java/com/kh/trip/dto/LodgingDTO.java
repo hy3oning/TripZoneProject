@@ -32,6 +32,7 @@ public class LodgingDTO {
 	private String checkInTime;
 	private String checkOutTime;
 	private LodgingStatus status;
+	private LodgingImageDTO lodgingImageDTO;
 	private List<RoomSummaryDTO> roomDTO;
 
 }
