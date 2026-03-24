@@ -56,7 +56,7 @@ public class BookingServiceImpl implements BookingService {
 			throw new IllegalArgumentException("예약이 불가한 방입니다.");
 
 		// 숙박 일수 계산 (체크아웃 날짜 - 체크인 날짜)
-		Long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate(), bookingDTO.getCheckOutDate());
+		Long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate().toLocalDate(), bookingDTO.getCheckOutDate().toLocalDate());
 		Long roomPrice = room.getPricePerNight() * daysBetween;
 		Long totalPrice = roomPrice;
 		Long discountAmount = 0L;
@@ -83,7 +83,7 @@ public class BookingServiceImpl implements BookingService {
 
 		Booking booking = Booking.builder().user(user).userCoupon(userCoupon).room(room)
 				.checkInDate(bookingDTO.getCheckInDate()).checkOutDate(bookingDTO.getCheckOutDate())
-				.guestCount(bookingDTO.getGuestCount()).pricePerNight(bookingDTO.getPricePerNight())
+				.guestCount(bookingDTO.getGuestCount()).pricePerNight(Long.valueOf(room.getPricePerNight()))
 				.discountAmount(discountAmount).totalPrice(totalPrice).regDate(bookingDTO.getRegDate())
 				.status(BookingStatus.PENDING).build();
 		Long bookingNo = repository.save(booking).getBookingNo();
@@ -105,9 +105,9 @@ public class BookingServiceImpl implements BookingService {
 		User user = userRepository.findById(userNo)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 정보입니다."));
 		Page<Booking> result = repository.findByRoomId(user.getUserNo(), pageable);
-		Lodging lodging = repository.findLodigByUserId(userNo);
+		
 
-		List<BookingDTO> dtoList = entityToDTO(user,lodging, result);
+		List<BookingDTO> dtoList = entityToDTO(user, result);
 		return PageResponseDTO.<BookingDTO>withAll().dtoList(dtoList).pageRequestDTO(pageRequestDTO)
 				.totalCount(result.getTotalElements()).build();
 	}
@@ -120,9 +120,8 @@ public class BookingServiceImpl implements BookingService {
 		User user = userRepository.findById(hostNo)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 정보입니다."));
 		Page<Booking> result = repository.findByUserId(user.getUserNo(), pageable);
-		Lodging lodging = repository.findLodigByUserId(hostNo);
 
-		List<BookingDTO> dtoList = entityToDTO(user,lodging, result);
+		List<BookingDTO> dtoList = entityToDTO(user, result);
 		return PageResponseDTO.<BookingDTO>withAll().dtoList(dtoList).pageRequestDTO(pageRequestDTO)
 				.totalCount(result.getTotalElements()).build();
 	}
@@ -143,16 +142,29 @@ public class BookingServiceImpl implements BookingService {
 		// 환불처리로직도 추가해야함.
 	}
 
-	public List<BookingDTO> entityToDTO(User user,Lodging lodging, Page<Booking> result) {
-		return result.get()
-				.map(booking -> BookingDTO.builder().bookingNo(booking.getBookingNo()).userNo(user.getUserNo())
-						.lodgingName(lodging.getLodgingName()).roomNo(booking.getRoom().getRoomNo())
-						.userCouponNo(booking.getUserCoupon().getUserCouponNo()).roomName(booking.getRoom().getRoomName())
+	public List<BookingDTO> entityToDTO(User user, Page<Booking> result) {
+		return result.getContent().stream().map(booking -> {
+			Long targetLodgingNo = booking.getRoom().getLodgingNo();
+			return BookingDTO.builder().bookingNo(booking.getBookingNo()).userNo(user.getUserNo())
+						.roomNo(booking.getRoom().getRoomNo()).lodgingName(findLodgingName(user, targetLodgingNo))
+						.userCouponNo(booking.getUserCoupon()!=null? booking.getUserCoupon().getUserCouponNo():null).roomName(booking.getRoom().getRoomName())
 						.checkInDate(booking.getCheckInDate()).checkOutDate(booking.getCheckOutDate())
 						.guestCount(booking.getGuestCount()).pricePerNight(booking.getPricePerNight())
 						.discountAmount(booking.getDiscountAmount()).totalPrice(booking.getTotalPrice())
 						.status(booking.getStatus()).requestMessage(booking.getRequestMessage())
-						.regDate(booking.getRegDate()).build())
+						.regDate(booking.getRegDate())
+						.build();})
 				.collect(Collectors.toList());
+	}
+	
+	public String findLodgingName(User user, Long targetLodgingNo) {
+		String lodgingName = null;
+		List<Lodging> lodgingList = repository.findLodigByUserId(user.getUserNo());
+		for(Lodging lodging : lodgingList) {
+			if(lodging.getLodgingNo().equals(targetLodgingNo)) {
+				lodgingName = lodging.getLodgingName();
+			}
+		}
+		return lodgingName;
 	}
 }
