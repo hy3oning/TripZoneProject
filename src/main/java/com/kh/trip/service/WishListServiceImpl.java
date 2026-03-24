@@ -2,6 +2,7 @@ package com.kh.trip.service;
 
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.User;
 import com.kh.trip.domain.WishList;
+import com.kh.trip.dto.LodgingDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.WishListDTO;
@@ -45,9 +47,21 @@ public class WishListServiceImpl implements WishListService {
 		Page<WishList> result = wishListRepository.findAll(pageable);
 		
 		List<WishListDTO> dtoList = result.getContent().stream().map(wishList -> {
-			return WishListDTO.builder().wishListNo(wishList.getWishListNo()).userNo(wishList.getUser().getUserNo())
-					.lodgingNo(wishList.getLodging().getLodgingNo()).build();}).collect(Collectors.toList());
-		
+			Optional<Lodging> resultLodging = lodgingRepository.findById(wishList.getLodging().getLodgingNo());
+			Lodging lodging = resultLodging.orElseThrow();
+			LodgingDTO lodgingDTO = LodgingDTO
+			.builder().lodgingNo(lodging.getLodgingNo())
+			.lodgingName(lodging.getLodgingName())
+			.address(lodging.getAddress()).build();	
+					
+					 
+			return WishListDTO.builder()
+		            .wishListNo(wishList.getWishListNo())
+		            .userNo(wishList.getUser().getUserNo())
+		            .lodgingNo(wishList.getLodging().getLodgingNo())
+		            .lodgingDTO(lodgingDTO) 
+		            .build();
+		}).collect(Collectors.toList());
 		long totalCount = result.getTotalElements();
 		
 		return PageResponseDTO.<WishListDTO>withAll().dtoList(dtoList)
@@ -68,7 +82,7 @@ public class WishListServiceImpl implements WishListService {
 	    //[추가] "이미 찜했는지" DB에서 찾아보기
 	    java.util.Optional<WishList> found = wishListRepository.findByUserAndLodging(user, lodging);
 	    
-	    //상황에 따라 다르게 행동하기 (If-Else)
+	    //상황에 따라 다르게 행동하기
 	    if (found.isPresent()) {
 	        wishListRepository.delete(found.get());
 	        log.info(">>>> 이미 찜한 상태라 삭제(취소) 처리함");
