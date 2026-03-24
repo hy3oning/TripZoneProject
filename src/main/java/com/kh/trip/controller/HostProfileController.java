@@ -20,7 +20,7 @@ public class HostProfileController {
 
 	private final HostProfileService hostProfileService;
 
-	@PostMapping
+	@PostMapping("/register")
 	public Long register(@RequestBody HostProfileDTO hostProfileDTO) {
 		return hostProfileService.register(hostProfileDTO);
 	}
@@ -29,5 +29,4 @@ public class HostProfileController {
 	public List<HostProfileDTO> getList(){
 		return hostProfileService.getList();
 	}
-
 }
