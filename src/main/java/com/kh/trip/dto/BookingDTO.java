@@ -27,4 +27,6 @@ public class BookingDTO {
 	private BookingStatus status;
 	private String requestMessage;
 	private LocalDateTime regDate;
+	private String lodgingName;
+	private String roomName;
 }
