@@ -12,6 +12,8 @@ public interface PaymentService {
 
 	PaymentDTO getPaymentById(Long paymentNo);
 
+	void complete(Long paymentNo);
+
 	void cancel(Long paymentNo);
 
 }

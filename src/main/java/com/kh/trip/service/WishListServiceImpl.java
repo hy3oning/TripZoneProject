@@ -1,7 +1,7 @@
 package com.kh.trip.service;
 
-
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -14,13 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.User;
 import com.kh.trip.domain.WishList;
+import com.kh.trip.dto.LodgingDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.WishListDTO;
 import com.kh.trip.repository.LodgingRepository;
 import com.kh.trip.repository.UserRepository;
 import com.kh.trip.repository.WishListRepository;
-
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,30 +30,51 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Transactional
 public class WishListServiceImpl implements WishListService {
-	
+
 	private final WishListRepository wishListRepository;
 	private final UserRepository userRepository;
 	private final LodgingRepository lodgingRepository;
-	
-	//findAll(list)
+
+	// findAll(list)
 	@Override
 	public PageResponseDTO<WishListDTO> findAll(PageRequestDTO pageRequestDTO) {
 		
-		Pageable pageable = PageRequest.of(pageRequestDTO.getPage()-1,pageRequestDTO.getSize(),
+		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, pageRequestDTO.getSize(),
 				Sort.by("wishListNo").descending());
-		
+
 		Page<WishList> result = wishListRepository.findAll(pageable);
-		
+
 		List<WishListDTO> dtoList = result.getContent().stream().map(wishList -> {
-			return WishListDTO.builder().wishListNo(wishList.getWishListNo()).userNo(wishList.getUser().getUserNo())
-					.lodgingNo(wishList.getLodging().getLodgingNo()).build();}).collect(Collectors.toList());
-		
+			// 1. 숙소 정보 조회
+			Optional<Lodging> resultLodging = lodgingRepository.findById(wishList.getLodging().getLodgingNo());
+			Lodging lodging = resultLodging.orElseThrow();
+
+			// 2. LodgingDTO 생성
+			LodgingDTO lodgingDTO = LodgingDTO.builder()
+					.lodgingNo(lodging.getLodgingNo())
+					.lodgingName(lodging.getLodgingName())
+					.address(lodging.getAddress())
+					.build();
+
+			// 3. WishListDTO 생성 및 반환
+			return WishListDTO.builder()
+					.wishListNo(wishList.getWishListNo())
+					.userNo(wishList.getUser().getUserNo())
+					.lodgingNo(wishList.getLodging().getLodgingNo())
+					.lodgingDTO(lodgingDTO)
+					.build();
+		}).collect(Collectors.toList());
+
 		long totalCount = result.getTotalElements();
-		
-		return PageResponseDTO.<WishListDTO>withAll().dtoList(dtoList)
-				.totalCount(totalCount).pageRequestDTO(pageRequestDTO).build();
+
+		return PageResponseDTO.<WishListDTO>withAll()
+				.dtoList(dtoList)
+				.totalCount(totalCount)
+				.pageRequestDTO(pageRequestDTO)
+				.build();
 	}
-	//save
+
+	// save
 	@Override
 	@Transactional
 	public Long save(WishListDTO wishListDTO) {
@@ -66,9 +87,9 @@ public class WishListServiceImpl implements WishListService {
 	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 숙소 입니다"));
 	    
 	    //[추가] "이미 찜했는지" DB에서 찾아보기
-	    java.util.Optional<WishList> found = wishListRepository.findByUserAndLodging(user, lodging);
+	    Optional<WishList> found = wishListRepository.findByUserAndLodging(user, lodging);
 	    
-	    //상황에 따라 다르게 행동하기 (If-Else)
+	    //상황에 따라 다르게 행동하기
 	    if (found.isPresent()) {
 	        wishListRepository.delete(found.get());
 	        log.info(">>>> 이미 찜한 상태라 삭제(취소) 처리함");
@@ -84,12 +105,12 @@ public class WishListServiceImpl implements WishListService {
 	        return savedwishList.getWishListNo(); // "저장됨"을 알리는 신호
 	    }
 	}
-	//delete
+
+	// delete
 	@Override
 	public void delete(Long wno) {
 		wishListRepository.deleteById(wno);
 		
 	}
-	
-	
+
 }

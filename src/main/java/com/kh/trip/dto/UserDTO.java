@@ -1,7 +1,5 @@
 package com.kh.trip.dto;
 
-import com.kh.trip.domain.User;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,14 +18,4 @@ public class UserDTO {
 	private Long mileage;
 	private String enabled;
 
-	public static UserDTO fromEntity(User user) {
-		return UserDTO.builder().userNo(user.getUserNo()).userName(user.getUserName()).email(user.getEmail())
-				.phone(user.getPhone()).gradeNo(user.getGradeNo()).mileage(user.getMileage()).enabled(user.getEnabled())
-				.build();
-	}
-
-	public User toEntity() {
-		return User.builder().userNo(userNo).userName(userName).email(email).phone(phone).gradeNo(gradeNo)
-				.mileage(mileage).enabled(enabled).build();
-	}
 }

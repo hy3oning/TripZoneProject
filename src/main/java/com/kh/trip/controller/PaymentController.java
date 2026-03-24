@@ -40,6 +40,12 @@ public class PaymentController {
 		return paymentService.getPaymentById(paymentNo);
 	}
 
+	@PutMapping("/{paymentNo}/complete")
+	public Map<String, String> complete(@PathVariable Long paymentNo) {
+		paymentService.complete(paymentNo);
+		return Map.of("result", "SUCCESS");
+	}
+
 	@PutMapping("/{paymentNo}/cancel")
 	public Map<String, String> cancel(@PathVariable Long paymentNo) {
 		paymentService.cancel(paymentNo);

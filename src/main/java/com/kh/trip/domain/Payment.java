@@ -92,7 +92,11 @@ public class Payment extends BaseTimeEntity {
 		this.paymentStatus = paymentStatus;
 	}
 
-	public void changeCanceledAt(java.time.LocalDateTime canceledAt) {
+	public void changeApprovedAt(LocalDateTime approvedAt) {
+		this.approvedAt = approvedAt;
+	}
+
+	public void changeCanceledAt(LocalDateTime canceledAt) {
 		this.canceledAt = canceledAt;
 	}
 

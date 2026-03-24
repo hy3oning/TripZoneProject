@@ -1,19 +1,14 @@
 package com.kh.trip.domain;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.kh.trip.domain.common.BaseTimeEntity;
-import com.kh.trip.domain.enums.ApprovalStatus;
+import com.kh.trip.domain.enums.HostApprovalStatus;
 
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,12 +23,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "HOST_PROFILE")
+@Table(name = "HOST_PROFILES")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class HostProfiles extends BaseTimeEntity {
+public class HostProfile extends BaseTimeEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_host_profile")
@@ -54,15 +49,10 @@ public class HostProfiles extends BaseTimeEntity {
 	@Column(name = "OWNER_NAME", nullable = false, length = 100)
 	private String ownerName;
 
-	@ElementCollection(fetch = FetchType.LAZY)
-	@CollectionTable(name = "HOST_PROFILE_APPROVAL_STATUS", joinColumns = @JoinColumn(name = "HOST_NO"))
-	@Enumerated(EnumType.STRING)
 	@Builder.Default
-	private List<ApprovalStatus> approvalStatusList = new ArrayList<>();
-
-	public void addStatus(ApprovalStatus approvalStatus) {
-		approvalStatusList.add(approvalStatus);
-	}
+	@Enumerated(EnumType.STRING)
+	@Column(name = "APPROVAL_STATUS", nullable = false, length = 20)
+	private HostApprovalStatus approvalStatus = HostApprovalStatus.PENDING;
 
 	@Column(name = "APPROVED_BY")
 	private Long approvedBy;

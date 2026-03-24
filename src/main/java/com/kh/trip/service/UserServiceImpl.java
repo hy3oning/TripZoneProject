@@ -37,8 +37,9 @@ public class UserServiceImpl implements UserService {
 
 	private UserDTO entityToDTO(User user) {
 		return UserDTO.builder().userNo(user.getUserNo()).userName(user.getUserName()).email(user.getEmail())
-				.phone(user.getPhone()).gradeNo(user.getGradeNo()).mileage(user.getMileage()).enabled(user.getEnabled())
-				.build();
+				.phone(user.getPhone())
+				.gradeNo(user.getMemberGrade() != null ? user.getMemberGrade().getGradeNo() : null)
+				.mileage(user.getMileage()).enabled(user.getEnabled()).build();
 	}
 
 	@Override
@@ -67,25 +68,33 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public PageResponseDTO<UserDTO> findUsers(AdminUserSearchRequestDTO request) {
 		int page = request.getPage() <= 0 ? 1 : request.getPage();
-		int size = request.getSize() <= 0 ? 10: request.getSize();
-		
-		Pageable pageable = PageRequest.of(page -1 , size, Sort.by(Sort.Direction.DESC, "userNo"));
-		
-		String type = request.getType() == null? "all" : request.getType().trim().toLowerCase();
-		if(!type.equals("name") && !type.equals("email") && !type.equals("all")) {
-		type = "all";	
+		int size = request.getSize() <= 0 ? 10 : request.getSize();
+
+		Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "userNo"));
+
+		String type = request.getType() == null ? "all" : request.getType().trim().toLowerCase();
+		if (!type.equals("name") && !type.equals("email") && !type.equals("all")) {
+			type = "all";
 		}
 		String keyword = request.getKeyword() == null ? "" : request.getKeyword().trim();
-		
+
 		Page<User> result = userRepository.searchUsers(type, keyword, pageable);
-		
-		List<UserDTO> dtoList = result.stream()
-				.map(this::entityToDTO)
-				.toList();
-		return PageResponseDTO.<UserDTO>withAll()
-				.dtoList(dtoList)
-				.pageRequestDTO(request)
-				.totalCount(result.getTotalElements())
-				.build();
+
+		List<UserDTO> dtoList = result.stream().map(this::entityToDTO).toList();
+		return PageResponseDTO.<UserDTO>withAll().dtoList(dtoList).pageRequestDTO(request)
+				.totalCount(result.getTotalElements()).build();
+	}
+
+	@Override
+	public void restore(Long userNo) {
+		User user = userRepository.findById(userNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+		if ("1".equals(user.getEnabled())) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 활성화된 사용자입니다.");
+		}
+
+		user.changeEnabled("1");
+		userRepository.save(user);
 	}
 }

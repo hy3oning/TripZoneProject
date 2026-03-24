@@ -1,5 +1,5 @@
 package com.kh.trip.domain.enums;
 
-public enum ApprovalStatus {
+public enum HostApprovalStatus {
 	PENDING, APPROVED, REJECTED;
 }

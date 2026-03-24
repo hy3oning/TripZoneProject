@@ -89,4 +89,14 @@ public class Room extends BaseTimeEntity {
 		this.status = status;
 	}
 
+	// 객실 유형 변경
+	public void changeRoomType(String roomType) {
+		this.roomType = roomType;
+	}
+
+	// 최대 수용 인원 변경
+	public void changeMaxGuestCount(Integer maxGuestCount) {
+		this.maxGuestCount = maxGuestCount;
+	}
+
 }

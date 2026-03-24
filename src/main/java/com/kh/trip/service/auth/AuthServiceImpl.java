@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -118,12 +119,17 @@ public class AuthServiceImpl implements AuthService {
 	public LoginResponseDTO login(LoginRequestDTO request) {
 
 		// 사용자가 입력한 loginId로 인증 정보를 조회한다.
-		AuthUserPrincipal authUser = (AuthUserPrincipal) customUserDetailsService
-				.loadUserByUsername(request.getLoginId());
+		AuthUserPrincipal authUser;
+
+		try {
+			authUser = (AuthUserPrincipal) customUserDetailsService.loadUserByUsername(request.getLoginId());
+		} catch (UsernameNotFoundException e) {
+			throw new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
+		}
 
 		// 입력한 비밀번호와 DB에 저장된 암호화 비밀번호를 비교한다.
 		if (!passwordEncoder.matches(request.getPassword(), authUser.getPassword())) {
-			throw new BadCredentialsException("Invalid password");
+			throw new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
 		}
 
 		// 로그인 성공 시 access token과 refresh token을 생성한다.

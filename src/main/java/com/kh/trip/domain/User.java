@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -38,12 +40,21 @@ public class User extends BaseTimeEntity {
 	@Column(name = "PHONE", nullable = false, length = 20)
 	private String phone;
 
-	@Column(name = "GRADE_NO")
-	private Long gradeNo;
+	@ManyToOne
+	@JoinColumn(name = "GRADE_NO")
+	private MemberGrade memberGrade;
 
 	@Builder.Default
 	@Column(name = "MILEAGE", nullable = false)
 	private Long mileage = 0L;
+
+	@Builder.Default
+	@Column(name = "TOTAL_SPENT", nullable = false)
+	private Long totalSpent = 0L;
+
+	@Builder.Default
+	@Column(name = "STAY_COUNT", nullable = false)
+	private Long stayCount = 0L;
 
 	@Builder.Default
 	@Column(name = "ENABLED", nullable = false, length = 1)
@@ -51,6 +62,14 @@ public class User extends BaseTimeEntity {
 
 	public void changePhone(String phone) {
 		this.phone = phone;
+	}
+
+	public void addMileage(Long amount) {
+		this.mileage += amount;
+	}
+
+	public void useMileage(Long amount) {
+		this.mileage -= amount;
 	}
 
 	public void changeEnabled(String enabled) {
