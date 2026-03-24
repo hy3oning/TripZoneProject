@@ -1,7 +1,5 @@
 package com.kh.trip.service;
 
-import java.util.Optional;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,8 +29,9 @@ public class UserServiceImpl implements UserService {
 
 	private UserDTO entityToDTO(User user) {
 		return UserDTO.builder().userNo(user.getUserNo()).userName(user.getUserName()).email(user.getEmail())
-				.phone(user.getPhone()).gradeNo(user.getGradeNo()).mileage(user.getMileage()).enabled(user.getEnabled())
-				.build();
+				.phone(user.getPhone())
+				.gradeNo(user.getMemberGrade() != null ? user.getMemberGrade().getGradeNo() : null)
+				.mileage(user.getMileage()).enabled(user.getEnabled()).build();
 	}
 
 	@Override
