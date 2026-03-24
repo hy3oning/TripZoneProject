@@ -22,11 +22,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	// 활성/비활성 계정 조회
 	List<User> findByEnabled(String enabled);
 
-	// 관리자 회원 목록 조회 (type: name | email | all)
+	// 관리자 회원 목록 조회 (type: name | email | all, enabled: 0 | 1 | all)
 	@Query("""
 			select u
 			from User u
 			where (
+			:enabled = 'all' or u.enabled = :enabled
+			)
+			and(
 			    :keyword = '' or
 			    (:type = 'name' and lower(u.userName) like lower(concat('%', :keyword, '%'))) or
 			    (:type = 'email' and lower(u.email) like lower(concat('%', :keyword, '%'))) or
@@ -36,5 +39,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			    ))
 			)
 			""")
-	Page<User> searchUsers(@Param("type") String type, @Param("keyword") String keyword, Pageable pageable);
+	Page<User> searchUsers(
+			@Param("type") String type, 
+			@Param("keyword") String keyword,
+			@Param("enabled") String enabled, Pageable pageable);
 }
