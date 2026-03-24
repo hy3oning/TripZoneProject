@@ -1,8 +1,10 @@
 package com.kh.trip.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.kh.trip.controller.formatter.LocalDateFormatter;
@@ -10,6 +12,9 @@ import com.kh.trip.controller.formatter.LocalDateFormatter;
 @Configuration
 public class CustomServletConfig implements WebMvcConfigurer {
 
+	@Value("${com.kh.upload.path}")
+	private String uploadPath;
+	
 	@Override
 	public void addFormatters(FormatterRegistry registry) {
 		registry.addFormatter(new LocalDateFormatter());
@@ -22,4 +27,12 @@ public class CustomServletConfig implements WebMvcConfigurer {
 				.allowedHeaders("Authorization", "Cache-Control", "Content-Type");
 	}
 
+	@Override
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		// 브라우저에서 접근하는 url(/api/view/파일명)
+		registry.addResourceHandler("/api/view/**")
+				// 실제 D:/upload/ 폴더에서 파일을 찾아 전달
+				.addResourceLocations("file:///" + uploadPath + "/");
+	}
+	
 }

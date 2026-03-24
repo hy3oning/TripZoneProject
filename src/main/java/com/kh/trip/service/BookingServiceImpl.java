@@ -104,7 +104,7 @@ public class BookingServiceImpl implements BookingService {
 				Sort.by("bookingNo").descending());
 		User user = userRepository.findById(userNo)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 정보입니다."));
-		Page<Booking> result = repository.findByRoomId(user.getUserNo(), pageable);
+		Page<Booking> result = repository.findByUserId(user.getUserNo(), pageable);
 		
 
 		List<BookingDTO> dtoList = entityToDTO(user, result);
@@ -119,7 +119,7 @@ public class BookingServiceImpl implements BookingService {
 				Sort.by("bookingNo").descending());
 		User user = userRepository.findById(hostNo)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 정보입니다."));
-		Page<Booking> result = repository.findByUserId(user.getUserNo(), pageable);
+		Page<Booking> result = repository.findByRoomId(user.getUserNo(), pageable);
 
 		List<BookingDTO> dtoList = entityToDTO(user, result);
 		return PageResponseDTO.<BookingDTO>withAll().dtoList(dtoList).pageRequestDTO(pageRequestDTO)

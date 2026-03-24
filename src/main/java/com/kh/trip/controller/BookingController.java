@@ -35,10 +35,10 @@ public class BookingController {
 		return Map.of("result",bno);
 	}
 	
-	@GetMapping("/userlist")
-	public PageResponseDTO<BookingDTO> findByUserId(@AuthenticationPrincipal AuthUserPrincipal authUser,PageRequestDTO pageRequestDTO) {
-		log.info("findByUserId() userNo= " + authUser.getUserNo());
-		return service.findByUserId(authUser.getUserNo(), pageRequestDTO);
+	@GetMapping("/userlist/{uno}")
+	public PageResponseDTO<BookingDTO> findByUserId(@PathVariable(name = "uno") Long userNo,PageRequestDTO pageRequestDTO) {
+		log.info("findByUserId() userNo= " + userNo);
+		return service.findByUserId(userNo, pageRequestDTO);
 	}
 	
 	@GetMapping("/roomlist/{uno}")
