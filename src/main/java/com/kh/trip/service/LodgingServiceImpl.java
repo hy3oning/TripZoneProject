@@ -60,7 +60,7 @@ public class LodgingServiceImpl implements LodgingService {
 			throw new IllegalArgumentException("숙소명은 필수입니다.");
 		}
 
-		// 지역 필수 체크
+		// 숙소 유형 필수 체크
 		if (lodging.getLodgingType() == null) {
 			throw new IllegalArgumentException("숙소 유형은 필수입니다.");
 		}
@@ -70,16 +70,19 @@ public class LodgingServiceImpl implements LodgingService {
 			throw new IllegalArgumentException("주소는 필수입니다.");
 		}
 
+		// 상태값이 없으면 ACTIVE로 기본 설정
 		if (lodging.getStatus() == null) {
 			lodging.changeStatus(LodgingStatus.ACTIVE);
 		}
 
+		// roomDTO가 없으면 빈 리스트 생성
 		List<Room> roomList = lodgingDTO.getRoomDTO() == null ? List.of()
 				: lodgingDTO.getRoomDTO().stream().map(this::toRoomEntity).collect(Collectors.toList());
 
+		// 숙소 먼저 저장해서 lodgingNo 생성
 		Lodging savedLodging = lodgingRepository.save(lodging);
 
-		if (roomList != null && !roomList.isEmpty()) {
+		if (!roomList.isEmpty()) {
 			roomList.forEach(room -> room.changeLodgingNo(savedLodging.getLodgingNo()));
 			roomRepository.saveAll(roomList);
 		}
@@ -198,6 +201,7 @@ public class LodgingServiceImpl implements LodgingService {
 
 		// 4. Lodging,Images,Rooms를 하나의 상세 DTO로 묶어서 반환
 		return LodgingDetailDTO.builder().lodgingNo(lodging.getLodgingNo()) // 숙소 번호
+				.lodgingNo(lodging.getLodgingNo()) // 숙소 번호
 				.hostNo(lodging.getHostNo()) // 호스트 번호
 				.lodgingName(lodging.getLodgingName()) // 숙소명
 				.lodgingType(lodging.getLodgingType()) // 숙소 유형
@@ -211,8 +215,9 @@ public class LodgingServiceImpl implements LodgingService {
 				.checkInTime(lodging.getCheckInTime()) // 체크인 시간
 				.checkOutTime(lodging.getCheckOutTime()) // 체크아웃 시간
 				.status(lodging.getStatus()) // 숙소 상태
-				.images(images.stream().map(this::toLodgingImageDTO).toList())
-				.rooms(rooms.stream().map(this::toRoomSummaryDTO).toList()).build();
+				.images(images.stream().map(this::toLodgingImageDTO).toList()) // 이미지 목록
+				.rooms(rooms.stream().map(this::toRoomSummaryDTO).toList()) // 객실 목록
+				.build(); // 상세 DTO 생성
 	}
 
 	// DTO -> Entity 변환 메서드를 Impl 내부로 이동
@@ -263,7 +268,7 @@ public class LodgingServiceImpl implements LodgingService {
 
 	// RoomSummaryDTO -> Room Entity 변환도 Impl 내부에서 처리
 	private Room toRoomEntity(RoomSummaryDTO roomDTO) {
-		return Room.builder().roomNo(roomDTO.getRoomNo()) // 객실 번호 세팅
+		return Room.builder()
 				.roomName(roomDTO.getRoomName()) // 객실명 세팅
 				.roomType(roomDTO.getRoomType()) // 객실 유형 세팅
 				.roomDescription(roomDTO.getRoomDescription()) // 객실 설명 세팅
