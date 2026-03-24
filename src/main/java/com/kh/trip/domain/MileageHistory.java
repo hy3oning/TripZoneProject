@@ -69,4 +69,8 @@ public class MileageHistory extends BaseTimeEntity {
 
 	@Column(name = "EXPIRED_AT")
 	private LocalDateTime expiredAt;
+
+	public void changeStatus(MileageStatus status) {
+		this.status = status;
+	}
 }
