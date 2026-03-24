@@ -1,5 +1,6 @@
 package com.kh.trip.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -19,7 +20,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>{
 	Page<Booking> findByRoomId(@Param("userNo")Long userNo, Pageable pageable);
 	
 	@Query("select l from Booking b join b.room r join Lodging l on r.lodgingNo = l.lodgingNo where b.user.userNo = :userNo")
-	Lodging findLodigByUserId(Long userNo);     
+	List<Lodging> findLodigByUserId(Long userNo);     
 	
 		 /**
 		  *  리뷰 작성 검증용 상세 조회
