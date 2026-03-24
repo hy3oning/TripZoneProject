@@ -46,10 +46,10 @@ public class LodgingServiceImpl implements LodgingService {
 
 	// 숙소 등록
 	@Override
-	public LodgingDTO createLodging(LodgingDTO lodgingDTO) { 
-		
+	public LodgingDTO createLodging(LodgingDTO lodgingDTO) {
+
 		Lodging lodging = toLodgingEntity(lodgingDTO);
-		
+
 		// null 체크
 		if (lodging == null) {
 			throw new IllegalArgumentException("숙소 정보가 없습니다.");
@@ -74,12 +74,8 @@ public class LodgingServiceImpl implements LodgingService {
 			lodging.changeStatus(LodgingStatus.ACTIVE);
 		}
 
-		
-		List<Room> roomList = lodgingDTO.getRoomDTO() == null
-				? List.of()
-				: lodgingDTO.getRoomDTO().stream()
-						.map(RoomSummaryDTO::toEntity)
-						.collect(Collectors.toList());
+		List<Room> roomList = lodgingDTO.getRoomDTO() == null ? List.of()
+				: lodgingDTO.getRoomDTO().stream().map(this::toRoomEntity).collect(Collectors.toList());
 
 		Lodging savedLodging = lodgingRepository.save(lodging);
 
@@ -88,68 +84,59 @@ public class LodgingServiceImpl implements LodgingService {
 			roomRepository.saveAll(roomList);
 		}
 
-		return toLodgingDTO(savedLodging); 
+		return toLodgingDTO(savedLodging);
 	}
 
 	// 숙소 단건 조회
 	@Override
 	@Transactional(readOnly = true)
-	public LodgingDTO getLodging(Long lodgingNo) { 
+	public LodgingDTO getLodging(Long lodgingNo) {
 		Lodging lodging = lodgingRepository.findById(lodgingNo)
-				.orElseThrow(() 
-				-> new NoSuchElementException("해당 숙소를 찾을 수 없습니다. lodgingNo=" + lodgingNo));
+				.orElseThrow(() -> new NoSuchElementException("해당 숙소를 찾을 수 없습니다. lodgingNo=" + lodgingNo));
 
-		return toLodgingDTO(lodging); 
+		return toLodgingDTO(lodging);
 	}
 
 	// 숙소 전체 목록 조회
 	@Override
 	@Transactional(readOnly = true)
-	public List<LodgingDTO> getAllLodgings() { 
-		return lodgingRepository.findByStatus(LodgingStatus.ACTIVE)
-				.stream()
-				.map(this::toLodgingDTO)  
-				.toList();
+	public List<LodgingDTO> getAllLodgings() {
+		return lodgingRepository.findByStatus(LodgingStatus.ACTIVE).stream().map(this::toLodgingDTO).toList();
 	}
 
 	// 지역으로 숙소 목록 조회
 	@Override
 	@Transactional(readOnly = true)
-	public List<LodgingDTO> getLodgingsByRegion(String region) { 
+	public List<LodgingDTO> getLodgingsByRegion(String region) {
 		if (region == null || region.isBlank()) {
 			throw new IllegalArgumentException("지역 값이 비어 있습니다.");
 		}
 
-		return lodgingRepository.findByRegionAndStatus(region, LodgingStatus.ACTIVE)
-				.stream()
-				.map(this::toLodgingDTO)
+		return lodgingRepository.findByRegionAndStatus(region, LodgingStatus.ACTIVE).stream().map(this::toLodgingDTO)
 				.toList();
 	}
 
 	// 숙소명 키워드 검색
 	@Override
 	@Transactional(readOnly = true)
-	public List<LodgingDTO> searchLodgingsByName(String keyword) { 
+	public List<LodgingDTO> searchLodgingsByName(String keyword) {
 		if (keyword == null || keyword.isBlank()) {
 			throw new IllegalArgumentException("검색어가 비어 있습니다.");
 		}
 
-		return lodgingRepository.findByLodgingNameContainingAndStatus(keyword, LodgingStatus.ACTIVE)
-				.stream()
-				.map(this::toLodgingDTO)
-				.toList();
+		return lodgingRepository.findByLodgingNameContainingAndStatus(keyword, LodgingStatus.ACTIVE).stream()
+				.map(this::toLodgingDTO).toList();
 	}
 
 	// 숙소 수정
 	@Override
-	public LodgingDTO updateLodging(Long lodgingNo, LodgingDTO lodgingDTO) { 
+	public LodgingDTO updateLodging(Long lodgingNo, LodgingDTO lodgingDTO) {
 
 		Lodging findLodging = lodgingRepository.findById(lodgingNo)
-				.orElseThrow(() 
-				-> new NoSuchElementException("수정할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
+				.orElseThrow(() -> new NoSuchElementException("수정할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
 		applyLodgingUpdate(findLodging, lodgingDTO);
 		Lodging updatedLodging = lodgingRepository.save(findLodging);
-		return toLodgingDTO(updatedLodging); 
+		return toLodgingDTO(updatedLodging);
 	}
 
 	// 숙소 수정값 반영 메서드 domain에 있던 수정 기능을 Service로 옮긴 버전
@@ -157,23 +144,23 @@ public class LodgingServiceImpl implements LodgingService {
 	private void applyLodgingUpdate(Lodging findLodging, LodgingDTO lodgingDTO) {
 
 		if (lodgingDTO.getLodgingName() != null && !lodgingDTO.getLodgingName().isBlank()) {
-			findLodging.changeLodgingName(lodgingDTO.getLodgingName()); 
+			findLodging.changeLodgingName(lodgingDTO.getLodgingName());
 		}
 
 		if (lodgingDTO.getDescription() != null) {
-			findLodging.changeDescription(lodgingDTO.getDescription()); 
+			findLodging.changeDescription(lodgingDTO.getDescription());
 		}
 
 		if (lodgingDTO.getCheckInTime() != null) {
-			findLodging.changeCheckInTime(lodgingDTO.getCheckInTime()); 
+			findLodging.changeCheckInTime(lodgingDTO.getCheckInTime());
 		}
 
 		if (lodgingDTO.getCheckOutTime() != null) {
-			findLodging.changeCheckOutTime(lodgingDTO.getCheckOutTime()); 
+			findLodging.changeCheckOutTime(lodgingDTO.getCheckOutTime());
 		}
 
 		if (lodgingDTO.getStatus() != null) {
-			findLodging.changeStatus(lodgingDTO.getStatus()); 
+			findLodging.changeStatus(lodgingDTO.getStatus());
 		}
 	}
 
@@ -182,15 +169,14 @@ public class LodgingServiceImpl implements LodgingService {
 	public void deleteLodging(Long lodgingNo) {
 
 		Lodging findLodging = lodgingRepository.findById(lodgingNo)
-				.orElseThrow(() 
-				-> new NoSuchElementException("삭제할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
+				.orElseThrow(() -> new NoSuchElementException("삭제할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
 
 		findLodging.changeStatus(LodgingStatus.INACTIVE);
 		lodgingRepository.save(findLodging);
-		
+
 		List<Room> roomList = roomRepository.findByLodgingNo(lodgingNo);
 		if (roomList != null && !roomList.isEmpty()) {
-			roomList.forEach(room -> room.changeStatus(RoomStatus.UNAVAILABLE)); 
+			roomList.forEach(room -> room.changeStatus(RoomStatus.UNAVAILABLE));
 			roomRepository.saveAll(roomList);
 		}
 	}
@@ -211,8 +197,7 @@ public class LodgingServiceImpl implements LodgingService {
 		List<Room> rooms = roomRepository.findByLodgingNo(lodgingNo);
 
 		// 4. Lodging,Images,Rooms를 하나의 상세 DTO로 묶어서 반환
-		return LodgingDetailDTO.builder()
-				.lodgingNo(lodging.getLodgingNo()) // 숙소 번호
+		return LodgingDetailDTO.builder().lodgingNo(lodging.getLodgingNo()) // 숙소 번호
 				.hostNo(lodging.getHostNo()) // 호스트 번호
 				.lodgingName(lodging.getLodgingName()) // 숙소명
 				.lodgingType(lodging.getLodgingType()) // 숙소 유형
@@ -227,14 +212,12 @@ public class LodgingServiceImpl implements LodgingService {
 				.checkOutTime(lodging.getCheckOutTime()) // 체크아웃 시간
 				.status(lodging.getStatus()) // 숙소 상태
 				.images(images.stream().map(this::toLodgingImageDTO).toList())
-				.rooms(rooms.stream().map(RoomSummaryDTO::fromEntity).toList())
-				.build(); 
+				.rooms(rooms.stream().map(this::toRoomSummaryDTO).toList()).build();
 	}
 
 	// DTO -> Entity 변환 메서드를 Impl 내부로 이동
 	private Lodging toLodgingEntity(LodgingDTO lodgingDTO) {
-		return Lodging.builder()
-				.lodgingNo(lodgingDTO.getLodgingNo()) // 숙소 번호 세팅
+		return Lodging.builder().lodgingNo(lodgingDTO.getLodgingNo()) // 숙소 번호 세팅
 				.hostNo(lodgingDTO.getHostNo()) // 호스트 번호 세팅
 				.lodgingName(lodgingDTO.getLodgingName()) // 숙소명 세팅
 				.lodgingType(lodgingDTO.getLodgingType()) // 숙소 유형 세팅
@@ -253,8 +236,7 @@ public class LodgingServiceImpl implements LodgingService {
 
 	// Entity -> DTO 변환 메서드를 Impl 내부로 이동
 	private LodgingDTO toLodgingDTO(Lodging lodging) {
-		return LodgingDTO.builder()
-				.lodgingNo(lodging.getLodgingNo()) // 숙소 번호 세팅
+		return LodgingDTO.builder().lodgingNo(lodging.getLodgingNo()) // 숙소 번호 세팅
 				.hostNo(lodging.getHostNo()) // 호스트 번호 세팅
 				.lodgingName(lodging.getLodgingName()) // 숙소명 세팅
 				.lodgingType(lodging.getLodgingType()) // 숙소 유형 세팅
@@ -273,10 +255,36 @@ public class LodgingServiceImpl implements LodgingService {
 
 	// LodgingImage Entity -> DTO 변환도 Impl 내부에서 처리
 	private LodgingImageDTO toLodgingImageDTO(LodgingImage lodgingImage) {
-		return LodgingImageDTO.builder()
-				.imageNo(lodgingImage.getImageNo()) // 이미지 번호 세팅
+		return LodgingImageDTO.builder().imageNo(lodgingImage.getImageNo()) // 이미지 번호 세팅
 				.imageUrl(lodgingImage.getImageUrl()) // 이미지 경로 세팅
 				.sortOrder(lodgingImage.getSortOrder()) // 정렬 순서 세팅
 				.build(); // DTO 생성
 	}
+
+	// RoomSummaryDTO -> Room Entity 변환도 Impl 내부에서 처리
+	private Room toRoomEntity(RoomSummaryDTO roomDTO) {
+		return Room.builder().roomNo(roomDTO.getRoomNo()) // 객실 번호 세팅
+				.roomName(roomDTO.getRoomName()) // 객실명 세팅
+				.roomType(roomDTO.getRoomType()) // 객실 유형 세팅
+				.roomDescription(roomDTO.getRoomDescription()) // 객실 설명 세팅
+				.maxGuestCount(roomDTO.getMaxGuestCount()) // 최대 수용 인원 세팅
+				.pricePerNight(roomDTO.getPricePerNight()) // 1박 가격 세팅
+				.roomCount(roomDTO.getRoomCount()) // 객실 수 세팅
+				.status(roomDTO.getStatus() != null ? roomDTO.getStatus() : RoomStatus.AVAILABLE) // 상태 세팅
+				.build(); // Entity 생성
+	}
+
+	// Room Entity -> RoomSummaryDTO 변환도 Impl 내부에서 처리
+	private RoomSummaryDTO toRoomSummaryDTO(Room room) {
+		return RoomSummaryDTO.builder().roomNo(room.getRoomNo()) // 객실 번호 세팅
+				.roomName(room.getRoomName()) // 객실명 세팅
+				.roomType(room.getRoomType()) // 객실 유형 세팅
+				.roomDescription(room.getRoomDescription()) // 객실 설명 세팅
+				.maxGuestCount(room.getMaxGuestCount()) // 최대 수용 인원 세팅
+				.pricePerNight(room.getPricePerNight()) // 1박 가격 세팅
+				.roomCount(room.getRoomCount()) // 객실 수 세팅
+				.status(room.getStatus()) // 상태 세팅
+				.build(); // DTO 생성
+	}
+
 }
