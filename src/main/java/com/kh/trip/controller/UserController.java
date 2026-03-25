@@ -30,7 +30,7 @@ public class UserController {
 	private final UserService userService;
 
 	@GetMapping("/me") // 로그인된 사용자 정보 가져오는거
-	@PreAuthorize("hasRole('User')")
+	@PreAuthorize("hasRole('USER')")
 	public UserDTO getMyInfo(@AuthenticationPrincipal AuthUserPrincipal principal) {
 		AuthUserPrincipal authUser = requirePrincipal(principal);
 
@@ -46,7 +46,7 @@ public class UserController {
 	
 	//회원 정보 수정
 	@PatchMapping("/{userNo}/update")
-	@PreAuthorize("hasRole('User')")
+	@PreAuthorize("hasRole('USER')")
 	public Map<String, String> update(@PathVariable Long userNo, @RequestBody UserUpdateRequestDTO request,
 			@AuthenticationPrincipal AuthUserPrincipal authUser) {
 		if (!authUser.getUserNo().equals(userNo)) {
@@ -58,7 +58,7 @@ public class UserController {
 	
 	// 회원 탈퇴
 	@PatchMapping("/{userNo}/delete")
-	@PreAuthorize("hasRole('User')")
+	@PreAuthorize("hasRole('USER')")
 	public Map<String, String> delete(@PathVariable Long userNo, @AuthenticationPrincipal AuthUserPrincipal authUser) {
 
 		if (!authUser.getUserNo().equals(userNo)) {
