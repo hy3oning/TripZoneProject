@@ -13,5 +13,7 @@ public interface BookingService {
 	PageResponseDTO<BookingDTO> findByRoomId(Long hostNo,PageRequestDTO pageRequestDTO);
 
 	void delete(Long bookingNo);
+	
+	void complete(Long bookingNo);
 
 }
