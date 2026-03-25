@@ -10,22 +10,31 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.domain.Booking;
 import com.kh.trip.domain.Lodging;
+import com.kh.trip.domain.MileageHistory;
+import com.kh.trip.domain.Payment;
 import com.kh.trip.domain.Room;
 import com.kh.trip.domain.User;
 import com.kh.trip.domain.UserCoupon;
 import com.kh.trip.domain.enums.BookingStatus;
 import com.kh.trip.domain.enums.CouponStatus;
 import com.kh.trip.domain.enums.DiscountType;
+import com.kh.trip.domain.enums.MileageChangeType;
+import com.kh.trip.domain.enums.MileageStatus;
+import com.kh.trip.domain.enums.PaymentStatus;
 import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.BookingDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.repository.BookingRepository;
+import com.kh.trip.repository.MileageHistoryRepository;
+import com.kh.trip.repository.PaymentRepository;
 import com.kh.trip.repository.RoomRepository;
 import com.kh.trip.repository.UserCouponRepository;
 import com.kh.trip.repository.UserRepository;
@@ -42,6 +51,8 @@ public class BookingServiceImpl implements BookingService {
 	private final UserCouponRepository userCouponRepository;
 	private final UserRepository userRepository;
 	private final RoomRepository roomRepository;
+	private final PaymentRepository paymentRepository;
+	private final MileageHistoryRepository mileageHistoryRepository;
 
 	@Override
 	public Long save(BookingDTO bookingDTO) {
@@ -56,7 +67,8 @@ public class BookingServiceImpl implements BookingService {
 			throw new IllegalArgumentException("예약이 불가한 방입니다.");
 
 		// 숙박 일수 계산 (체크아웃 날짜 - 체크인 날짜)
-		Long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate().toLocalDate(), bookingDTO.getCheckOutDate().toLocalDate());
+		Long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate().toLocalDate(),
+				bookingDTO.getCheckOutDate().toLocalDate());
 		Long roomPrice = room.getPricePerNight() * daysBetween;
 		Long totalPrice = roomPrice;
 		Long discountAmount = 0L;
@@ -105,7 +117,6 @@ public class BookingServiceImpl implements BookingService {
 		User user = userRepository.findById(userNo)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 정보입니다."));
 		Page<Booking> result = repository.findByUserId(user.getUserNo(), pageable);
-		
 
 		List<BookingDTO> dtoList = entityToDTO(user, result);
 		return PageResponseDTO.<BookingDTO>withAll().dtoList(dtoList).pageRequestDTO(pageRequestDTO)
@@ -146,25 +157,62 @@ public class BookingServiceImpl implements BookingService {
 		return result.getContent().stream().map(booking -> {
 			Long targetLodgingNo = booking.getRoom().getLodgingNo();
 			return BookingDTO.builder().bookingNo(booking.getBookingNo()).userNo(user.getUserNo())
-						.roomNo(booking.getRoom().getRoomNo()).lodgingName(findLodgingName(user, targetLodgingNo))
-						.userCouponNo(booking.getUserCoupon()!=null? booking.getUserCoupon().getUserCouponNo():null).roomName(booking.getRoom().getRoomName())
-						.checkInDate(booking.getCheckInDate()).checkOutDate(booking.getCheckOutDate())
-						.guestCount(booking.getGuestCount()).pricePerNight(booking.getPricePerNight())
-						.discountAmount(booking.getDiscountAmount()).totalPrice(booking.getTotalPrice())
-						.status(booking.getStatus()).requestMessage(booking.getRequestMessage())
-						.regDate(booking.getRegDate())
-						.build();})
-				.collect(Collectors.toList());
+					.roomNo(booking.getRoom().getRoomNo()).lodgingName(findLodgingName(user, targetLodgingNo))
+					.userCouponNo(booking.getUserCoupon() != null ? booking.getUserCoupon().getUserCouponNo() : null)
+					.roomName(booking.getRoom().getRoomName()).checkInDate(booking.getCheckInDate())
+					.checkOutDate(booking.getCheckOutDate()).guestCount(booking.getGuestCount())
+					.pricePerNight(booking.getPricePerNight()).discountAmount(booking.getDiscountAmount())
+					.totalPrice(booking.getTotalPrice()).status(booking.getStatus())
+					.requestMessage(booking.getRequestMessage()).regDate(booking.getRegDate()).build();
+		}).collect(Collectors.toList());
 	}
-	
+
 	public String findLodgingName(User user, Long targetLodgingNo) {
 		String lodgingName = null;
 		List<Lodging> lodgingList = repository.findLodigByUserId(user.getUserNo());
-		for(Lodging lodging : lodgingList) {
-			if(lodging.getLodgingNo().equals(targetLodgingNo)) {
+		for (Lodging lodging : lodgingList) {
+			if (lodging.getLodgingNo().equals(targetLodgingNo)) {
 				lodgingName = lodging.getLodgingName();
 			}
 		}
 		return lodgingName;
 	}
+
+	@Override
+	public void complete(Long bookingNo) {
+		Booking booking = repository.findById(bookingNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 예약입니다."));
+		if (booking.getStatus() == BookingStatus.COMPLETED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 숙박 완료된 예약입니다.");
+		}
+		if (booking.getStatus() == BookingStatus.CANCELED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "취소된 예약은 완료 처리할 수 없습니다.");
+		}
+		Payment payment = paymentRepository.findByBooking_BookingNoOrderByPaymentNoDesc(bookingNo).stream().findFirst()
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "예약에 대한 결제 정보가 없습니다."));
+		if (payment.getPaymentStatus() != PaymentStatus.PAID) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "결제 완료된 예약만 숙박 완료 처리할 수 있습니다.");
+		}
+
+		boolean alreadyEarned = mileageHistoryRepository.existsByPayment_PaymentNoAndChangeTypeAndStatus(
+				payment.getPaymentNo(), MileageChangeType.EARN, MileageStatus.NORMAL);
+		if (alreadyEarned) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 적립 처리된 예약입니다.");
+		}
+
+		booking.complete();
+
+		User user = booking.getUser();
+		Long earnedMileage = payment.getPaymentAmount() / 100;
+		user.addMileage(earnedMileage);
+
+		MileageHistory mileageHistory = MileageHistory.builder().user(user).booking(booking).payment(payment)
+				.changeType(MileageChangeType.EARN).changeAmount(earnedMileage).balanceAfter(user.getMileage())
+				.reason("숙박 완료 마일리지 적립").status(MileageStatus.NORMAL).build();
+
+		mileageHistoryRepository.save(mileageHistory);
+		userRepository.save(user);
+		repository.save(booking);
+	}
+
 }

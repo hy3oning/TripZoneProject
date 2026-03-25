@@ -38,22 +38,22 @@ import lombok.ToString;
 public class Booking {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BOOKINGS")
-	@SequenceGenerator(name = "SEQ_BOOKINGS",sequenceName = "SEQ_BOOKINGS", allocationSize = 1)
+	@SequenceGenerator(name = "SEQ_BOOKINGS", sequenceName = "SEQ_BOOKINGS", allocationSize = 1)
 	@Column(name = "BOOKING_NO")
 	private Long bookingNo;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
 	@JoinColumn(name = "USER_NO", nullable = false) // 실제 DB의 FK 컬럼명
 	private User user;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
 	@JoinColumn(name = "ROOM_NO", nullable = false) // 실제 DB의 FK 컬럼명
 	private Room room;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
 	@JoinColumn(name = "USER_COUPON_NO") // 실제 DB의 FK 컬럼명
 	private UserCoupon userCoupon;
-	
+
 	@Column(name = "CHECK_IN_DATE", nullable = false)
 	private LocalDateTime checkInDate;
 
@@ -63,55 +63,58 @@ public class Booking {
 	@Column(name = "GUEST_COUNT", nullable = false)
 	@Positive
 	private Long guestCount;
-	
+
 	@Column(name = "PRICE_PER_NIGHT", nullable = false)
 	@Positive
 	private Long pricePerNight;
-	
+
 	@Builder.Default
 	@Column(name = "DISCOUNT_AMOUNT", nullable = false)
 	@Min(0)
 	private Long discountAmount = 0L;
-	
+
 	@Column(name = "TOTAL_PRICE", nullable = false)
 	@Min(0)
 	private Long totalPrice;
-	
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "STATUS", nullable = false)
 	@Builder.Default
 	private BookingStatus status = BookingStatus.PENDING; // pending, confirmed, canceled, completed
-	
+
 	@Column(name = "REQUEST_MESSAGE", length = 500)
-	private String requestMessage; 
-	
-    @Column(name = "REG_DATE", nullable = false, updatable = false)
-    @CreationTimestamp
+	private String requestMessage;
+
+	@Column(name = "REG_DATE", nullable = false, updatable = false)
+	@CreationTimestamp
 	private LocalDateTime regDate;
-	
-    
+
 	@PrePersist
 	public void validateNewBooking() {
-	    // 1. 체크아웃 > 체크인 검증
+		// 1. 체크아웃 > 체크인 검증
 		if (checkInDate != null && checkOutDate != null) {
-            // 체크아웃이 체크인보다 이전이거나 같으면 안됨
-            if (!checkOutDate.isAfter(checkInDate)) {
-                throw new IllegalStateException("체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.");
-            }
-        }
-	    
-	    // 2. 과거 날짜 예약 방지
-	    if (checkInDate.isBefore(LocalDateTime.now())) {
-	        throw new IllegalStateException("과거 날짜로는 예약할 수 없습니다.");
-	    }
+			// 체크아웃이 체크인보다 이전이거나 같으면 안됨
+			if (!checkOutDate.isAfter(checkInDate)) {
+				throw new IllegalStateException("체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.");
+			}
+		}
+
+		// 2. 과거 날짜 예약 방지
+		if (checkInDate.isBefore(LocalDateTime.now())) {
+			throw new IllegalStateException("과거 날짜로는 예약할 수 없습니다.");
+		}
 	}
-	
+
 	public void cancel() {
-        this.status = BookingStatus.CANCELED;
-        
-        // 연관된 쿠폰이 있다면 복구
-        if (this.userCoupon != null) {
-            this.userCoupon.restore(); // status를 ACTIVE로 바꾸는 메서드
-        }
-    }
+		this.status = BookingStatus.CANCELED;
+
+		// 연관된 쿠폰이 있다면 복구
+		if (this.userCoupon != null) {
+			this.userCoupon.restore(); // status를 ACTIVE로 바꾸는 메서드
+		}
+	}
+
+	public void complete() {
+		this.status = BookingStatus.COMPLETED;
+	}
 }

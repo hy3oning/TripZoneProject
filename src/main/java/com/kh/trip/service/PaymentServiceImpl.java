@@ -13,6 +13,7 @@ import com.kh.trip.domain.Booking;
 import com.kh.trip.domain.MileageHistory;
 import com.kh.trip.domain.Payment;
 import com.kh.trip.domain.User;
+import com.kh.trip.domain.enums.BookingStatus;
 import com.kh.trip.domain.enums.MileageChangeType;
 import com.kh.trip.domain.enums.MileageStatus;
 import com.kh.trip.domain.enums.PaymentPayMethod;
@@ -79,18 +80,7 @@ public class PaymentServiceImpl implements PaymentService {
 		payment.changePaymentStatus(PaymentStatus.PAID);
 		payment.changeApprovedAt(LocalDateTime.now());
 
-		Booking booking = payment.getBooking();
-		User user = booking.getUser();
-
-		Long earnedMileage = payment.getPaymentAmount() / 100;
-		user.addMileage(earnedMileage);
-
-		MileageHistory mileageHistory = MileageHistory.builder().user(user).booking(booking).payment(payment)
-				.changeType(MileageChangeType.EARN).changeAmount(earnedMileage).balanceAfter(user.getMileage())
-				.reason("결제 완료 마일리지 적립").status(MileageStatus.NORMAL).build();
-		mileageHistoryRepository.save(mileageHistory);
 		paymentRepository.save(payment);
-		userRepository.save(user);
 	}
 
 	@Override
@@ -98,6 +88,10 @@ public class PaymentServiceImpl implements PaymentService {
 		Payment payment = paymentRepository.findById(paymentNo).orElseThrow(
 				() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 결제입니다. paymentNo=" + paymentNo));
 
+		Booking booking = payment.getBooking();
+		if (booking.getStatus() == BookingStatus.COMPLETED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "숙박 완료된 예약의 결제는 취소할 수 없습니다.");
+		}
 		if (payment.getPaymentStatus() == PaymentStatus.CANCELED) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 취소된 결제입니다. paymentNo=" + paymentNo);
 		}
