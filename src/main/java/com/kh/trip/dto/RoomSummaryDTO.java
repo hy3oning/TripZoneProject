@@ -1,5 +1,7 @@
 package com.kh.trip.dto;
 
+import java.util.List;
+
 import com.kh.trip.domain.enums.RoomStatus;
 
 import lombok.AllArgsConstructor;
@@ -23,5 +25,6 @@ public class RoomSummaryDTO {
 	private Integer pricePerNight; // 1박 가격
 	private Integer roomCount; // 객실 수
 	private RoomStatus status; // 객실 상태
+	private List<RoomImageDTO> images; // 객실 목록 조회 시 이미지 목록 포함
 
 }
