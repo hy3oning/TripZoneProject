@@ -117,4 +117,8 @@ public class Booking {
 	public void complete() {
 		this.status = BookingStatus.COMPLETED;
 	}
+	
+	public void confirm() {
+		this.status = BookingStatus.CONFIRMED;
+	}
 }

@@ -3,7 +3,6 @@ package com.kh.trip.service;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -27,7 +26,6 @@ import com.kh.trip.domain.enums.CouponStatus;
 import com.kh.trip.domain.enums.DiscountType;
 import com.kh.trip.domain.enums.MileageChangeType;
 import com.kh.trip.domain.enums.MileageStatus;
-import com.kh.trip.domain.enums.PaymentStatus;
 import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.BookingDTO;
 import com.kh.trip.dto.PageRequestDTO;
@@ -47,6 +45,10 @@ import lombok.extern.log4j.Log4j2;
 @Transactional
 @Log4j2
 public class BookingServiceImpl implements BookingService {
+
+	// 이미 있는 결제 취소 로직을 그대로 사용하려고 주입한 service
+	private final PaymentService paymentService;
+
 	private final BookingRepository repository;
 	private final UserCouponRepository userCouponRepository;
 	private final UserRepository userRepository;
@@ -138,19 +140,37 @@ public class BookingServiceImpl implements BookingService {
 	}
 
 	@Override
-	public void delete(Long bookingNo) {
-		Optional<Booking> result = repository.findById(bookingNo);
-		Booking booking = result.orElseThrow();
-		// 쿠폰복구 처리도 포함된 함수
-		booking.cancel();
-		repository.save(booking);
-		Optional<Room> resultRoom = roomRepository.findById(booking.getRoom().getRoomNo());
-		Room room = resultRoom.orElseThrow();
-		// 변경해야할 부분
-		room.changeStatus(RoomStatus.AVAILABLE);
-		roomRepository.save(room);
+	public void cancelBooking(Long bookingNo) {
+		Booking booking = repository.findById(bookingNo).orElseThrow(
+				() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 예약입니다. bookingNo=" + bookingNo));
 
-		// 환불처리로직도 추가해야함.
+		if (booking.getStatus() == BookingStatus.CANCELED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 취소된 예약입니다. bookingNo=" + bookingNo);
+		}
+
+		if (booking.getStatus() == BookingStatus.COMPLETED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "숙박 완료된 예약은 취소할 수 없습니다. bookingNo=" + bookingNo);
+		}
+
+		if (booking.getStatus() == BookingStatus.CONFIRMED) {
+			Payment payment = paymentRepository.findByBooking_BookingNoOrderByPaymentNoDesc(bookingNo).stream()
+					.findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+							"예약에 대한 결제 정보가 없습니다. bookingNo=" + bookingNo));
+
+			paymentService.cancel(payment.getPaymentNo());
+			return;
+		}
+
+		if (booking.getStatus() == BookingStatus.PENDING) {
+			booking.cancel();
+			repository.save(booking);
+
+			Room room = roomRepository.findById(booking.getRoom().getRoomNo())
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "객실을 찾을 수 없습니다."));
+			room.changeStatus(RoomStatus.AVAILABLE);
+			roomRepository.save(room);
+		}
+
 	}
 
 	public List<BookingDTO> entityToDTO(User user, Page<Booking> result) {
@@ -182,17 +202,20 @@ public class BookingServiceImpl implements BookingService {
 	public void complete(Long bookingNo) {
 		Booking booking = repository.findById(bookingNo)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 예약입니다."));
+
 		if (booking.getStatus() == BookingStatus.COMPLETED) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 숙박 완료된 예약입니다.");
 		}
+
 		if (booking.getStatus() == BookingStatus.CANCELED) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "취소된 예약은 완료 처리할 수 없습니다.");
 		}
+
+		if (booking.getStatus() != BookingStatus.CONFIRMED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "예약 확정 상태만 숙박 완료 처리할 수 있습니다.");
+		}
 		Payment payment = paymentRepository.findByBooking_BookingNoOrderByPaymentNoDesc(bookingNo).stream().findFirst()
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "예약에 대한 결제 정보가 없습니다."));
-		if (payment.getPaymentStatus() != PaymentStatus.PAID) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "결제 완료된 예약만 숙박 완료 처리할 수 있습니다.");
-		}
 
 		boolean alreadyEarned = mileageHistoryRepository.existsByPayment_PaymentNoAndChangeTypeAndStatus(
 				payment.getPaymentNo(), MileageChangeType.EARN, MileageStatus.NORMAL);

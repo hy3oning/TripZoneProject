@@ -47,9 +47,9 @@ public class BookingController {
 	}
 
 	@DeleteMapping("/{bno}")
-	public Map<String, String> delete(@PathVariable(name = "bno") Long bookingNo) {
+	public Map<String, String> cancelBooking(@PathVariable(name = "bno") Long bookingNo) {
 		log.info("findByUserId() = " + bookingNo);
-		service.delete(bookingNo);
+		service.cancelBooking(bookingNo);
 		return Map.of("result", "SUCCESS");
 	}
 

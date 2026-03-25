@@ -1,5 +1,6 @@
 package com.kh.trip.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,16 +13,19 @@ import org.springframework.web.server.ResponseStatusException;
 import com.kh.trip.domain.Booking;
 import com.kh.trip.domain.MileageHistory;
 import com.kh.trip.domain.Payment;
+import com.kh.trip.domain.Room;
 import com.kh.trip.domain.User;
 import com.kh.trip.domain.enums.BookingStatus;
 import com.kh.trip.domain.enums.MileageChangeType;
 import com.kh.trip.domain.enums.MileageStatus;
 import com.kh.trip.domain.enums.PaymentPayMethod;
 import com.kh.trip.domain.enums.PaymentStatus;
+import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.PaymentDTO;
 import com.kh.trip.repository.BookingRepository;
 import com.kh.trip.repository.MileageHistoryRepository;
 import com.kh.trip.repository.PaymentRepository;
+import com.kh.trip.repository.RoomRepository;
 import com.kh.trip.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,7 @@ public class PaymentServiceImpl implements PaymentService {
 	private final UserRepository userRepository;
 	private final PaymentRepository paymentRepository;
 	private final BookingRepository bookingRepository;
+	private final RoomRepository roomRepository;
 	private final MileageHistoryRepository mileageHistoryRepository;
 
 	@Override
@@ -80,7 +85,11 @@ public class PaymentServiceImpl implements PaymentService {
 		payment.changePaymentStatus(PaymentStatus.PAID);
 		payment.changeApprovedAt(LocalDateTime.now());
 
+		Booking booking = payment.getBooking();
+		booking.confirm();
+
 		paymentRepository.save(payment);
+		bookingRepository.save(booking);
 	}
 
 	@Override
@@ -110,11 +119,26 @@ public class PaymentServiceImpl implements PaymentService {
 				userRepository.save(user);
 			}
 		}
+
+		LocalDate today = LocalDate.now();
+		LocalDate noRefundDate = booking.getCheckInDate().toLocalDate().minusDays(1);
+
+		if (!today.isBefore(noRefundDate)) {
+			payment.changeRefundAmount(0L);
+		} else {
+			payment.changeRefundAmount(payment.getPaymentAmount());
+		}
+
 		payment.changePaymentStatus(PaymentStatus.CANCELED);
 		payment.changeCanceledAt(LocalDateTime.now());
-		payment.changeRefundAmount(payment.getPaymentAmount());
+		booking.cancel();
+
+		Room room = booking.getRoom();
+		room.changeStatus(RoomStatus.AVAILABLE);
 
 		paymentRepository.save(payment);
+		bookingRepository.save(booking);
+		roomRepository.save(room);
 
 	}
 
