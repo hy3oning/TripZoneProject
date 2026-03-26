@@ -9,4 +9,6 @@ public interface HostProfileService {
 	Long register(HostProfileDTO hostProfileDTO);
 
 	List<HostProfileDTO> getList();
+	
+	HostProfileDTO get(Long hostNo);
 }

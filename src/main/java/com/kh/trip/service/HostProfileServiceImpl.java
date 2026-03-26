@@ -35,6 +35,13 @@ public class HostProfileServiceImpl implements HostProfileService {
 		return hostProfileList.stream().map(this::entityToDTO).toList();
 	}
 
+	@Override
+	public HostProfileDTO get(Long hostNo) {
+		HostProfile hostProfile = hostProfileRepository.findById(hostNo)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 호스트 프로필 입니다."));
+		return entityToDTO(hostProfile);
+	}
+
 	private HostProfile dtoToEntity(HostProfileDTO hostProfileDTO) {
 		User user = userRepository.findById(hostProfileDTO.getUserNo())
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. userNo=" + hostProfileDTO.getUserNo()));
