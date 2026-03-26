@@ -26,5 +26,6 @@ public class RoomSummaryDTO {
 	private Integer roomCount; // 객실 수
 	private RoomStatus status; // 객실 상태
 	private List<RoomImageDTO> images; // 객실 목록 조회 시 이미지 목록 포함
+	private Long lodgingNo; // 숙소 번호
 
 }
