@@ -53,6 +53,10 @@ public class UserAuthProvider extends BaseTimeEntity {
 	@Column(name = "LAST_LOGIN_AT")
 	private LocalDateTime lastLoginAt;
 
+	public void changePasswordHash(String passwordHash) {
+		this.passwordHash = passwordHash;
+	}
+
 	@PrePersist
 	public void prePersistAuth() {
 		if (this.connectedAt == null) {
