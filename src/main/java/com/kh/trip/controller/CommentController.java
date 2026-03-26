@@ -1,7 +1,9 @@
 package com.kh.trip.controller;
 
+import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,10 +37,12 @@ public class CommentController {
 	
 	//댓글저장
 	@PostMapping("/")
-	public Map<String, Long> save(@RequestBody CommentDTO commentDTO){
+	public Map<String, Object> save(@RequestBody CommentDTO commentDTO){
 		log.info("CommentDTO"+commentDTO);
 		Long cno = service.save(commentDTO);
-		return Map.of("CNO",cno);
+		Map<String, Object> result = new HashMap<>();
+		result.put("CNO", cno);
+		return result;
 	}
 	
 	//댓글수정
@@ -47,6 +51,13 @@ public class CommentController {
 		commentDTO.setCommentNo(cno);
 		log.info("Update:"+commentDTO);
 		service.update(commentDTO);
+		return Map.of("RESULT","SUCCESS");
+	}
+	//댓글삭제
+	@DeleteMapping("/{cno}")
+	public Map<String, String> delete(@PathVariable Long cno) {
+		log.info("Delete:" + cno);
+		service.delete(cno);
 		return Map.of("RESULT","SUCCESS");
 	}
 }

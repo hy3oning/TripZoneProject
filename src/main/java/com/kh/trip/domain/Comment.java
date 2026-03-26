@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name = "COMMENT")
+@Table(name = "COMMENTS")
 @Getter
 @ToString
 @Builder
