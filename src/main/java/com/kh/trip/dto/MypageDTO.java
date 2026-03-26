@@ -3,6 +3,8 @@ package com.kh.trip.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -114,6 +116,38 @@ public class MypageDTO {
 		private boolean canCancel;
 		private boolean canReview;
 		private boolean canViewPayment;
+	}
+
+	@Getter
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class BookingCreateRequest {
+		@NotNull
+		private Long roomNo;
+		private Long userCouponNo;
+		@NotNull
+		private LocalDateTime checkInDate;
+		@NotNull
+		private LocalDateTime checkOutDate;
+		@NotNull
+		@Positive
+		private Long guestCount;
+		private String requestMessage;
+	}
+
+	@Getter
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class BookingCreatedResponse {
+		private Long bookingNo;
+		private String bookingId;
+		private String bookingStatus;
+		private String bookingStatusLabel;
+		private long totalPrice;
+		private String amount;
+		private LocalDateTime createdAt;
 	}
 
 	@Getter

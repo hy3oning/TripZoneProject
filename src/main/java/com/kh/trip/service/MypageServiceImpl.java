@@ -3,6 +3,7 @@ package com.kh.trip.service;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
@@ -18,22 +19,27 @@ import com.kh.trip.domain.Inquiry;
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.MileageHistory;
 import com.kh.trip.domain.Payment;
+import com.kh.trip.domain.Room;
 import com.kh.trip.domain.User;
 import com.kh.trip.domain.UserAuthProvider;
 import com.kh.trip.domain.UserCoupon;
 import com.kh.trip.domain.WishList;
 import com.kh.trip.domain.enums.BookingStatus;
 import com.kh.trip.domain.enums.CouponStatus;
+import com.kh.trip.domain.enums.DiscountType;
 import com.kh.trip.domain.enums.InquiryStatus;
 import com.kh.trip.domain.enums.InquiryType;
 import com.kh.trip.domain.enums.MileageChangeType;
 import com.kh.trip.domain.enums.PaymentPayMethod;
 import com.kh.trip.domain.enums.PaymentStatus;
+import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.MypageDTO;
 import com.kh.trip.repository.BookingRepository;
 import com.kh.trip.repository.InquiryRepository;
 import com.kh.trip.repository.MileageHistoryRepository;
+import com.kh.trip.repository.MypageBookingRepository;
 import com.kh.trip.repository.PaymentRepository;
+import com.kh.trip.repository.RoomRepository;
 import com.kh.trip.repository.UserAuthProviderRepository;
 import com.kh.trip.repository.UserCouponRepository;
 import com.kh.trip.repository.UserRepository;
@@ -54,9 +60,11 @@ public class MypageServiceImpl implements MypageService {
 	private final UserRepository userRepository;
 	private final UserAuthProviderRepository userAuthProviderRepository;
 	private final BookingRepository bookingRepository;
+	private final MypageBookingRepository mypageBookingRepository;
 	private final UserCouponRepository userCouponRepository;
 	private final MileageHistoryRepository mileageHistoryRepository;
 	private final PaymentRepository paymentRepository;
+	private final RoomRepository roomRepository;
 	private final WishListRepository wishListRepository;
 	private final InquiryRepository inquiryRepository;
 
@@ -110,6 +118,76 @@ public class MypageServiceImpl implements MypageService {
 						.canceledCount(bookings.stream().filter(booking -> booking.getStatus() == BookingStatus.CANCELED).count())
 						.build())
 				.items(bookings.stream().map(booking -> toBookingItem(booking, payments)).toList())
+				.build();
+	}
+
+	@Override
+	@Transactional
+	public MypageDTO.BookingCreatedResponse createBooking(Long userNo, MypageDTO.BookingCreateRequest request) {
+		User user = getUser(userNo);
+		Room room = roomRepository.findById(request.getRoomNo())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "객실을 찾을 수 없습니다."));
+
+		validateBookingRequest(request, room);
+		validateRoomAvailability(request, room);
+
+		long nights = ChronoUnit.DAYS.between(request.getCheckInDate().toLocalDate(), request.getCheckOutDate().toLocalDate());
+		long roomPrice = (long) room.getPricePerNight() * nights;
+		long totalPrice = roomPrice;
+		long discountAmount = 0L;
+
+		UserCoupon userCoupon = null;
+		if (request.getUserCouponNo() != null) {
+			userCoupon = userCouponRepository.findById(request.getUserCouponNo())
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "쿠폰을 찾을 수 없습니다."));
+
+			if (!userCoupon.getUser().getUserNo().equals(userNo)) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "본인 쿠폰만 사용할 수 있습니다.");
+			}
+
+			CouponStatus couponStatus = resolveCouponStatus(userCoupon);
+			if (couponStatus != CouponStatus.ACTIVE) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "사용 가능한 쿠폰이 아닙니다.");
+			}
+
+			DiscountType discountType = userCoupon.getCoupon().getDiscountType();
+			long discountValue = userCoupon.getCoupon().getDiscountValue();
+			totalPrice = discountType.calculate(roomPrice, discountValue);
+			if (totalPrice < 0) {
+				totalPrice = 0L;
+			}
+			discountAmount = roomPrice - totalPrice;
+		}
+
+		Booking booking = Booking.builder()
+				.user(user)
+				.room(room)
+				.userCoupon(userCoupon)
+				.checkInDate(request.getCheckInDate())
+				.checkOutDate(request.getCheckOutDate())
+				.guestCount(request.getGuestCount())
+				.pricePerNight(Long.valueOf(room.getPricePerNight()))
+				.discountAmount(discountAmount)
+				.totalPrice(totalPrice)
+				.requestMessage(request.getRequestMessage())
+				.status(BookingStatus.PENDING)
+				.build();
+
+		Booking savedBooking = mypageBookingRepository.save(booking);
+
+		if (userCoupon != null) {
+			userCoupon.changeUsedAt(LocalDateTime.now());
+			userCoupon.changeStatus(CouponStatus.USED);
+		}
+
+		return MypageDTO.BookingCreatedResponse.builder()
+				.bookingNo(savedBooking.getBookingNo())
+				.bookingId("B-" + savedBooking.getBookingNo())
+				.bookingStatus(savedBooking.getStatus().name())
+				.bookingStatusLabel(toBookingStatusLabel(savedBooking.getStatus()))
+				.totalPrice(savedBooking.getTotalPrice())
+				.amount(formatWon(savedBooking.getTotalPrice()))
+				.createdAt(savedBooking.getRegDate())
 				.build();
 	}
 
@@ -194,6 +272,40 @@ public class MypageServiceImpl implements MypageService {
 	private User getUser(Long userNo) {
 		return userRepository.findById(userNo)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+	}
+
+	private void validateBookingRequest(MypageDTO.BookingCreateRequest request, Room room) {
+		if (request.getCheckInDate() == null || request.getCheckOutDate() == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "체크인/체크아웃 날짜는 필수입니다.");
+		}
+		if (!request.getCheckOutDate().isAfter(request.getCheckInDate())) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.");
+		}
+		if (request.getCheckInDate().isBefore(LocalDateTime.now())) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "과거 날짜로는 예약할 수 없습니다.");
+		}
+		if (request.getGuestCount() == null || request.getGuestCount() <= 0) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "투숙 인원은 1명 이상이어야 합니다.");
+		}
+		if (room.getStatus() != RoomStatus.AVAILABLE) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "예약이 불가한 객실입니다.");
+		}
+		if (request.getGuestCount() > room.getMaxGuestCount()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "객실 최대 인원을 초과했습니다.");
+		}
+	}
+
+	private void validateRoomAvailability(MypageDTO.BookingCreateRequest request, Room room) {
+		List<BookingStatus> activeStatuses = List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED);
+		long overlappingCount = mypageBookingRepository.countOverlappingBookings(
+				room.getRoomNo(),
+				request.getCheckInDate(),
+				request.getCheckOutDate(),
+				activeStatuses);
+
+		if (overlappingCount >= room.getRoomCount()) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "선택한 날짜에는 예약 가능한 객실이 없습니다.");
+		}
 	}
 
 	private List<MypageDTO.MenuItem> defaultMenus() {

@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,6 +46,14 @@ public class MypageController {
 //	@PreAuthorize("hasRole('USER')")
 	public MypageDTO.BookingResponse getBookings(@AuthenticationPrincipal AuthUserPrincipal principal) {
 		return mypageService.getBookings(requirePrincipal(principal).getUserNo());
+	}
+
+	@PostMapping("/bookings")
+//	@PreAuthorize("hasRole('USER')")
+	public MypageDTO.BookingCreatedResponse createBooking(
+			@AuthenticationPrincipal AuthUserPrincipal principal,
+			@Valid @RequestBody MypageDTO.BookingCreateRequest request) {
+		return mypageService.createBooking(requirePrincipal(principal).getUserNo(), request);
 	}
 
 	@GetMapping("/coupons")

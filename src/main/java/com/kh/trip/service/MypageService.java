@@ -10,6 +10,8 @@ public interface MypageService {
 
 	MypageDTO.BookingResponse getBookings(Long userNo);
 
+	MypageDTO.BookingCreatedResponse createBooking(Long userNo, MypageDTO.BookingCreateRequest request);
+
 	MypageDTO.CouponResponse getCoupons(Long userNo);
 
 	MypageDTO.MileageResponse getMileage(Long userNo);
