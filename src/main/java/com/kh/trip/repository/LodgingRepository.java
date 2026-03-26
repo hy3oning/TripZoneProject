@@ -35,6 +35,9 @@ public interface LodgingRepository extends JpaRepository<Lodging, Long> {
 	 */
 	List<Lodging> findByStatus(LodgingStatus status);
 
+	// host 객체 안의 userNo 기준으로 조회가 필요할 때 사용
+	List<Lodging> findByHost_UserNo(Long userNo);
+
 	@EntityGraph(attributePaths = "imageList")
 	@Query("select l from Lodging l where l.lodgingNo = :lodgingNo")
 	Optional<Lodging> selectOne(@Param("lodgingNo") Long lodgingNo);

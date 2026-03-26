@@ -12,9 +12,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -33,7 +36,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-
 public class Lodging extends BaseTimeEntity {
 
 	// 숙소 번호 (Primary Key)
@@ -46,8 +48,9 @@ public class Lodging extends BaseTimeEntity {
 
 	// 숙소를 등록한 호스트(판매자)의 번호
 	// USERS 테이블의 USER_NO와 연결될 수 있는 값
-	@Column(name = "HOST_NO", nullable = false)
-	private Long hostNo;
+	@ManyToOne(fetch = FetchType.LAZY) // 여러 숙소가 하나의 사용자(호스트)에 속할 수 있으므로 다대일 관계
+	@JoinColumn(name = "HOST_NO", nullable = false) // 실제 DB의 FK 컬럼명 HOST_NO
+	private User host;
 
 	// 숙소 이름
 	// 최대 200자까지 저장 가능
@@ -116,12 +119,12 @@ public class Lodging extends BaseTimeEntity {
 	@OneToMany(mappedBy = "lodging", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<LodgingImage> imageList = new ArrayList<>();
-	
+
 	// 상태 변경
 	public void changeStatus(LodgingStatus status) {
 		this.status = status;
 	}
-
+	
 	// 숙소명 변경
 	public void changeLodgingName(String lodgingName) {
 		this.lodgingName = lodgingName;
@@ -141,6 +144,7 @@ public class Lodging extends BaseTimeEntity {
 	public void changeCheckOutTime(String checkOutTime) {
 		this.checkOutTime = checkOutTime;
 	}
+
 	public void addImage(LodgingImage image) {
 		// 이미지 추가시 순서(ord) 자동 설정 (0, 1, 2, ...)
 		image.changeOrd(this.imageList.size());

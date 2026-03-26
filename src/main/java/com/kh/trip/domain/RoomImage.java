@@ -1,6 +1,6 @@
 package com.kh.trip.domain;
 
-import java.time.LocalDateTime;
+import com.kh.trip.domain.common.BaseTimeEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class RoomImage {
+public class RoomImage extends BaseTimeEntity{
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_room_images")
@@ -44,8 +44,5 @@ public class RoomImage {
 
 	@Column(name = "SORT_ORDER", nullable = false)
 	private Integer sortOrder; // 이미지 정렬 순서
-
-	@Column(name = "REG_DATE", insertable = false, updatable = false)
-	private LocalDateTime regDate; // DB DEFAULT SYSDATE 값을 그대로 사용하기 위한 등록일
 
 }

@@ -1,5 +1,6 @@
 package com.kh.trip.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -7,16 +8,20 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.LodgingImage;
 import com.kh.trip.domain.Room;
+import com.kh.trip.domain.User; 
 import com.kh.trip.domain.enums.LodgingStatus;
 import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.LodgingDTO;
 import com.kh.trip.dto.RoomSummaryDTO;
 import com.kh.trip.repository.LodgingRepository;
 import com.kh.trip.repository.RoomRepository;
+import com.kh.trip.repository.UserRepository; 
+import com.kh.trip.util.CustomFileUtil; 
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,15 +40,20 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-
 public class LodgingServiceImpl implements LodgingService {
 
 	private final LodgingRepository lodgingRepository;
 	private final RoomRepository roomRepository;
+	private final UserRepository userRepository; 
+	private final CustomFileUtil fileUtil; 
 
 	// 숙소 등록
 	@Override
 	public LodgingDTO createLodging(LodgingDTO lodgingDTO) {
+
+		// 컨트롤러에서 하던 파일 저장을 서비스에서 처리
+		List<String> uploadFileNames = saveUploadedFiles(lodgingDTO.getFiles());
+		lodgingDTO.setUploadFileNames(uploadFileNames);
 
 		Lodging lodging = toLodgingEntity(lodgingDTO);
 
@@ -80,7 +90,7 @@ public class LodgingServiceImpl implements LodgingService {
 		Lodging savedLodging = lodgingRepository.save(lodging);
 
 		if (!roomList.isEmpty()) {
-			roomList.forEach(room -> room.changeLodgingNo(savedLodging.getLodgingNo()));
+			roomList.forEach(room -> room.changeLodging(savedLodging));
 			roomRepository.saveAll(roomList);
 		}
 
@@ -93,7 +103,6 @@ public class LodgingServiceImpl implements LodgingService {
 	public LodgingDTO getLodging(Long lodgingNo) {
 		Lodging lodging = lodgingRepository.findById(lodgingNo)
 				.orElseThrow(() -> new NoSuchElementException("해당 숙소를 찾을 수 없습니다. lodgingNo=" + lodgingNo));
-
 		return toLodgingDTO(lodging);
 	}
 
@@ -147,28 +156,52 @@ public class LodgingServiceImpl implements LodgingService {
 		// 1. read
 		Lodging findLodging = lodgingRepository.findById(lodgingNo)
 				.orElseThrow(() -> new NoSuchElementException("수정할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
+
+		// 수정 전에 기존 이미지 파일명 목록 보관
+		List<String> oldFileNames = extractFileNames(findLodging.getImageList());
+
 		applyLodgingUpdate(findLodging, lodgingDTO);
+
+		// 화면에서 변화 없이 계속 유지된 파일들
+		List<String> uploadFileNames = lodgingDTO.getUploadFileNames() == null
+				? new ArrayList<>()
+				: new ArrayList<>(lodgingDTO.getUploadFileNames());
+
+		// 새로업로드된 파일을 내부폴더 중복되지않는 파일명으로 저장하고, 저장된 이름을 리스트로 가져온다.
+		List<String> currentUploadFileNames = saveUploadedFiles(lodgingDTO.getFiles());
+
+		// 유지되는 파일들 + 새로 업로드된 파일 이름들이 저장해야 하는 파일 목록이 됨
+		if (currentUploadFileNames != null && !currentUploadFileNames.isEmpty()) {
+			uploadFileNames.addAll(currentUploadFileNames);
+		}
 
 		// 기존의 이미지 파일명을 모두 삭제한다.
 		findLodging.clearList();
 
-		// 새로업로드된 파일을 내부폴더 중복되지않는 파일명으로 저장하고, 저장된 이름을 리스트로 가져온다.
-		List<String> uploadFileNames = lodgingDTO.getUploadFileNames();
-
-		if (uploadFileNames != null && !uploadFileNames.isEmpty()) {
-			uploadFileNames.stream().forEach(uploadName -> {
+		if (!uploadFileNames.isEmpty()) {
+			uploadFileNames.forEach(uploadName -> {
 				findLodging.addImageString(uploadName);
 			});
 		}
 
 		Lodging updatedLodging = lodgingRepository.save(findLodging);
+
+		// 예전 파일들 중에서 더 이상 유지되지 않는 실제 파일 삭제
+		if (oldFileNames != null && !oldFileNames.isEmpty()) {
+			List<String> removeFiles = oldFileNames.stream()
+					.filter(fileName -> !uploadFileNames.contains(fileName))
+					.toList();
+
+			fileUtil.deleteFiles(removeFiles);
+		}
+
 		return toLodgingDTO(updatedLodging);
 	}
 
-	// 숙소 수정값 반영 메서드 domain에 있던 수정 기능을 Service로 옮긴 버전
+	// 숙소 수정값 반영 메서드 수정 기능 
 	// @Setter 방식 대신 엔티티의 change 메서드만 사용하도록 변경
 	private void applyLodgingUpdate(Lodging findLodging, LodgingDTO lodgingDTO) {
-
+		
 		if (lodgingDTO.getLodgingName() != null && !lodgingDTO.getLodgingName().isBlank()) {
 			findLodging.changeLodgingName(lodgingDTO.getLodgingName());
 		}
@@ -196,14 +229,25 @@ public class LodgingServiceImpl implements LodgingService {
 		Lodging findLodging = lodgingRepository.findById(lodgingNo)
 				.orElseThrow(() -> new NoSuchElementException("삭제할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
 
+		// 삭제 전에 실제 파일명 목록 확보
+		List<String> oldFileNames = extractFileNames(findLodging.getImageList());
+
 		findLodging.changeStatus(LodgingStatus.INACTIVE);
+
+		// orphanRemoval = true 이므로 이미지 연관관계도 같이 비움
+		findLodging.clearList();
+
 		lodgingRepository.save(findLodging);
 
-		List<Room> roomList = roomRepository.findByLodgingNo(lodgingNo);
+		
+		 
+		List<Room> roomList = roomRepository.findByLodging_LodgingNo(lodgingNo);
 		if (roomList != null && !roomList.isEmpty()) {
 			roomList.forEach(room -> room.changeStatus(RoomStatus.UNAVAILABLE));
 			roomRepository.saveAll(roomList);
 		}
+		// 실제 이미지 파일 삭제
+		fileUtil.deleteFiles(oldFileNames);
 	}
 
 	// 숙소 상세보기용
@@ -215,7 +259,7 @@ public class LodgingServiceImpl implements LodgingService {
 		Lodging lodging = result.orElseThrow();
 
 		// 2. 객실 목록 조회
-		List<Room> rooms = roomRepository.findByLodgingNo(lodgingNo);
+		List<Room> rooms = roomRepository.findByLodging_LodgingNo(lodgingNo);
 
 		// 3. lodging entity를 dto로 변환
 		LodgingDTO lodgingDTO = toLodgingDTO(lodging);
@@ -227,8 +271,13 @@ public class LodgingServiceImpl implements LodgingService {
 
 	// DTO -> Entity 변환 메서드를 Impl 내부로 이동
 	private Lodging toLodgingEntity(LodgingDTO lodgingDTO) {
+
+		// hostNo로 실제 User 엔티티 조회
+		User host = userRepository.findById(lodgingDTO.getHostNo())
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 호스트입니다. hostNo=" + lodgingDTO.getHostNo()));
+
 		Lodging lodging = Lodging.builder().lodgingNo(lodgingDTO.getLodgingNo()) // 숙소 번호 세팅
-				.hostNo(lodgingDTO.getHostNo()) // 호스트 번호 세팅
+				.host(host) // User 엔티티 세팅
 				.lodgingName(lodgingDTO.getLodgingName()) // 숙소명 세팅
 				.lodgingType(lodgingDTO.getLodgingType()) // 숙소 유형 세팅
 				.region(lodgingDTO.getRegion()) // 지역 세팅
@@ -242,23 +291,23 @@ public class LodgingServiceImpl implements LodgingService {
 				.checkOutTime(lodgingDTO.getCheckOutTime()) // 체크아웃 시간 세팅
 				.status(lodgingDTO.getStatus()) // 상태 세팅
 				.build(); // Entity 생성
+
 		// 업로드 처리가 끝난 파일들의 이름 리스트
 		List<String> uploadFileNames = lodgingDTO.getUploadFileNames();
 		if (uploadFileNames == null) {
 			return lodging;
 		}
-		uploadFileNames.stream().forEach(uploadName -> {
+		uploadFileNames.forEach(uploadName -> {
 			lodging.addImageString(uploadName);
 		});
 
 		return lodging;
-
 	}
 
 	// Entity -> DTO 변환 메서드를 Impl 내부로 이동
 	private LodgingDTO toLodgingDTO(Lodging lodging) {
 		LodgingDTO lodgingDTO = LodgingDTO.builder().lodgingNo(lodging.getLodgingNo()) // 숙소 번호 세팅
-				.hostNo(lodging.getHostNo()) // 호스트 번호 세팅
+				.hostNo(lodging.getHost().getUserNo()) // User 엔티티에서 호스트 번호 꺼내기
 				.lodgingName(lodging.getLodgingName()) // 숙소명 세팅
 				.lodgingType(lodging.getLodgingType()) // 숙소 유형 세팅
 				.region(lodging.getRegion()) // 지역 세팅
@@ -275,14 +324,36 @@ public class LodgingServiceImpl implements LodgingService {
 
 		List<LodgingImage> imageList = lodging.getImageList();
 
-		if (imageList == null || imageList.size() == 0) {
+		if (imageList == null || imageList.isEmpty()) {
 			return lodgingDTO;
 		}
 
-		List<String> fileNameList = imageList.stream().map(lodgingImage -> lodgingImage.getFileName()).toList();
+		List<String> fileNameList = imageList.stream().map(LodgingImage::getFileName).toList();
 
 		lodgingDTO.setUploadFileNames(fileNameList);
 		return lodgingDTO;
+	}
+
+	// 업로드 파일들을 실제 저장하고 저장된 파일명 목록을 반환하는 공통 메서드
+	private List<String> saveUploadedFiles(List<MultipartFile> files) {
+		if (files == null || files.isEmpty()) {
+			return List.of();
+		}
+
+		if (files.get(0).isEmpty()) {
+			return List.of();
+		}
+
+		return fileUtil.saveFiles(files);
+	}
+
+	// LodgingImage 리스트에서 파일명만 추출하는 공통 메서드
+	private List<String> extractFileNames(List<LodgingImage> imageList) {
+		if (imageList == null || imageList.isEmpty()) {
+			return List.of();
+		}
+
+		return imageList.stream().map(LodgingImage::getFileName).toList();
 	}
 
 	// RoomSummaryDTO -> Room Entity 변환도 Impl 내부에서 처리
@@ -300,6 +371,8 @@ public class LodgingServiceImpl implements LodgingService {
 	// Room Entity -> RoomSummaryDTO 변환도 Impl 내부에서 처리
 	private RoomSummaryDTO toRoomSummaryDTO(Room room) {
 		return RoomSummaryDTO.builder().roomNo(room.getRoomNo()) // 객실 번호 세팅
+				// [추가] Room이 Lodging 엔티티를 참조하므로 숙소 번호도 같이 세팅
+				.lodgingNo(room.getLodging().getLodgingNo())
 				.roomName(room.getRoomName()) // 객실명 세팅
 				.roomType(room.getRoomType()) // 객실 유형 세팅
 				.roomDescription(room.getRoomDescription()) // 객실 설명 세팅
@@ -309,5 +382,4 @@ public class LodgingServiceImpl implements LodgingService {
 				.status(room.getStatus()) // 상태 세팅
 				.build(); // DTO 생성
 	}
-
 }
