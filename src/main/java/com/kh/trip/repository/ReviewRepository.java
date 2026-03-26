@@ -12,7 +12,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 	List<Review> findByLodgingNoOrderByReviewNoDesc(Long lodgingNo);
 
 	// 같은 예약번호로 이미 리뷰가 있는지 확인
-	boolean existsByBookingNo(Long bookingNo);
+	boolean existsByBooking_BookingNo(Long bookingNo);
 
 	// 리뷰 번호로 단건 조회
 	Optional<Review> findByReviewNo(Long reviewNo);
