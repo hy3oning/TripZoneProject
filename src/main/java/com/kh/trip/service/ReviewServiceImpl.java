@@ -3,7 +3,7 @@ package com.kh.trip.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.stream.IntStream; // 이미지 순서(index) 처리용
+import java.util.stream.IntStream;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +42,6 @@ public class ReviewServiceImpl implements ReviewService {
 		// 평점이 없거나 범위를 벗어나면 예외
 		if (reviewCreateDTO.getRating() == null || reviewCreateDTO.getRating() < 1 || reviewCreateDTO.getRating() > 5) {
 			throw new IllegalArgumentException("평점은 1점부터 5점까지 가능합니다.");
-
 		}
 
 		// 리뷰 내용이 비어 있으면 예외
@@ -98,13 +97,14 @@ public class ReviewServiceImpl implements ReviewService {
 		Review savedReview = reviewRepository.save(review);
 
 		// 리뷰 이미지 저장
-		saveReviewImages(savedReview.getReviewNo(), reviewCreateDTO.getImageUrls());
+		// ReviewImage가 Review 엔티티를 참조하므로 savedReview 자체를 넘김
+		saveReviewImages(savedReview, reviewCreateDTO.getImageUrls());
 
 		// 저장된 리뷰 이미지 목록 실제 조회
+		// review 객체 안의 reviewNo 기준으로 조회
 		List<ReviewImageDTO> imageDTOs = reviewImageRepository
-				.findByReviewNoOrderBySortOrderAsc(savedReview.getReviewNo()).stream().map(this::toReviewImageDTO)
-				.toList();
-
+				.findByReview_ReviewNoOrderBySortOrderAsc(savedReview.getReviewNo()).stream()
+				.map(this::toReviewImageDTO).toList();
 		return toReviewSummaryDTO(savedReview, imageDTOs); // 실제 이미지 목록 포함해서 반환
 	}
 
@@ -151,15 +151,17 @@ public class ReviewServiceImpl implements ReviewService {
 		Review updatedReview = reviewRepository.save(review);
 
 		// 수정 시 기존 이미지 전부 삭제
-		reviewImageRepository.deleteByReviewNo(reviewNo);
+		// review 객체 안의 reviewNo 기준으로 삭제
+		reviewImageRepository.deleteByReview_ReviewNo(reviewNo);
 
 		// 새 이미지 다시 저장
-		saveReviewImages(reviewNo, reviewUpdateDTO.getImageUrls());
+		// Review 엔티티 자체를 넘겨서 저장
+		saveReviewImages(updatedReview, reviewUpdateDTO.getImageUrls());
 
 		// 수정 후 이미지 목록 실제 조회
-		List<ReviewImageDTO> imageDTOs = reviewImageRepository.findByReviewNoOrderBySortOrderAsc(reviewNo).stream()
-				.map(this::toReviewImageDTO).toList();
-
+		// review 객체 안의 reviewNo 기준으로 조회
+		List<ReviewImageDTO> imageDTOs = reviewImageRepository.findByReview_ReviewNoOrderBySortOrderAsc(reviewNo)
+				.stream().map(this::toReviewImageDTO).toList();
 		return toReviewSummaryDTO(updatedReview, imageDTOs); // 실제 이미지 목록 포함해서 반환
 	}
 
@@ -185,7 +187,8 @@ public class ReviewServiceImpl implements ReviewService {
 		}
 
 		// 리뷰 삭제 전에 REVIEW_IMAGES부터 먼저 삭제
-		reviewImageRepository.deleteByReviewNo(reviewNo);
+		// review 객체 안의 reviewNo 기준으로 삭제
+		reviewImageRepository.deleteByReview_ReviewNo(reviewNo);
 		reviewRepository.delete(review);
 	}
 
@@ -201,9 +204,9 @@ public class ReviewServiceImpl implements ReviewService {
 		// 특정 숙소의 리뷰들을 조회하면서, 각 리뷰의 이미지도 실제 조회해서 DTO에 포함
 		return reviewRepository.findByLodgingNoOrderByReviewNoDesc(lodgingNo).stream().map(review -> {
 			List<ReviewImageDTO> imageDTOs = reviewImageRepository
-					.findByReviewNoOrderBySortOrderAsc(review.getReviewNo()).stream().map(this::toReviewImageDTO)
+					// review 객체 안의 reviewNo 기준으로 조회
+					.findByReview_ReviewNoOrderBySortOrderAsc(review.getReviewNo()).stream().map(this::toReviewImageDTO)
 					.toList();
-
 			return toReviewSummaryDTO(review, imageDTOs);
 		}).toList();
 	}
@@ -240,8 +243,8 @@ public class ReviewServiceImpl implements ReviewService {
 		}
 
 		// 분리한 메서드 호출
-	    return toReviewStatsDTO(totalReviewCount, averageRating, 
-	                            rating5Count, rating4Count, rating3Count, rating2Count, rating1Count);
+		return toReviewStatsDTO(totalReviewCount, averageRating, rating5Count, rating4Count, rating3Count, rating2Count,
+				rating1Count);
 	}
 
 	// ReviewImage 엔티티를 ReviewImageDTO로 변환
@@ -249,6 +252,7 @@ public class ReviewServiceImpl implements ReviewService {
 		return ReviewImageDTO.builder().reviewImageNo(reviewImage.getReviewImageNo()) // 리뷰 이미지 번호 세팅
 				.imageUrl(reviewImage.getImageUrl()) // 이미지 URL 세팅
 				.sortOrder(reviewImage.getSortOrder()) // 정렬 순서 세팅
+				.regDate(reviewImage.getRegDate()) // 이미지 등록일 세팅
 				.build(); // DTO 생성
 	}
 
@@ -268,29 +272,32 @@ public class ReviewServiceImpl implements ReviewService {
 	}
 
 	// 이미지 URL 리스트를 REVIEW_IMAGES 테이블에 저장하는 공통 메서드
-	private void saveReviewImages(Long reviewNo, List<String> imageUrls) {
+	// imageUrls)
+	// ReviewImage가 Review 엔티티를 참조하므로 Review 자체를 받음
+	private void saveReviewImages(Review review, List<String> imageUrls) {
 		if (imageUrls == null || imageUrls.isEmpty()) {
 			return;
 		}
 
 		// 전달받은 이미지 URL들을 순서대로 REVIEW_IMAGES에 저장
-		IntStream.range(0, imageUrls.size()).mapToObj(index -> ReviewImage.builder().reviewNo(reviewNo) // 어떤 리뷰의 이미지인지
+		IntStream.range(0, imageUrls.size()).mapToObj(index -> ReviewImage.builder()
+				.review(review) // 어떤 리뷰의 이미지인지 Review 엔티티 자체를 저장
 				.imageUrl(imageUrls.get(index)) // 이미지 URL
 				.sortOrder(index + 1) // 정렬 순서 1부터 시작
 				.build()).forEach(reviewImageRepository::save);
 	}
-	
+
 	// Review 통계 정보들을 -> ReviewStatsDTO로 변환
-	private ReviewStatsDTO toReviewStatsDTO(long totalCount, double avgRating, long r5, long r4, long r3, long r2, long r1) {
-	    return ReviewStatsDTO.builder()
-	            .totalReviewCount(totalCount) // 합계
-	            .averageRating(avgRating) // 평균
-	            .rating5Count(r5) // 별점 5점
-	            .rating4Count(r4) // 별점 4점
-	            .rating3Count(r3) // 별점 3점
-	            .rating2Count(r2) // 별점 2점
-	            .rating1Count(r1) // 별점 1점
-	            .build();
+	private ReviewStatsDTO toReviewStatsDTO(long totalCount, double avgRating, long r5, long r4, long r3, long r2,
+			long r1) {
+		return ReviewStatsDTO.builder().totalReviewCount(totalCount) // 합계
+				.averageRating(avgRating) // 평균
+				.rating5Count(r5) // 별점 5점
+				.rating4Count(r4) // 별점 4점
+				.rating3Count(r3) // 별점 3점
+				.rating2Count(r2) // 별점 2점
+				.rating1Count(r1) // 별점 1점
+				.build();
 	}
 
 }
