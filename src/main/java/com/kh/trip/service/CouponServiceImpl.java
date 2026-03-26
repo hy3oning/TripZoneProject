@@ -1,5 +1,6 @@
 package com.kh.trip.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -58,11 +59,15 @@ public class CouponServiceImpl implements CouponService {
 	public Coupon dtoToEntity(CouponDTO couponDTO) {
 		User user = userRepository.findById(couponDTO.getAdminUserNo())
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 관리자 번호입니다."));
+		
+		CouponStatus status = CouponStatus.ACTIVE;
+		
+		if(couponDTO.getStartDate().isAfter(LocalDateTime.now())) status = CouponStatus.INACTIVE;
 
 		return Coupon.builder().user(user) 
 				.couponName(couponDTO.getCouponName()).discountType(couponDTO.getDiscountType())
 				.discountValue(couponDTO.getDiscountValue()).startDate(couponDTO.getStartDate())
-				.endDate(couponDTO.getEndDate()).status(CouponStatus.INACTIVE).build();
+				.endDate(couponDTO.getEndDate()).status(status).build();
 	}
 	
 	public List<CouponDTO> EntityToDTO(List<Coupon> result) {

@@ -7,19 +7,18 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.kh.trip.domain.enums.BookingStatus;
-import com.kh.trip.repository.BookingRepository;
+import com.kh.trip.domain.enums.CouponStatus;
+import com.kh.trip.repository.CouponRepository;
 
 @Component
-public class BookingScheduler {
+public class CouponScheduler {
 	@Autowired
-	private BookingRepository bookingRepository;
+	private CouponRepository couponRepository;
 	
 	@Scheduled(cron = "0 0 0 * * *")
 	@Transactional
-	public void updateBookingStatus() {
+	public void updateCouponStatus() {
 		LocalDateTime today = LocalDateTime.now();
-		bookingRepository.updateStatusForCheckout(today,BookingStatus.COMPLETED, BookingStatus.CONFIRMED);
+		couponRepository.updateStatusForEndDate(today,CouponStatus.EXPIRED, CouponStatus.ACTIVE);
 	}
-	
 }
