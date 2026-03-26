@@ -146,7 +146,8 @@ public class PaymentServiceImpl implements PaymentService {
 		Booking booking = bookingRepository.findById(paymentDTO.getBookingNo())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
 						"존재하지 않는 예약입니다. bookingNo=" + paymentDTO.getBookingNo()));
-		String orderName = booking.getRoom().getLodging().getLodgingNo() + "예약";
+		String orderName = booking.getRoom().getLodging().getLodgingName() + " " + booking.getRoom().getRoomName()
+				+ "예약";
 
 		return Payment.builder().booking(booking).paymentId(paymentDTO.getPaymentId()).storeId(paymentDTO.getStoreId())
 				.channelKey(paymentDTO.getChannelKey()).orderName(orderName).paymentAmount(booking.getTotalPrice())
