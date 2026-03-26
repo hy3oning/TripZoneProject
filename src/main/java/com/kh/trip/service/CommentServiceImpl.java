@@ -11,11 +11,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.kh.trip.domain.Comment;
+import com.kh.trip.domain.Inquiry;
 import com.kh.trip.domain.User;
 import com.kh.trip.dto.CommentDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.repository.CommentRepository;
+import com.kh.trip.repository.InquiryRepository;
 import com.kh.trip.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -29,6 +31,7 @@ public class CommentServiceImpl implements CommentService{
 	
 	private final CommentRepository commentRepository;
 	private final UserRepository userRepository;
+	private final InquiryRepository inquiryRepository;
 	//findAll
 	@Override
 	public PageResponseDTO<CommentDTO> findAll(PageRequestDTO pageRequestDTO) {
@@ -40,6 +43,7 @@ public class CommentServiceImpl implements CommentService{
 		
 		List<CommentDTO> dtoList = result.getContent().stream().map(comment -> {
 			return CommentDTO.builder().commentNo(comment.getCommentNo()).userNo(comment.getUser().getUserNo())
+					.inquiryNo(comment.getInquiry().getInquiryNo())
 					.content(comment.getContent()).status(comment.isStatus()).build();
 		}).collect(Collectors.toList());
 		
@@ -55,7 +59,9 @@ public class CommentServiceImpl implements CommentService{
 		log.info(".............");
 		User user = userRepository.findById(commentDTO.getUserNo())
 				.orElseThrow(()-> new IllegalArgumentException("존재하지 않는 유저입니다."));
-		Comment comment = Comment.builder().user(user).content(commentDTO.getContent()).status(true).build();
+		Inquiry inquiry = inquiryRepository.findById(commentDTO.getInquiryNo())
+				.orElseThrow(()-> new IllegalArgumentException("존재하지 않는 문의입니다."));
+		Comment comment = Comment.builder().user(user).inquiry(inquiry).content(commentDTO.getContent()).status(true).build();
 		Comment result = commentRepository.save(comment);
 		return result.getCommentNo();
 	}
