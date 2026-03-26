@@ -6,7 +6,7 @@ import com.kh.trip.dto.WishListDTO;
 
 public interface WishListService {
 	//findAll(list)
-	PageResponseDTO<WishListDTO> findAll(PageRequestDTO pageRequestDTO);
+	PageResponseDTO<WishListDTO> findAll(Long userNo, PageRequestDTO pageRequestDTO);
 	//save
 	Long save(WishListDTO wishListDTO);
 	//delete
