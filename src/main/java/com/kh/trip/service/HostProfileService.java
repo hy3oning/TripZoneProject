@@ -11,4 +11,8 @@ public interface HostProfileService {
 	List<HostProfileDTO> getList();
 	
 	HostProfileDTO get(Long hostNo);
+	
+	void approve(Long hostNo, Long adminUserNo);
+	
+	void reject(Long hostNo, Long adminUserNo, String rejectReason);
 }
