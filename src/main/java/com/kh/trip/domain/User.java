@@ -49,14 +49,6 @@ public class User extends BaseTimeEntity {
 	private Long mileage = 0L;
 
 	@Builder.Default
-	@Column(name = "TOTAL_SPENT", nullable = false)
-	private Long totalSpent = 0L;
-
-	@Builder.Default
-	@Column(name = "STAY_COUNT", nullable = false)
-	private Long stayCount = 0L;
-
-	@Builder.Default
 	@Column(name = "ENABLED", nullable = false, length = 1)
 	private String enabled = "1";
 
