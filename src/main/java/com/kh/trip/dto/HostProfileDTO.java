@@ -24,4 +24,5 @@ public class HostProfileDTO {
 	private String ownerName;
 	private String approvalStatus;
 	private String rejectReason;
+	private String enabled;
 }
