@@ -33,9 +33,9 @@ public class Comment extends BaseTimeEntity{
 	@Column(name = "COMMENT_NO")
 	private Long commentNo;
 	
-	//@ManyToOne // 외래키
-	//@JoinColumn("INQUIRY_NO",nullable = false)
-	//private Inquiry inquiry;
+	@ManyToOne // 외래키
+	@JoinColumn(name ="INQUIRY_NO",nullable = false)
+	private Inquiry inquiry;
 	
 	@ManyToOne // 외래키
 	@JoinColumn(name = "ADMIN_NO", nullable = false)
