@@ -2,8 +2,10 @@ package com.kh.trip.service;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.domain.HostProfile;
 import com.kh.trip.domain.User;
@@ -24,6 +26,13 @@ public class HostProfileServiceImpl implements HostProfileService {
 
 	@Override
 	public Long register(HostProfileDTO hostProfileDTO) {
+		if (hostProfileRepository.existsByUser_UserNo(hostProfileDTO.getUserNo())) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 호스트 프로필이 등록된 사용자입니다.");
+		}
+		if (hostProfileRepository.existsByBusinessNumber(hostProfileDTO.getBusinessNumber())) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 등록된 사업자등록번호입니다.");
+		}
+
 		HostProfile hostProfile = dtoToEntity(hostProfileDTO);
 		HostProfile savedHostProfile = hostProfileRepository.save(hostProfile);
 		return savedHostProfile.getHostNo();
@@ -33,6 +42,36 @@ public class HostProfileServiceImpl implements HostProfileService {
 	public List<HostProfileDTO> getList() {
 		List<HostProfile> hostProfileList = hostProfileRepository.findAll();
 		return hostProfileList.stream().map(this::entityToDTO).toList();
+	}
+
+	@Override
+	public HostProfileDTO get(Long hostNo) {
+		HostProfile hostProfile = hostProfileRepository.findById(hostNo)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 호스트 프로필 입니다."));
+		return entityToDTO(hostProfile);
+	}
+
+	@Override
+	public void approve(Long hostNo, Long adminUserNo) {
+		HostProfile hostProfile = hostProfileRepository.findById(hostNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 호스트 프로필 입니다."));
+
+		if (hostProfile.getApprovalStatus() == HostApprovalStatus.APPROVED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 승인된 호스트 프로필 입니다.");
+		}
+		hostProfile.approve(adminUserNo);
+		hostProfileRepository.save(hostProfile);
+	}
+
+	@Override
+	public void reject(Long hostNo, Long adminUserNo, String rejectReason) {
+		HostProfile hostProfile = hostProfileRepository.findById(hostNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 호스트 프로필 입니다."));
+		if (hostProfile.getApprovalStatus() == HostApprovalStatus.APPROVED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 승인된 호스트 프로필은 반려할 수 없습니다.");
+		}
+		hostProfile.reject(adminUserNo, rejectReason);
+		hostProfileRepository.save(hostProfile);
 	}
 
 	private HostProfile dtoToEntity(HostProfileDTO hostProfileDTO) {
@@ -47,7 +86,8 @@ public class HostProfileServiceImpl implements HostProfileService {
 	private HostProfileDTO entityToDTO(HostProfile hostProfile) {
 		return HostProfileDTO.builder().hostNo(hostProfile.getHostNo()).userNo(hostProfile.getUser().getUserNo())
 				.businessName(hostProfile.getBusinessName()).businessNumber(hostProfile.getBusinessNumber())
-				.ownerName(hostProfile.getOwnerName()).approvalStatus(hostProfile.getApprovalStatus().name()).build();
+				.ownerName(hostProfile.getOwnerName()).approvalStatus(hostProfile.getApprovalStatus().name())
+				.rejectReason(hostProfile.getRejectReason()).build();
 	}
 
 }
