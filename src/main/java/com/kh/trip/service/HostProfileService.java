@@ -17,4 +17,8 @@ public interface HostProfileService {
 	void reject(Long hostNo, Long adminUserNo, String rejectReason);
 
 	void update(Long hostNo, HostProfileDTO hostProfileDTO);
+
+	void delete(Long hostNo);
+
+	void restore(Long hostNo);
 }

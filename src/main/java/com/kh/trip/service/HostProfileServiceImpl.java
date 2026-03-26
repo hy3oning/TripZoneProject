@@ -91,6 +91,21 @@ public class HostProfileServiceImpl implements HostProfileService {
 		hostProfileRepository.save(hostProfile);
 	}
 
+	@Override
+	public void delete(Long hostNo) {
+		HostProfile hostProfile = hostProfileRepository.findById(hostNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 호스트 프로필 입니다."));
+		if (hostProfile.getEnabled().equals("0")) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 비활성화 된 사업자정보입니다.");
+		}
+		hostProfile.changeEnabled("0");
+		hostProfileRepository.save(hostProfile);
+	}
+
+	@Override
+	public void restore(Long hostNo) {
+	}
+
 	private HostProfile dtoToEntity(HostProfileDTO hostProfileDTO) {
 		User user = userRepository.findById(hostProfileDTO.getUserNo())
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. userNo=" + hostProfileDTO.getUserNo()));
@@ -104,7 +119,7 @@ public class HostProfileServiceImpl implements HostProfileService {
 		return HostProfileDTO.builder().hostNo(hostProfile.getHostNo()).userNo(hostProfile.getUser().getUserNo())
 				.businessName(hostProfile.getBusinessName()).businessNumber(hostProfile.getBusinessNumber())
 				.ownerName(hostProfile.getOwnerName()).approvalStatus(hostProfile.getApprovalStatus().name())
-				.rejectReason(hostProfile.getRejectReason()).build();
+				.rejectReason(hostProfile.getRejectReason()).enabled(hostProfile.getEnabled()).build();
 	}
 
 }
