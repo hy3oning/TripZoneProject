@@ -102,7 +102,6 @@ public class BookingServiceImpl implements BookingService {
 				.status(BookingStatus.PENDING).build();
 		Long bookingNo = repository.save(booking).getBookingNo();
 
-		// 변경해야할 부분
 		room.changeStatus(RoomStatus.UNAVAILABLE);
 		roomRepository.save(room);
 		if (userCoupon != null) {

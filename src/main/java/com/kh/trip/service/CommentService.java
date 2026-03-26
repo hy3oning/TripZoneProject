@@ -14,5 +14,7 @@ public interface CommentService {
 	Long save(CommentDTO commentDTO);
 	//update
 	void update(CommentDTO commentDTO);
+	//delete
+	void delete(Long cno);
 
 }

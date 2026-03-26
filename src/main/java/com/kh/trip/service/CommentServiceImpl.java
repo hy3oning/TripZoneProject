@@ -56,7 +56,8 @@ public class CommentServiceImpl implements CommentService{
 		User user = userRepository.findById(commentDTO.getUserNo())
 				.orElseThrow(()-> new IllegalArgumentException("존재하지 않는 유저입니다."));
 		Comment comment = Comment.builder().user(user).content(commentDTO.getContent()).status(true).build();
-		return null;
+		Comment result = commentRepository.save(comment);
+		return result.getCommentNo();
 	}
 	//update
 	@Override
@@ -67,6 +68,14 @@ public class CommentServiceImpl implements CommentService{
 		comment.changeContent(commentDTO.getContent());
 		log.info("DB 새로운 업데이트 번호" + commentDTO.getCommentNo());
 		commentRepository.save(comment);
+	}
+	//delete
+	@Override
+	public void delete(Long cno) {
+		Optional<Comment> result = commentRepository.findById(cno);
+		Comment comment = result.orElseThrow(() -> new RuntimeException("해당 댓글 없음" + cno));
+		commentRepository.delete(comment);
+		log.info("댓글 완전 삭제 완료"+ cno);
 	}
 
 }

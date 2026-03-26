@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name = "Coupons")
+@Table(name = "COUPONS")
 @Getter
 @ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

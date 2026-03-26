@@ -63,4 +63,17 @@ public class HostProfile extends BaseTimeEntity {
 	@Column(name = "REJECT_REASON", length = 300)
 	private String rejectReason;
 
+	public void approve(Long adminUserNo) {
+		this.approvalStatus = HostApprovalStatus.APPROVED;
+		this.approvedBy = adminUserNo;
+		this.approvedAt = LocalDateTime.now();
+		this.rejectReason = null;
+	}
+
+	public void reject(Long adminUserNo, String rejectReason) {
+		this.approvalStatus = HostApprovalStatus.REJECTED;
+		this.approvedBy = adminUserNo;
+		this.approvedAt = LocalDateTime.now();
+		this.rejectReason = rejectReason;
+	}
 }
