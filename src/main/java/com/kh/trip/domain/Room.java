@@ -7,9 +7,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -34,8 +37,10 @@ public class Room extends BaseTimeEntity {
 	@Column(name = "ROOM_NO") // ROOM_NO 컬럼
 	private Long roomNo;
 
-	@Column(name = "LODGING_NO", nullable = false) // 어떤 숙소에 속한 객실인지
-	private Long lodgingNo;
+	// Lodging 엔티티와 연관관계로 매핑
+	@ManyToOne(fetch = FetchType.LAZY) // 여러 객실이 하나의 숙소에 속하므로 다대일 관계
+	@JoinColumn(name = "LODGING_NO", nullable = false) // 실제 DB의 FK 컬럼명 LODGING_NO
+	private Lodging lodging; // 어떤 숙소에 속한 객실인지 Lodging 엔티티로 참조
 
 	@Column(name = "ROOM_NAME", nullable = false, length = 200) // 객실명
 	private String roomName;
@@ -59,9 +64,9 @@ public class Room extends BaseTimeEntity {
 	@Builder.Default
 	@Column(name = "STATUS", nullable = false, length = 20) // 객실 상태
 	private RoomStatus status = RoomStatus.AVAILABLE;
-
-	public void changeLodgingNo(Long lodgingNo) {
-		this.lodgingNo = lodgingNo;
+	
+	public void changeLodging(Lodging lodging) {
+		this.lodging = lodging;
 	}
 
 	// 객실명 변경

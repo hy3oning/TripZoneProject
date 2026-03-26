@@ -174,7 +174,7 @@ public class BookingServiceImpl implements BookingService {
 
 	public List<BookingDTO> entityToDTO(User user, Page<Booking> result) {
 		return result.getContent().stream().map(booking -> {
-			Long targetLodgingNo = booking.getRoom().getLodgingNo();
+			Long targetLodgingNo = booking.getRoom().getLodging().getLodgingNo();
 			return BookingDTO.builder().bookingNo(booking.getBookingNo()).userNo(user.getUserNo())
 					.roomNo(booking.getRoom().getRoomNo()).lodgingName(findLodgingName(user, targetLodgingNo))
 					.userCouponNo(booking.getUserCoupon() != null ? booking.getUserCoupon().getUserCouponNo() : null)

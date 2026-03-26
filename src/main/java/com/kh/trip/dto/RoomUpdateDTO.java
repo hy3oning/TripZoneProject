@@ -14,7 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class RoomUpdateDTO {
-
+	
+	private Long lodgingNo; // 객실이 속한 숙소 자체를 변경할 때 사용할 숙소 번호
 	private String roomName; // 수정할 객실 이름
 	private String roomType; // 수정할 객실 타입
 	private String roomDescription; // 수정할 설명
