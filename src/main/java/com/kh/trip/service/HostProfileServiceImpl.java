@@ -104,6 +104,13 @@ public class HostProfileServiceImpl implements HostProfileService {
 
 	@Override
 	public void restore(Long hostNo) {
+		HostProfile hostProfile = hostProfileRepository.findById(hostNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 호스트 프로필 입니다."));
+		if (hostProfile.getEnabled().equals("1")) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용중인 사업자정보입니다.");
+		}
+		hostProfile.changeEnabled("1");
+		hostProfileRepository.save(hostProfile);
 	}
 
 	private HostProfile dtoToEntity(HostProfileDTO hostProfileDTO) {
