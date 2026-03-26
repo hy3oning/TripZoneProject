@@ -7,15 +7,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.domain.User;
+import com.kh.trip.domain.UserAuthProvider;
 import com.kh.trip.dto.AdminUserSearchRequestDTO;
+import com.kh.trip.dto.PasswordChangeRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.UserDTO;
 import com.kh.trip.dto.UserUpdateRequestDTO;
+import com.kh.trip.repository.UserAuthProviderRepository;
 import com.kh.trip.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -26,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService {
 
 	private final UserRepository userRepository;
+	private final UserAuthProviderRepository userAuthProviderRepository;
+	private final PasswordEncoder passwordEncoder;
 
 	@Override
 	public UserDTO getUser(Long userNo) {
@@ -63,6 +69,19 @@ public class UserServiceImpl implements UserService {
 
 		user.changePhone(request.getPhone());
 		userRepository.save(user);
+	}
+
+	@Override
+	public void changePassword(Long userNo, PasswordChangeRequestDTO request) {
+		UserAuthProvider authProvider = userAuthProviderRepository.findByUserNoAndProviderCode(userNo, "LOCAL")
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "로컬 로그인 계정만 비밀번호를 변경할 수 있습니다."));
+
+		if (!passwordEncoder.matches(request.getCurrentPassword(), authProvider.getPasswordHash())) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "현재 비밀번호가 일치하지 않습니다.");
+		}
+
+		authProvider.changePasswordHash(passwordEncoder.encode(request.getNewPassword()));
+		userAuthProviderRepository.save(authProvider);
 	}
 
 	@Override
