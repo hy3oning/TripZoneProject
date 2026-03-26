@@ -2,6 +2,7 @@ package com.kh.trip.controller;
 
 import java.util.Map;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.WishListDTO;
+import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.service.WishListService;
 
 import lombok.RequiredArgsConstructor;
@@ -26,10 +28,10 @@ public class WishListController {
 	
 	private final WishListService service;
 	//리스트
-	@GetMapping("/list")
-	public PageResponseDTO<WishListDTO> findAll(PageRequestDTO pageRequestDTO){
+	@GetMapping("/list/{wno}")
+	public PageResponseDTO<WishListDTO> findAll(@AuthenticationPrincipal AuthUserPrincipal authUser, PageRequestDTO pageRequestDTO){
 		log.info(pageRequestDTO);
-		return service.findAll(pageRequestDTO);
+		return service.findAll(authUser.getUserNo(),pageRequestDTO);
 	}
 	//찜 저장
 	@PostMapping("/")
