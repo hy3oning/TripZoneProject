@@ -76,13 +76,18 @@ public class HostProfileServiceImpl implements HostProfileService {
 	}
 
 	@Override
-	public void resubmit(Long hostNo) {
+	public void update(Long hostNo, HostProfileDTO hostProfileDTO) {
 		HostProfile hostProfile = hostProfileRepository.findById(hostNo)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 호스트 프로필입니다."));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 호스트 프로필 입니다."));
 		if (hostProfile.getApprovalStatus() != HostApprovalStatus.REJECTED) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "반려된 호스트 프로필만 재신청할 수 있습니다.");
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "반려된 호스트 프로필만 수정 후 재신청할 수 있습니다.");
 		}
-		hostProfile.resubmit();
+		if (!hostProfile.getBusinessNumber().equals(hostProfileDTO.getBusinessNumber())
+				&& hostProfileRepository.existsByBusinessNumber(hostProfileDTO.getBusinessNumber())) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 등록된 사업자등록번호입니다.");
+		}
+		hostProfile.updateForResubmit(hostProfileDTO.getBusinessName(), hostProfileDTO.getBusinessNumber(),
+				hostProfileDTO.getOwnerName());
 		hostProfileRepository.save(hostProfile);
 	}
 

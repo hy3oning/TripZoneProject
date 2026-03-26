@@ -63,6 +63,14 @@ public class HostProfile extends BaseTimeEntity {
 	@Column(name = "REJECT_REASON", length = 300)
 	private String rejectReason;
 
+	@Builder.Default
+	@Column(name = "ENABLED", nullable = false, length = 1)
+	private String enabled = "1";
+
+	public void changeEnabled(String enabled) {
+		this.enabled = enabled;
+	}
+
 	public void approve(Long adminUserNo) {
 		this.approvalStatus = HostApprovalStatus.APPROVED;
 		this.approvedBy = adminUserNo;
@@ -77,7 +85,10 @@ public class HostProfile extends BaseTimeEntity {
 		this.rejectReason = rejectReason;
 	}
 
-	public void resubmit() {
+	public void updateForResubmit(String businessName, String businessNumber, String ownerName) {
+		this.businessName = businessName;
+		this.businessNumber = businessNumber;
+		this.ownerName = ownerName;
 		this.approvalStatus = HostApprovalStatus.PENDING;
 		this.approvedBy = null;
 		this.approvedAt = null;

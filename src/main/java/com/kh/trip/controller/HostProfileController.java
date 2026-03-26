@@ -53,9 +53,9 @@ public class HostProfileController {
 		return Map.of("result", "SUCCESS");
 	}
 
-	@PatchMapping("/{hostNo}/resubmit")
-	public Map<String, String> resubmit(@PathVariable Long hostNo) {
-		hostProfileService.resubmit(hostNo);
+	@PatchMapping("/{hostNo}")
+	public Map<String, String> update(@PathVariable Long hostNo, @RequestBody HostProfileDTO hostProfileDTO) {
+		hostProfileService.update(hostNo, hostProfileDTO);
 		return Map.of("result", "SUCCESS");
 	}
 }
