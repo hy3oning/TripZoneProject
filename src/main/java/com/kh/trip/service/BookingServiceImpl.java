@@ -152,11 +152,11 @@ public class BookingServiceImpl implements BookingService {
 		}
 
 		if (booking.getStatus() == BookingStatus.CONFIRMED) {
-			Payment payment = paymentRepository.findByBooking_BookingNoOrderByPaymentNoDesc(bookingNo).stream()
-					.findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+			Payment payment = paymentRepository.findFirstByBooking_BookingNoOrderByPaymentNoDesc(bookingNo)
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
 							"예약에 대한 결제 정보가 없습니다. bookingNo=" + bookingNo));
 
-			paymentService.cancel(payment.getPaymentNo());
+			paymentService.cancel(payment.getPaymentNo(), booking.getUser().getUserNo());
 			return;
 		}
 
@@ -213,7 +213,7 @@ public class BookingServiceImpl implements BookingService {
 		if (booking.getStatus() != BookingStatus.CONFIRMED) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "예약 확정 상태만 숙박 완료 처리할 수 있습니다.");
 		}
-		Payment payment = paymentRepository.findByBooking_BookingNoOrderByPaymentNoDesc(bookingNo).stream().findFirst()
+		Payment payment = paymentRepository.findFirstByBooking_BookingNoOrderByPaymentNoDesc(bookingNo)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "예약에 대한 결제 정보가 없습니다."));
 
 		boolean alreadyEarned = mileageHistoryRepository.existsByPayment_PaymentNoAndChangeTypeAndStatus(

@@ -5,6 +5,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +25,8 @@ import com.kh.trip.domain.enums.MileageStatus;
 import com.kh.trip.domain.enums.PaymentPayMethod;
 import com.kh.trip.domain.enums.PaymentStatus;
 import com.kh.trip.domain.enums.RoomStatus;
+import com.kh.trip.dto.PageRequestDTO;
+import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.PaymentDTO;
 import com.kh.trip.repository.BookingRepository;
 import com.kh.trip.repository.MileageHistoryRepository;
@@ -42,7 +48,13 @@ public class PaymentServiceImpl implements PaymentService {
 	private final MileageHistoryRepository mileageHistoryRepository;
 
 	@Override
-	public Long save(PaymentDTO paymentDTO) {
+	public Long save(PaymentDTO paymentDTO, Long userNo) {
+		Booking booking = bookingRepository.findById(paymentDTO.getBookingNo())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 예약입니다."));
+		if (!booking.getUser().getUserNo().equals(userNo)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 예약만 결제할 수 있습니다.");
+		}
+
 		List<PaymentStatus> blockedStatuses = List.of(PaymentStatus.READY, PaymentStatus.PAID);
 		boolean exists = paymentRepository.existsByBooking_BookingNoAndPaymentStatusIn(paymentDTO.getBookingNo(),
 				blockedStatuses);
@@ -56,16 +68,34 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
-	public List<PaymentDTO> getPaymentsByBooking(Long bookingNo) {
-		List<Payment> paymentList = paymentRepository.findByBooking_BookingNoOrderByPaymentNoDesc(bookingNo);
+	public PageResponseDTO<PaymentDTO> getPaymentsByBooking(Long bookingNo, Long userNo,
+			PageRequestDTO pageRequestDTO) {
+		Booking booking = bookingRepository.findById(bookingNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 예약입니다."));
 
-		return paymentList.stream().map(this::entityToDTO).collect(Collectors.toList());
+		if (!booking.getUser().getUserNo().equals(userNo)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 예약만 조회할 수 있습니다.");
+		}
+
+		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, pageRequestDTO.getSize(),
+				Sort.by("paymentNo").descending());
+
+		Page<Payment> result = paymentRepository.findByBooking_BookingNoOrderByPaymentNoDesc(bookingNo, pageable);
+
+		List<PaymentDTO> dtoList = result.stream().map(this::entityToDTO).collect(Collectors.toList());
+
+		return PageResponseDTO.<PaymentDTO>withAll().dtoList(dtoList).pageRequestDTO(pageRequestDTO)
+				.totalCount(result.getTotalElements()).build();
 	}
 
 	@Override
-	public PaymentDTO getPaymentById(Long paymentNo) {
+	public PaymentDTO getPaymentById(Long paymentNo, Long userNo) {
 		Payment payment = paymentRepository.findById(paymentNo).orElseThrow(
 				() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 결제입니다. paymentNo=" + paymentNo));
+
+		if (!payment.getBooking().getUser().getUserNo().equals(userNo)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 결제만 조회할 수 있습니다.");
+		}
 		return entityToDTO(payment);
 	}
 
@@ -93,9 +123,13 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
-	public void cancel(Long paymentNo) {
+	public void cancel(Long paymentNo, Long userNo) {
 		Payment payment = paymentRepository.findById(paymentNo).orElseThrow(
 				() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 결제입니다. paymentNo=" + paymentNo));
+
+		if (!payment.getBooking().getUser().getUserNo().equals(userNo)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 결제만 취소할 수 있습니다.");
+		}
 
 		Booking booking = payment.getBooking();
 		if (booking.getStatus() == BookingStatus.COMPLETED) {
