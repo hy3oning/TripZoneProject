@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,10 @@ import com.kh.trip.domain.enums.BookingStatus;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 	@Query("select b from Booking b where b.user.userNo = :userNo")
 	Page<Booking> findByUserId(@Param("userNo") Long userNo, Pageable pageable);
+
+	@EntityGraph(attributePaths = { "room", "room.lodging", "room.lodging.imageList" })
+	@Query("select b from Booking b where b.user.userNo = :userNo order by b.regDate desc")
+	List<Booking> findMypageBookings(@Param("userNo") Long userNo);
 
 	@Query("select b from Booking b join b.room r where r.lodging.host.userNo = :userNo")
 	Page<Booking> findByRoomId(@Param("userNo") Long userNo, Pageable pageable);

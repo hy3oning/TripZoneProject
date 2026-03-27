@@ -14,4 +14,7 @@ public interface UserCouponRepository extends JpaRepository<UserCoupon, Long>{
 
 	@Query("select uc from UserCoupon uc left join fetch uc.coupon c where uc.user.userNo = :userNo")
 	Page<UserCoupon> findByUser(Long userNo, Pageable pageable);
+
+	@Query("select uc from UserCoupon uc left join fetch uc.coupon c where uc.user.userNo = :userNo order by uc.issuedAt desc")
+	java.util.List<UserCoupon> findMypageCoupons(@Param("userNo") Long userNo);
 }

@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Local runtime files
+src/main/resources/application-local.properties
+*.log
+tailscale-setup-latest-amd64.msi
