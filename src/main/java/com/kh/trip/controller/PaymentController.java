@@ -39,8 +39,8 @@ public class PaymentController {
 	@GetMapping("/booking/{bookingNo}")
 	@PreAuthorize("hasRole('USER')")
 	public PageResponseDTO<PaymentDTO> getPaymentsByBooking(@AuthenticationPrincipal AuthUserPrincipal authUser,
-			@PathVariable Long bookingNo, PageRequestDTO pageRequestDTO ) {
-		return paymentService.getPaymentsByBooking(bookingNo, authUser.getUserNo(),pageRequestDTO);
+			@PathVariable Long bookingNo, PageRequestDTO pageRequestDTO) {
+		return paymentService.getPaymentsByBooking(bookingNo, authUser.getUserNo(), pageRequestDTO);
 	}
 
 	@GetMapping("/{paymentNo}")
