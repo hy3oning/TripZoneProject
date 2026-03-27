@@ -98,4 +98,10 @@ public class Event extends BaseTimeEntity {
 	public void changeViewCount(Long viewCount) {
 		this.viewCount = viewCount;
 	}
+	public void changeStartDate (LocalDateTime startDate) {
+		this.startDate = startDate;
+	}
+	public void changeEndDate (LocalDateTime endDate) {
+		this.endDate = endDate;
+	}
 }

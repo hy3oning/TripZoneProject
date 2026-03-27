@@ -37,7 +37,7 @@ public class WishList extends BaseTimeEntity{
 	private Long wishListNo;
 	
 	@JoinColumn(name = "USER_NO",nullable = false)
-	@ManyToOne  //외래키
+	@ManyToOne  //외래키(user1명에 찜 여러개 1:n)
 	private User user;
 	
 	@JoinColumn(name = "LODGING_NO",nullable = false)
