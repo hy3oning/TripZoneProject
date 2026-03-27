@@ -43,8 +43,8 @@ public class UserController {
 		}
 		return principal;
 	}
-	
-	//회원 정보 수정
+
+	// 회원 정보 수정
 	@PatchMapping("/{userNo}/update")
 	@PreAuthorize("hasRole('USER')")
 	public Map<String, String> update(@PathVariable Long userNo, @RequestBody UserUpdateRequestDTO request,
@@ -55,7 +55,7 @@ public class UserController {
 		userService.update(userNo, request);
 		return Map.of("result", "SUCCESS");
 	}
-	
+
 	// 회원 탈퇴
 	@PatchMapping("/{userNo}/delete")
 	@PreAuthorize("hasRole('USER')")
