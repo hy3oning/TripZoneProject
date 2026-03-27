@@ -2,11 +2,14 @@ package com.kh.trip.controller.auth;
 
 import java.util.Map;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.trip.dto.auth.ChangePasswordRequestDTO;
 import com.kh.trip.dto.auth.LoginRequestDTO;
 import com.kh.trip.dto.auth.LoginResponseDTO;
 import com.kh.trip.dto.auth.LogoutRequestDTO;
@@ -16,6 +19,7 @@ import com.kh.trip.dto.auth.TokenRefreshResponseDTO;
 import com.kh.trip.dto.auth.social.GoogleLoginRequestDTO;
 import com.kh.trip.dto.auth.social.KakaoLoginRequestDTO;
 import com.kh.trip.dto.auth.social.NaverLoginRequestDTO;
+import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.service.auth.AuthService;
 
 import jakarta.validation.Valid;
@@ -36,6 +40,13 @@ public class AuthController {
 
 		// 회원가입 성공 메시지를 응답한다.
 		return Map.of("msg", "register success");
+	}
+
+	@PatchMapping("/password")
+	public Map<String, String> changePassword(@AuthenticationPrincipal AuthUserPrincipal authUser,
+			@Valid @RequestBody ChangePasswordRequestDTO request) {
+		authService.changePassword(authUser.getUserNo(), request);
+		return Map.of("result", "SUCCESS");
 	}
 
 	@PostMapping("/login")

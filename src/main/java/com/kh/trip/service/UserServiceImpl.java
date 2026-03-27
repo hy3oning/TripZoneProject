@@ -61,7 +61,10 @@ public class UserServiceImpl implements UserService {
 
 				));
 
-		user.changePhone(request.getPhone());
+		if (request.getPhone() != null && !request.getPhone().isBlank()) {
+
+			user.changePhone(request.getPhone());
+		}
 		userRepository.save(user);
 	}
 

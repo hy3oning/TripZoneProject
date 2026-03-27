@@ -10,12 +10,14 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.domain.User;
 import com.kh.trip.domain.UserAuthProvider;
 import com.kh.trip.domain.UserRefreshToken;
 import com.kh.trip.domain.UserRole;
+import com.kh.trip.dto.auth.ChangePasswordRequestDTO;
 import com.kh.trip.dto.auth.LoginRequestDTO;
 import com.kh.trip.dto.auth.LoginResponseDTO;
 import com.kh.trip.dto.auth.LogoutRequestDTO;
@@ -32,13 +34,11 @@ import com.kh.trip.repository.UserRoleRepository;
 import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.security.CustomUserDetailsService;
 import com.kh.trip.security.JwtProvider;
-//import com.kh.trip.security.social.GoogleTokenVerifier;
 import com.kh.trip.security.social.GoogleTokenVerifier;
 import com.kh.trip.security.social.KakaoTokenVerifier;
 import com.kh.trip.security.social.NaverTokenVerifier;
 import com.kh.trip.security.social.SocialUserInfo;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -278,5 +278,17 @@ public class AuthServiceImpl implements AuthService {
 	public LoginResponseDTO naverLogin(NaverLoginRequestDTO request) {
 		SocialUserInfo socialUser = naverTokenVerifier.verify(request.getCode());
 		return socialLogin(socialUser);
+	}
+
+	@Override
+	@Transactional
+	public void changePassword(Long userNo, ChangePasswordRequestDTO request) {
+		UserAuthProvider authProvider = userAuthProviderRepository.findByUserNoAndProviderCode(userNo, "LOCAL")
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "로컬 로그인 계정만 비밀번호를 변경할 수 있습니다."));
+		if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+		}
+		authProvider.changePasswordHash(passwordEncoder.encode(request.getNewPassword()));
+		userAuthProviderRepository.save(authProvider);
 	}
 }
