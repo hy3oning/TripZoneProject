@@ -59,9 +59,4 @@ public class UserAuthProvider extends BaseTimeEntity {
 			this.connectedAt = LocalDateTime.now();
 		}
 	}
-
-	public void changePasswordHash(String passwordHash) {
-		this.passwordHash = passwordHash;
-	}
-
 }
