@@ -321,12 +321,4 @@ public class MypageDTO {
 		private String preview;
 	}
 
-	@Getter
-	@Builder
-	@NoArgsConstructor
-	@AllArgsConstructor
-	public static class PasswordChangedResponse {
-		private String result;
-		private LocalDateTime changedAt;
-	}
 }
