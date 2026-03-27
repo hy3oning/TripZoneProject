@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,10 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.dto.MypageDTO;
-import com.kh.trip.dto.PasswordChangeRequestDTO;
 import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.service.MypageService;
-import com.kh.trip.service.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 public class MypageController {
 
 	private final MypageService mypageService;
-	private final UserService userService;
 
 	@GetMapping("/home")
 //	@PreAuthorize("hasRole('USER')")
@@ -84,19 +80,6 @@ public class MypageController {
 //	@PreAuthorize("hasRole('USER')")
 	public MypageDTO.InquiryResponse getInquiries(@AuthenticationPrincipal AuthUserPrincipal principal) {
 		return mypageService.getInquiries(requirePrincipal(principal).getUserNo());
-	}
-
-	@PatchMapping("/profile/password")
-//	@PreAuthorize("hasRole('USER')")
-	public MypageDTO.PasswordChangedResponse changePassword(
-			@AuthenticationPrincipal AuthUserPrincipal principal,
-			@Valid @RequestBody PasswordChangeRequestDTO request) {
-		Long userNo = requirePrincipal(principal).getUserNo();
-		userService.changePassword(userNo, request);
-		return MypageDTO.PasswordChangedResponse.builder()
-				.result("SUCCESS")
-				.changedAt(LocalDateTime.now())
-				.build();
 	}
 
 	private AuthUserPrincipal requirePrincipal(AuthUserPrincipal principal) {
