@@ -20,28 +20,32 @@ import lombok.Setter;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-
 public class LodgingDTO {
 
-	private Long lodgingNo;
-	private Long hostNo;
-	private String lodgingName;
-	private LodgingType lodgingType;
-	private String region;
-	private String address;
-	private String detailAddress;
-	private String zipCode;
-	private Double latitude;
-	private Double longitude;
-	private String description;
-	private String checkInTime;
-	private String checkOutTime;
-	private LodgingStatus status;
-	@Builder.Default 
-	private List<MultipartFile> files = new ArrayList<MultipartFile>(); 
+	private Long lodgingNo; // 숙소 번호
+	private Long hostNo; // 호스트 번호
+	private String lodgingName; // 숙소명
+	private LodgingType lodgingType; // 숙소 유형
+	private String region; // 지역
+	private String address; // 기본 주소
+	private String detailAddress; // 상세 주소
+	private String zipCode; // 우편번호
+	private Double latitude; // 위도
+	private Double longitude; // 경도
+	private String description; // 숙소 설명
+	private String checkInTime; // 체크인 시간
+	private String checkOutTime; // 체크아웃 시간
+	private LodgingStatus status; // 숙소 상태
 
-	@Builder.Default 
-	private List<String> uploadFileNames = new ArrayList<String>();
-	private List<RoomSummaryDTO> roomDTO;
+	// 업로드 받을 파일들
+	@Builder.Default
+	private List<MultipartFile> files = new ArrayList<>();
 
+	// 실제 저장된 파일명 목록
+	@Builder.Default
+	private List<String> uploadFileNames = new ArrayList<>();
+
+	// 상세조회 시 같이 내려줄 객실 목록
+	@Builder.Default
+	private List<RoomDTO> rooms = new ArrayList<>();
 }

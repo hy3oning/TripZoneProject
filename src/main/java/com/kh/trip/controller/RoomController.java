@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.trip.domain.enums.RoomStatus;
-import com.kh.trip.dto.RoomCreateDTO;
-import com.kh.trip.dto.RoomDetailDTO;
-import com.kh.trip.dto.RoomSummaryDTO;
-import com.kh.trip.dto.RoomUpdateDTO;
+import com.kh.trip.dto.RoomDTO; 
 import com.kh.trip.service.RoomService;
 
 import lombok.RequiredArgsConstructor;
@@ -32,23 +29,23 @@ public class RoomController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public RoomDetailDTO createRoom(@RequestBody RoomCreateDTO createDTO) {
-		return roomService.createRoom(createDTO);
+	public RoomDTO createRoom(@RequestBody RoomDTO roomDTO) { 
+		return roomService.createRoom(roomDTO); 
 	}
 
 	@GetMapping("/lodging/{lodgingNo}")
-	public List<RoomSummaryDTO> getRoomsByLodgingNo(@PathVariable Long lodgingNo) {
-		return roomService.getRoomsByLodgingNo(lodgingNo);
+	public List<RoomDTO> getRoomsByLodgingNo(@PathVariable Long lodgingNo) { 
+		return roomService.getRoomsByLodgingNo(lodgingNo); 
 	}
 
 	@GetMapping("/{roomNo}")
-	public RoomDetailDTO getRoomDetail(@PathVariable Long roomNo) {
-		return roomService.getRoomDetail(roomNo);
+	public RoomDTO getRoomDetail(@PathVariable Long roomNo) { 
+		return roomService.getRoomDetail(roomNo); 
 	}
 
 	@PatchMapping("/{roomNo}")
-	public RoomDetailDTO updateRoom(@PathVariable Long roomNo, @RequestBody RoomUpdateDTO updateDTO) {
-		return roomService.updateRoom(roomNo, updateDTO);
+	public RoomDTO updateRoom(@PathVariable Long roomNo, @RequestBody RoomDTO roomDTO) { 
+		return roomService.updateRoom(roomNo, roomDTO); 
 	}
 
 	@DeleteMapping("/{roomNo}")
@@ -58,24 +55,23 @@ public class RoomController {
 	}
 
 	@GetMapping
-	public List<RoomSummaryDTO> getAllRooms() {
-		return roomService.getAllRooms();
+	public List<RoomDTO> getAllRooms() { 
+		return roomService.getAllRooms(); 
 	}
 
 	@GetMapping("/status/{status}")
-	public List<RoomSummaryDTO> getRoomsByStatus(@PathVariable RoomStatus status) {
-		return roomService.getRoomsByStatus(status);
+	public List<RoomDTO> getRoomsByStatus(@PathVariable RoomStatus status) { 
+		return roomService.getRoomsByStatus(status); 
 	}
 
 	@GetMapping("/search")
-	public List<RoomSummaryDTO> searchRoomsByName(@RequestParam String keyword) {
-		return roomService.searchRoomsByName(keyword);
+	public List<RoomDTO> searchRoomsByName(@RequestParam String keyword) {
+		return roomService.searchRoomsByName(keyword); 
 	}
 
 	@GetMapping("/lodging/{lodgingNo}/status/{status}")
-	public List<RoomSummaryDTO> getRoomsByLodgingNoAndStatus(@PathVariable Long lodgingNo,
-			@PathVariable RoomStatus status) {
-		return roomService.getRoomsByLodgingNoAndStatus(lodgingNo, status);
+	public List<RoomDTO> getRoomsByLodgingNoAndStatus(@PathVariable Long lodgingNo,
+			@PathVariable RoomStatus status) { 
+		return roomService.getRoomsByLodgingNoAndStatus(lodgingNo, status); 
 	}
-
 }

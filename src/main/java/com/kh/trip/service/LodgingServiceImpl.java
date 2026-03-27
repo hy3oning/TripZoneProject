@@ -13,15 +13,15 @@ import org.springframework.web.multipart.MultipartFile;
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.LodgingImage;
 import com.kh.trip.domain.Room;
-import com.kh.trip.domain.User; 
+import com.kh.trip.domain.User;
 import com.kh.trip.domain.enums.LodgingStatus;
 import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.LodgingDTO;
-import com.kh.trip.dto.RoomSummaryDTO;
+import com.kh.trip.dto.RoomDTO;
 import com.kh.trip.repository.LodgingRepository;
 import com.kh.trip.repository.RoomRepository;
-import com.kh.trip.repository.UserRepository; 
-import com.kh.trip.util.CustomFileUtil; 
+import com.kh.trip.repository.UserRepository;
+import com.kh.trip.util.CustomFileUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,8 +44,8 @@ public class LodgingServiceImpl implements LodgingService {
 
 	private final LodgingRepository lodgingRepository;
 	private final RoomRepository roomRepository;
-	private final UserRepository userRepository; 
-	private final CustomFileUtil fileUtil; 
+	private final UserRepository userRepository;
+	private final CustomFileUtil fileUtil;
 
 	// 숙소 등록
 	@Override
@@ -83,8 +83,8 @@ public class LodgingServiceImpl implements LodgingService {
 		}
 
 		// roomDTO가 없으면 빈 리스트 생성
-		List<Room> roomList = lodgingDTO.getRoomDTO() == null ? List.of()
-				: lodgingDTO.getRoomDTO().stream().map(this::toRoomEntity).collect(Collectors.toList());
+		List<Room> roomList = lodgingDTO.getRooms() == null ? List.of()
+				: lodgingDTO.getRooms().stream().map(this::toRoomEntity).collect(Collectors.toList());
 
 		// 숙소 먼저 저장해서 lodgingNo 생성
 		Lodging savedLodging = lodgingRepository.save(lodging);
@@ -163,8 +163,7 @@ public class LodgingServiceImpl implements LodgingService {
 		applyLodgingUpdate(findLodging, lodgingDTO);
 
 		// 화면에서 변화 없이 계속 유지된 파일들
-		List<String> uploadFileNames = lodgingDTO.getUploadFileNames() == null
-				? new ArrayList<>()
+		List<String> uploadFileNames = lodgingDTO.getUploadFileNames() == null ? new ArrayList<>()
 				: new ArrayList<>(lodgingDTO.getUploadFileNames());
 
 		// 새로업로드된 파일을 내부폴더 중복되지않는 파일명으로 저장하고, 저장된 이름을 리스트로 가져온다.
@@ -188,8 +187,7 @@ public class LodgingServiceImpl implements LodgingService {
 
 		// 예전 파일들 중에서 더 이상 유지되지 않는 실제 파일 삭제
 		if (oldFileNames != null && !oldFileNames.isEmpty()) {
-			List<String> removeFiles = oldFileNames.stream()
-					.filter(fileName -> !uploadFileNames.contains(fileName))
+			List<String> removeFiles = oldFileNames.stream().filter(fileName -> !uploadFileNames.contains(fileName))
 					.toList();
 
 			fileUtil.deleteFiles(removeFiles);
@@ -198,10 +196,10 @@ public class LodgingServiceImpl implements LodgingService {
 		return toLodgingDTO(updatedLodging);
 	}
 
-	// 숙소 수정값 반영 메서드 수정 기능 
+	// 숙소 수정값 반영 메서드 수정 기능
 	// @Setter 방식 대신 엔티티의 change 메서드만 사용하도록 변경
 	private void applyLodgingUpdate(Lodging findLodging, LodgingDTO lodgingDTO) {
-		
+
 		if (lodgingDTO.getLodgingName() != null && !lodgingDTO.getLodgingName().isBlank()) {
 			findLodging.changeLodgingName(lodgingDTO.getLodgingName());
 		}
@@ -239,8 +237,6 @@ public class LodgingServiceImpl implements LodgingService {
 
 		lodgingRepository.save(findLodging);
 
-		
-		 
 		List<Room> roomList = roomRepository.findByLodging_LodgingNo(lodgingNo);
 		if (roomList != null && !roomList.isEmpty()) {
 			roomList.forEach(room -> room.changeStatus(RoomStatus.UNAVAILABLE));
@@ -263,9 +259,9 @@ public class LodgingServiceImpl implements LodgingService {
 
 		// 3. lodging entity를 dto로 변환
 		LodgingDTO lodgingDTO = toLodgingDTO(lodging);
-		List<RoomSummaryDTO> roomDTOs = rooms.stream().map(this::toRoomSummaryDTO).collect(Collectors.toList());
+		List<RoomDTO> roomDTOs = rooms.stream().map(this::toRoomDTO).collect(Collectors.toList());
 		// 4.lodgingDTO에 룸정보추가
-		lodgingDTO.setRoomDTO(roomDTOs);
+		lodgingDTO.setRooms(roomDTOs);
 		return lodgingDTO;
 	}
 
@@ -357,7 +353,7 @@ public class LodgingServiceImpl implements LodgingService {
 	}
 
 	// RoomSummaryDTO -> Room Entity 변환도 Impl 내부에서 처리
-	private Room toRoomEntity(RoomSummaryDTO roomDTO) {
+	private Room toRoomEntity(RoomDTO roomDTO) {
 		return Room.builder().roomName(roomDTO.getRoomName()) // 객실명 세팅
 				.roomType(roomDTO.getRoomType()) // 객실 유형 세팅
 				.roomDescription(roomDTO.getRoomDescription()) // 객실 설명 세팅
@@ -369,11 +365,9 @@ public class LodgingServiceImpl implements LodgingService {
 	}
 
 	// Room Entity -> RoomSummaryDTO 변환도 Impl 내부에서 처리
-	private RoomSummaryDTO toRoomSummaryDTO(Room room) {
-		return RoomSummaryDTO.builder().roomNo(room.getRoomNo()) // 객실 번호 세팅
-				// [추가] Room이 Lodging 엔티티를 참조하므로 숙소 번호도 같이 세팅
-				.lodgingNo(room.getLodging().getLodgingNo())
-				.roomName(room.getRoomName()) // 객실명 세팅
+	private RoomDTO toRoomDTO(Room room) {
+		return RoomDTO.builder().roomNo(room.getRoomNo()) // 객실 번호 세팅
+				.lodgingNo(room.getLodging().getLodgingNo()).roomName(room.getRoomName()) // 객실명 세팅
 				.roomType(room.getRoomType()) // 객실 유형 세팅
 				.roomDescription(room.getRoomDescription()) // 객실 설명 세팅
 				.maxGuestCount(room.getMaxGuestCount()) // 최대 수용 인원 세팅
