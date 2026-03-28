@@ -1,6 +1,7 @@
 package com.kh.trip.domain;
 import java.time.LocalDateTime;
 
+import com.kh.trip.domain.common.BaseTimeEntity;
 import com.kh.trip.domain.enums.CouponStatus;
 
 import jakarta.persistence.Column;
@@ -20,19 +21,17 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Entity
 @Table(name = "USER_COUPONS")
 @Getter
-@ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class UserCoupon {
+public class UserCoupon extends BaseTimeEntity{
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_USER_COUPONS")
-	@SequenceGenerator(name = "SEQ_USER_COUPONS", sequenceName = "SEQ_USER_COUPONS", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_user_coupons")
+	@SequenceGenerator(name = "seq_user_coupons", sequenceName = "SEQ_USER_COUPONS", allocationSize = 1)
 	@Column(name = "USER_COUPON_NO")
 	private Long userCouponNo;
 
