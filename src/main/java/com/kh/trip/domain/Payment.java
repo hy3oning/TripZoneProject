@@ -25,7 +25,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "PAYMENT")
+@Table(name = "PAYMENTS")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -88,7 +88,7 @@ public class Payment extends BaseTimeEntity {
 	@Column(name = "RAW_RESPONSE")
 	private String rawResponse; // 결제 응답 원본 데이터
 
-	public void changePaymentStatus(com.kh.trip.domain.enums.PaymentStatus paymentStatus) {
+	public void changePaymentStatus(PaymentStatus paymentStatus) {
 		this.paymentStatus = paymentStatus;
 	}
 
