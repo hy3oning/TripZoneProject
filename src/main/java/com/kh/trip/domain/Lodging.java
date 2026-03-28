@@ -147,7 +147,7 @@ public class Lodging extends BaseTimeEntity {
 
 	public void addImage(LodgingImage image) {
 		// 이미지 추가시 순서(ord) 자동 설정 (0, 1, 2, ...)
-		image.changeOrd(this.imageList.size());
+		image.changeOrd(this.imageList.size() + 1);
 		image.changeLodging(this);
 		imageList.add(image);
 	}
