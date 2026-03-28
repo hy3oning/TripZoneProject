@@ -23,8 +23,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 	@Query("select b from Booking b where b.user.userNo = :userNo order by b.regDate desc")
 	List<Booking> findMypageBookings(@Param("userNo") Long userNo);
 
-	@Query("select b from Booking b join b.room r where r.lodging.host.userNo = :userNo")
-	Page<Booking> findByRoomId(@Param("userNo") Long userNo, Pageable pageable);
+	@Query("select b from Booking b join b.room r where r.lodging.host.hostNo = :hostNo")
+	Page<Booking> findByHostNo(@Param("hostNo") Long hostNo, Pageable pageable);
 
 	@Query("select r.lodging from Booking b join b.room r where b.user.userNo = :userNo")
 	List<Lodging> findLodigByUserId(@Param("userNo") Long userNo);

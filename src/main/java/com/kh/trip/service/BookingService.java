@@ -12,7 +12,7 @@ public interface BookingService {
 	
 	PageResponseDTO<BookingDTO> findByUserId(Long userNo,PageRequestDTO pageRequestDTO);
 
-	PageResponseDTO<BookingDTO> findByRoomId(Long hostNo,PageRequestDTO pageRequestDTO);
+	PageResponseDTO<BookingDTO> findByHostNo(Long hostNo, PageRequestDTO pageRequestDTO);
 
 	void cancelBooking(Long bookingNo);
 	

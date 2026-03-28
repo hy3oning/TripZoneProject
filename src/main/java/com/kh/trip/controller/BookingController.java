@@ -18,8 +18,6 @@ import com.kh.trip.service.BookingService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.web.bind.annotation.RequestParam;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -41,19 +39,17 @@ public class BookingController {
 		log.info("findById()" + bookingNo);
 		return service.findById(bookingNo);
 	}
-	
+
 	@GetMapping("/userlist/{userNo}")
-	public PageResponseDTO<BookingDTO> findByUserId(@PathVariable Long userNo,
-			PageRequestDTO pageRequestDTO) {
+	public PageResponseDTO<BookingDTO> findByUserId(@PathVariable Long userNo, PageRequestDTO pageRequestDTO) {
 		log.info("findByUserId() userNo= " + userNo);
 		return service.findByUserId(userNo, pageRequestDTO);
 	}
 
-	@GetMapping("/roomlist/{userNo}")
-	public PageResponseDTO<BookingDTO> findByRoomId(@PathVariable Long userNo,
-			PageRequestDTO pageRequestDTO) {
-		log.info("findByLodgingId() lodgingNo= " + userNo);
-		return service.findByRoomId(userNo, pageRequestDTO);
+	@GetMapping("/hostlist/{hostNo}")
+	public PageResponseDTO<BookingDTO> findByHostNo(@PathVariable Long hostNo, PageRequestDTO pageRequestDTO) {
+		log.info("findByHostNo() hostNo= " + hostNo);
+		return service.findByHostNo(hostNo, pageRequestDTO);
 	}
 
 	@DeleteMapping("/{bookingNo}")

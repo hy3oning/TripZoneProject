@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.domain.Booking;
-import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.MemberGrade;
 import com.kh.trip.domain.MileageHistory;
 import com.kh.trip.domain.Payment;
@@ -60,7 +59,7 @@ public class BookingServiceImpl implements BookingService {
 	private final PaymentRepository paymentRepository;
 	private final MileageHistoryRepository mileageHistoryRepository;
 	private final MemberGradeRepository memberGradeRepository;
-	
+
 	@Override
 	public Long save(BookingDTO bookingDTO) {
 
@@ -103,8 +102,7 @@ public class BookingServiceImpl implements BookingService {
 		Booking booking = Booking.builder().user(user).userCoupon(userCoupon).room(room)
 				.checkInDate(bookingDTO.getCheckInDate()).checkOutDate(bookingDTO.getCheckOutDate())
 				.guestCount(bookingDTO.getGuestCount()).pricePerNight(Long.valueOf(room.getPricePerNight()))
-				.discountAmount(discountAmount).totalPrice(totalPrice).regDate(bookingDTO.getRegDate())
-				.status(BookingStatus.PENDING).build();
+				.discountAmount(discountAmount).totalPrice(totalPrice).status(BookingStatus.PENDING).build();
 		Long bookingNo = repository.save(booking).getBookingNo();
 
 		room.changeStatus(RoomStatus.UNAVAILABLE);
@@ -125,25 +123,24 @@ public class BookingServiceImpl implements BookingService {
 	public PageResponseDTO<BookingDTO> findByUserId(Long userNo, PageRequestDTO pageRequestDTO) {
 		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, pageRequestDTO.getSize(),
 				Sort.by("bookingNo").descending());
-		User user = userRepository.findById(userNo)
-				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 정보입니다."));
-		Page<Booking> result = repository.findByUserId(user.getUserNo(), pageable);
 
-		List<BookingDTO> dtoList = entityToDTO(user, result);
+		Page<Booking> result = repository.findByUserId(userNo, pageable);
+
+		List<BookingDTO> dtoList = entityToDTO(result);
+
 		return PageResponseDTO.<BookingDTO>withAll().dtoList(dtoList).pageRequestDTO(pageRequestDTO)
 				.totalCount(result.getTotalElements()).build();
 	}
 
 	@Override
-	public PageResponseDTO<BookingDTO> findByRoomId(Long hostNo, PageRequestDTO pageRequestDTO) {
-		// userNo랑 Lodging의 host가 같은 조건으로 숙소를 찾고, 그 숙소에 포함된 roomNo에 따라 불러올 리스트를 정한다.
+	public PageResponseDTO<BookingDTO> findByHostNo(Long hostNo, PageRequestDTO pageRequestDTO) {
 		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, pageRequestDTO.getSize(),
 				Sort.by("bookingNo").descending());
-		User user = userRepository.findById(hostNo)
-				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 정보입니다."));
-		Page<Booking> result = repository.findByRoomId(user.getUserNo(), pageable);
 
-		List<BookingDTO> dtoList = entityToDTO(user, result);
+		Page<Booking> result = repository.findByHostNo(hostNo, pageable);
+
+		List<BookingDTO> dtoList = entityToDTO(result);
+
 		return PageResponseDTO.<BookingDTO>withAll().dtoList(dtoList).pageRequestDTO(pageRequestDTO)
 				.totalCount(result.getTotalElements()).build();
 	}
@@ -182,23 +179,22 @@ public class BookingServiceImpl implements BookingService {
 
 	}
 
-	public List<BookingDTO> entityToDTO(User user, Page<Booking> result) {
-		return result.getContent().stream().map(booking -> {
-			Long targetLodgingNo = booking.getRoom().getLodging().getLodgingNo();
-			return BookingDTO.builder().bookingNo(booking.getBookingNo()).userNo(user.getUserNo())
-					.roomNo(booking.getRoom().getRoomNo()).lodgingName(findLodgingName(user, targetLodgingNo))
-					.userCouponNo(booking.getUserCoupon() != null ? booking.getUserCoupon().getUserCouponNo() : null)
-					.roomName(booking.getRoom().getRoomName()).checkInDate(booking.getCheckInDate())
-					.checkOutDate(booking.getCheckOutDate()).guestCount(booking.getGuestCount())
-					.pricePerNight(booking.getPricePerNight()).discountAmount(booking.getDiscountAmount())
-					.totalPrice(booking.getTotalPrice()).status(booking.getStatus())
-					.requestMessage(booking.getRequestMessage()).regDate(booking.getRegDate()).build();
-		}).collect(Collectors.toList());
+	public List<BookingDTO> entityToDTO(Page<Booking> result) {
+		return result.getContent().stream().map(booking -> BookingDTO.builder().bookingNo(booking.getBookingNo())
+				.userNo(booking.getUser().getUserNo()).roomNo(booking.getRoom().getRoomNo())
+				.lodgingName(booking.getRoom().getLodging().getLodgingName())
+				.userCouponNo(booking.getUserCoupon() != null ? booking.getUserCoupon().getUserCouponNo() : null)
+				.roomName(booking.getRoom().getRoomName()).checkInDate(booking.getCheckInDate())
+				.checkOutDate(booking.getCheckOutDate()).guestCount(booking.getGuestCount())
+				.pricePerNight(booking.getPricePerNight()).discountAmount(booking.getDiscountAmount())
+				.totalPrice(booking.getTotalPrice()).status(booking.getStatus())
+				.requestMessage(booking.getRequestMessage()).regDate(booking.getRegDate()).build())
+				.collect(Collectors.toList());
 	}
 
 	public BookingDTO entityToDTO(Long bookingNo) {
 		Optional<Booking> result = repository.findById(bookingNo);
-		Booking booking = result.orElseThrow(()-> new IllegalArgumentException("존재하지 않는 예약번호입니다."));
+		Booking booking = result.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예약번호입니다."));
 		return BookingDTO.builder().bookingNo(booking.getBookingNo()).userNo(booking.getUser().getUserNo())
 				.roomNo(booking.getRoom().getRoomNo()).lodgingName(booking.getRoom().getLodging().getLodgingName())
 				.userCouponNo(booking.getUserCoupon() != null ? booking.getUserCoupon().getUserCouponNo() : null)
@@ -207,17 +203,6 @@ public class BookingServiceImpl implements BookingService {
 				.pricePerNight(booking.getPricePerNight()).discountAmount(booking.getDiscountAmount())
 				.totalPrice(booking.getTotalPrice()).status(booking.getStatus())
 				.requestMessage(booking.getRequestMessage()).regDate(booking.getRegDate()).build();
-	}
-	
-	public String findLodgingName(User user, Long targetLodgingNo) {
-		String lodgingName = null;
-		List<Lodging> lodgingList = repository.findLodigByUserId(user.getUserNo());
-		for (Lodging lodging : lodgingList) {
-			if (lodging.getLodgingNo().equals(targetLodgingNo)) {
-				lodgingName = lodging.getLodgingName();
-			}
-		}
-		return lodgingName;
 	}
 
 	@Override
@@ -248,9 +233,9 @@ public class BookingServiceImpl implements BookingService {
 		booking.complete();
 
 		User user = booking.getUser();
-		user.addTotalSpent(payment.getPaymentAmount()); 
+		user.addTotalSpent(payment.getPaymentAmount());
 		user.addStayCount(1L);
-		
+
 		Long earnedMileage = payment.getPaymentAmount() / 100;
 		user.addMileage(earnedMileage);
 
@@ -265,21 +250,22 @@ public class BookingServiceImpl implements BookingService {
 	}
 
 	private void updateMemberGrade(User user) {
-	    MemberGradeName gradeName;
-	    if (user.getTotalSpent() >= 3000000 || user.getStayCount() >= 30) {
-	    	gradeName = MemberGradeName.BLACK;
-	    } else if (user.getTotalSpent() >= 1500000 || user.getStayCount() >= 15) {
-	    	gradeName = MemberGradeName.GOLD;
-	    } else if (user.getTotalSpent() >= 500000 || user.getStayCount() >= 5) {
-	    	gradeName = MemberGradeName.SILVER;
-	    } else {
-	    	gradeName = MemberGradeName.BASIC;
-	    }
+		MemberGradeName gradeName;
+		if (user.getTotalSpent() >= 3000000 || user.getStayCount() >= 30) {
+			gradeName = MemberGradeName.BLACK;
+		} else if (user.getTotalSpent() >= 1500000 || user.getStayCount() >= 15) {
+			gradeName = MemberGradeName.GOLD;
+		} else if (user.getTotalSpent() >= 500000 || user.getStayCount() >= 5) {
+			gradeName = MemberGradeName.SILVER;
+		} else {
+			gradeName = MemberGradeName.BASIC;
+		}
 
-	    Optional<MemberGrade> result = memberGradeRepository.findByGradeName(gradeName);
-	    MemberGrade memberGrade = result.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "등급 정보가 없습니다."));
-	    
-	    user.changeMemberGrade(memberGrade);
+		Optional<MemberGrade> result = memberGradeRepository.findByGradeName(gradeName);
+		MemberGrade memberGrade = result
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "등급 정보가 없습니다."));
+
+		user.changeMemberGrade(memberGrade);
 	}
 
 }

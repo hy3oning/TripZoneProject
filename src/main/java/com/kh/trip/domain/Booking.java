@@ -2,8 +2,7 @@ package com.kh.trip.domain;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-
+import com.kh.trip.domain.common.BaseTimeEntity;
 import com.kh.trip.domain.enums.BookingStatus;
 
 import jakarta.persistence.Column;
@@ -26,19 +25,17 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Entity
 @Table(name = "BOOKINGS")
 @Getter
-@ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Booking {
+public class Booking extends BaseTimeEntity {
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BOOKINGS")
-	@SequenceGenerator(name = "SEQ_BOOKINGS", sequenceName = "SEQ_BOOKINGS", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_bookings")
+	@SequenceGenerator(name = "seq_bookings", sequenceName = "SEQ_BOOKINGS", allocationSize = 1)
 	@Column(name = "BOOKING_NO")
 	private Long bookingNo;
 
@@ -85,10 +82,6 @@ public class Booking {
 	@Column(name = "REQUEST_MESSAGE", length = 500)
 	private String requestMessage;
 
-	@Column(name = "REG_DATE", nullable = false, updatable = false)
-	@CreationTimestamp
-	private LocalDateTime regDate;
-
 	@PrePersist
 	public void validateNewBooking() {
 		// 1. 체크아웃 > 체크인 검증
@@ -117,7 +110,7 @@ public class Booking {
 	public void complete() {
 		this.status = BookingStatus.COMPLETED;
 	}
-	
+
 	public void confirm() {
 		this.status = BookingStatus.CONFIRMED;
 	}
