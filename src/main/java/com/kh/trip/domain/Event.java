@@ -9,6 +9,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -38,7 +39,7 @@ public class Event extends BaseTimeEntity {
 	@Column(name = "EVENT_NO")
 	private Long eventNo;
 
-	@ManyToOne // 외래키
+	@ManyToOne(fetch = FetchType.LAZY) // 외래키
 	@JoinColumn(name = "ADMIN_USER_NO", nullable = false)
 	private User adminUser;
 

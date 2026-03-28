@@ -2,10 +2,10 @@
 package com.kh.trip.domain;
 
 import com.kh.trip.domain.common.BaseTimeEntity;
-import com.kh.trip.domain.enums.MemberGradeName;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -41,7 +41,7 @@ public class User extends BaseTimeEntity {
 	@Column(name = "PHONE", nullable = false, length = 20)
 	private String phone;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "GRADE_NAME")
 	private MemberGrade memberGrade;
 
@@ -84,7 +84,7 @@ public class User extends BaseTimeEntity {
 	public void addStayCount(Long stayCount) {
 		this.stayCount += stayCount;
 	}
-	
+
 	public void changeMemberGrade(MemberGrade memberGrade) {
 		this.memberGrade = memberGrade;
 	}
