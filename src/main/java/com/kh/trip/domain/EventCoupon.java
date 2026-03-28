@@ -1,5 +1,6 @@
 package com.kh.trip.domain;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -14,12 +15,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Entity
 @Table(name = "EVENT_COUPONS")
 @Getter
-@ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -27,6 +26,7 @@ public class EventCoupon {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_EVENT_COUPONS")
 	@SequenceGenerator(name = "SEQ_EVENT_COUPONS", sequenceName = "SEQ_EVENT_COUPONS", allocationSize = 1)
+	@Column(name = "EVENT_COUPON_NO")
 	private Long eventCouponNo;
 	
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
