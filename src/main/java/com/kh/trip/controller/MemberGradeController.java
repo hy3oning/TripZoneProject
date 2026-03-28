@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.trip.domain.enums.MemberGradeName;
 import com.kh.trip.dto.MemberGradeDTO;
 import com.kh.trip.service.MemberGradeService;
 
@@ -27,10 +28,10 @@ public class MemberGradeController {
 	private final MemberGradeService service;
 	
 	@PostMapping("/")
-	public Map<String, Long> save(@RequestBody MemberGradeDTO memberGradeDTO) {
+	public Map<String, MemberGradeName> save(@RequestBody MemberGradeDTO memberGradeDTO) {
 		log.info("MemberGradeDTO = " + memberGradeDTO);
-		Long gno = service.save(memberGradeDTO);
-		return Map.of("result",gno);
+		MemberGradeName mgn = service.save(memberGradeDTO);
+		return Map.of("result",mgn);
 	}
 	
 	@GetMapping("/list")
@@ -40,22 +41,22 @@ public class MemberGradeController {
 	}
 	
 	@GetMapping("/{gno}")
-	public MemberGradeDTO findById(@PathVariable(name = "gno") Long gradeNo) {
-		log.info("MemberGradeFindById()"+ gradeNo);
-		return service.findById(gradeNo);
+	public MemberGradeDTO findById(@PathVariable(name = "gno") MemberGradeName gradeName) {
+		log.info("MemberGradeFindById()"+ gradeName);
+		return service.findById(gradeName);
 	}
 	
 	@DeleteMapping("/{gno}")
-	public Map<String, String> delete(@PathVariable(name = "gno") Long gradeNo) {
-		log.info("MemberGradeDelete" + gradeNo);
-		service.delete(gradeNo);
+	public Map<String, String> delete(@PathVariable(name = "gno") MemberGradeName gradeName) {
+		log.info("MemberGradeDelete" + gradeName);
+		service.delete(gradeName);
 		return Map.of("result","SUCCESS");
 	}
 	
 	@PatchMapping("/{gno}")
-	public Map<String, String> update(@PathVariable(name = "gno") Long gradeNo, @RequestBody MemberGradeDTO memberGradeDTO) {
-		memberGradeDTO.setGradeNo(gradeNo);
-		log.info("MemberGradeUpdate" + gradeNo);
+	public Map<String, String> update(@PathVariable(name = "gno") MemberGradeName gradeName, @RequestBody MemberGradeDTO memberGradeDTO) {
+		memberGradeDTO.setGradeName(gradeName);
+		log.info("MemberGradeUpdate" + gradeName);
 		service.update(memberGradeDTO);
 		return Map.of("result","SUCCESS");
 	}

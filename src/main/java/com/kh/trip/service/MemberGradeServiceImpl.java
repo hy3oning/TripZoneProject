@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.trip.domain.MemberGrade;
+import com.kh.trip.domain.enums.MemberGradeName;
 import com.kh.trip.dto.MemberGradeDTO;
 import com.kh.trip.repository.MemberGradeRepository;
 
@@ -25,10 +26,10 @@ public class MemberGradeServiceImpl implements MemberGradeService{
 	private final MemberGradeRepository repository;
 
 	@Override
-	public Long save(MemberGradeDTO memberGradeDTO) {
+	public MemberGradeName save(MemberGradeDTO memberGradeDTO) {
 		MemberGrade memberGrade = modelMapper.map(memberGradeDTO, MemberGrade.class);
 		memberGrade.changeStatus(true);
-		return repository.save(memberGrade).getGradeNo();
+		return repository.save(memberGrade).getGradeName();
 	}
 
 	@Override
@@ -40,16 +41,16 @@ public class MemberGradeServiceImpl implements MemberGradeService{
 	}
 
 	@Override
-	public MemberGradeDTO findById(Long gradeNo) {
-		Optional<MemberGrade> result = repository.findById(gradeNo);
+	public MemberGradeDTO findById(MemberGradeName gradeName) {
+		Optional<MemberGrade> result = repository.findById(gradeName);
 		MemberGrade grade = result.orElseThrow();
 		MemberGradeDTO gradeDTO = modelMapper.map(grade, MemberGradeDTO.class);
 		return gradeDTO;
 	}
 
 	@Override
-	public void delete(Long gradeNo) {
-		Optional<MemberGrade> result = repository.findById(gradeNo);
+	public void delete(MemberGradeName gradeName) {
+		Optional<MemberGrade> result = repository.findById(gradeName);
 		MemberGrade grade = result.orElseThrow();
 		grade.changeStatus(false);
 		repository.save(grade);
@@ -57,7 +58,7 @@ public class MemberGradeServiceImpl implements MemberGradeService{
 
 	@Override
 	public void update(MemberGradeDTO gradeDTO) {
-		Optional<MemberGrade> result = repository.findById(gradeDTO.getGradeNo());
+		Optional<MemberGrade> result = repository.findById(gradeDTO.getGradeName());
 		MemberGrade grade = result.orElseThrow();
 		grade.changeName(gradeDTO.getGradeName());
 		grade.changeMinAmount(gradeDTO.getMinTotalAmount());

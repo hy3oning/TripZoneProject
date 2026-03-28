@@ -1,8 +1,9 @@
 package com.kh.trip.dto;
 
+import com.kh.trip.domain.enums.MemberGradeName;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,8 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MemberGradeDTO {
-	private Long gradeNo;
-	private String gradeName;
+	private MemberGradeName gradeName;
 	private Long minTotalAmount;
 	private Long minStayCount;
 	private double mileageRate;
