@@ -85,13 +85,13 @@ public class Booking extends BaseTimeEntity {
 	@PrePersist
 	public void validateNewBooking() {
 		// 1. 체크아웃 > 체크인 검증
-		if (checkInDate != null && checkOutDate != null) {
-			// 체크아웃이 체크인보다 이전이거나 같으면 안됨
-			if (!checkOutDate.isAfter(checkInDate)) {
-				throw new IllegalStateException("체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.");
-			}
+		if (checkInDate == null || checkOutDate == null) {
+			throw new IllegalStateException("체크인/체크아웃 날짜는 필수입니다.");
 		}
-
+		// 체크아웃이 체크인보다 이전이거나 같으면 안됨
+		if (!checkOutDate.isAfter(checkInDate)) {
+			throw new IllegalStateException("체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.");
+		}
 		// 2. 과거 날짜 예약 방지
 		if (checkInDate.isBefore(LocalDateTime.now())) {
 			throw new IllegalStateException("과거 날짜로는 예약할 수 없습니다.");
