@@ -50,7 +50,7 @@ public class Lodging extends BaseTimeEntity {
 	// USERS 테이블의 USER_NO와 연결될 수 있는 값
 	@ManyToOne(fetch = FetchType.LAZY) // 여러 숙소가 하나의 사용자(호스트)에 속할 수 있으므로 다대일 관계
 	@JoinColumn(name = "HOST_NO", nullable = false) // 실제 DB의 FK 컬럼명 HOST_NO
-	private User host;
+	private HostProfile host;
 
 	// 숙소 이름
 	// 최대 200자까지 저장 가능

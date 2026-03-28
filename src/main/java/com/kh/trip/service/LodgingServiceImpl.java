@@ -10,17 +10,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.kh.trip.domain.HostProfile;
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.LodgingImage;
 import com.kh.trip.domain.Room;
-import com.kh.trip.domain.User;
 import com.kh.trip.domain.enums.LodgingStatus;
 import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.LodgingDTO;
 import com.kh.trip.dto.RoomDTO;
+import com.kh.trip.repository.HostProfileRepository;
 import com.kh.trip.repository.LodgingRepository;
 import com.kh.trip.repository.RoomRepository;
-import com.kh.trip.repository.UserRepository;
 import com.kh.trip.util.CustomFileUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ public class LodgingServiceImpl implements LodgingService {
 
 	private final LodgingRepository lodgingRepository;
 	private final RoomRepository roomRepository;
-	private final UserRepository userRepository;
+	private final HostProfileRepository hostProfileRepository;
 	private final CustomFileUtil fileUtil;
 
 	// 숙소 등록
@@ -269,8 +269,10 @@ public class LodgingServiceImpl implements LodgingService {
 	private Lodging toLodgingEntity(LodgingDTO lodgingDTO) {
 
 		// hostNo로 실제 User 엔티티 조회
-		User host = userRepository.findById(lodgingDTO.getHostNo())
-				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 호스트입니다. hostNo=" + lodgingDTO.getHostNo()));
+
+	    HostProfile host = hostProfileRepository.findById(lodgingDTO.getHostNo())
+	            .orElseThrow(() -> new IllegalArgumentException(
+	                    "존재하지 않는 호스트입니다. hostNo=" + lodgingDTO.getHostNo()));
 
 		Lodging lodging = Lodging.builder().lodgingNo(lodgingDTO.getLodgingNo()) // 숙소 번호 세팅
 				.host(host) // User 엔티티 세팅
@@ -303,7 +305,7 @@ public class LodgingServiceImpl implements LodgingService {
 	// Entity -> DTO 변환 메서드를 Impl 내부로 이동
 	private LodgingDTO toLodgingDTO(Lodging lodging) {
 		LodgingDTO lodgingDTO = LodgingDTO.builder().lodgingNo(lodging.getLodgingNo()) // 숙소 번호 세팅
-				.hostNo(lodging.getHost().getUserNo()) // User 엔티티에서 호스트 번호 꺼내기
+				.hostNo(lodging.getHost().getHostNo()) // User 엔티티에서 호스트 번호 꺼내기
 				.lodgingName(lodging.getLodgingName()) // 숙소명 세팅
 				.lodgingType(lodging.getLodgingType()) // 숙소 유형 세팅
 				.region(lodging.getRegion()) // 지역 세팅
