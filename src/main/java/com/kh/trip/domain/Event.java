@@ -3,7 +3,6 @@ package com.kh.trip.domain;
 import java.time.LocalDateTime;
 
 import com.kh.trip.domain.common.BaseTimeEntity;
-import com.kh.trip.domain.enums.CouponStatus;
 import com.kh.trip.domain.enums.EventStatus;
 
 import jakarta.persistence.Column;
@@ -25,25 +24,23 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Entity
-@Table(name = "EVENT")
+@Table(name = "EVENTS")
 @Getter
-@ToString
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Builder
 public class Event extends BaseTimeEntity {
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_EVENT")
-	@SequenceGenerator(name = "SEQ_EVENT", sequenceName = "SEQ_EVENT", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_events")
+	@SequenceGenerator(name = "seq_events", sequenceName = "SEQ_EVENTS", allocationSize = 1)
 	@Column(name = "EVENT_NO")
 	private Long eventNo;
 
 	@ManyToOne // 외래키
 	@JoinColumn(name = "ADMIN_USER_NO", nullable = false)
-	private User adminUserNo;
+	private User adminUser;
 
 	@Column(name = "TITLE", nullable = false)
 	private String title;
