@@ -35,8 +35,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Coupon extends BaseTimeEntity {
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_COUPONS")
-	@SequenceGenerator(name = "SEQ_COUPONS", sequenceName = "SEQ_COUPONS", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_coupons")
+	@SequenceGenerator(name = "seq_coupons", sequenceName = "SEQ_COUPONS", allocationSize = 1)
 	@Column(name = "COUPON_NO")
 	private Long couponNo;
 
