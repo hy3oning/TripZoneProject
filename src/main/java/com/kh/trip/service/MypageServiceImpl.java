@@ -3,8 +3,8 @@ package com.kh.trip.service;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -100,7 +100,7 @@ public class MypageServiceImpl implements MypageService {
 						profileDetail("이메일", user.getEmail()),
 						profileDetail("전화번호", user.getPhone()),
 						profileDetail("로그인 방식", resolveLoginMethod(authProviders)),
-						profileDetail("회원 등급", user.getMemberGrade() != null ? user.getMemberGrade().getGradeName() : null),
+						profileDetail("회원 등급", user.getMemberGrade() != null ? user.getMemberGrade().getGradeName().name() : null),
 						profileDetail("마케팅 수신", null),
 						profileDetail("최근 로그인", resolveLastLoginAt(authProviders))))
 				.build();
@@ -335,7 +335,7 @@ public class MypageServiceImpl implements MypageService {
 	private MypageDTO.ProfileSummary toProfileSummary(User user, List<UserAuthProvider> authProviders) {
 		return MypageDTO.ProfileSummary.builder()
 				.name(user.getUserName())
-				.grade(user.getMemberGrade() != null ? user.getMemberGrade().getGradeName() : null)
+				.grade(user.getMemberGrade() != null ? user.getMemberGrade().getGradeName().name() : null)
 				.gradeHint("누적 마일리지 " + NUMBER_FORMAT.format(defaultLong(user.getMileage())))
 				.status("1".equals(user.getEnabled()) ? "활성 회원" : "비활성 회원")
 				.joinedAt(user.getRegDate() != null ? DATE_FORMAT.format(user.getRegDate()) + " 가입" : null)

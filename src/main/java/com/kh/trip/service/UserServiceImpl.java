@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
 	private UserDTO entityToDTO(User user) {
 		return UserDTO.builder().userNo(user.getUserNo()).userName(user.getUserName()).email(user.getEmail())
 				.phone(user.getPhone())
-				.gradeNo(user.getMemberGrade() != null ? user.getMemberGrade().getGradeNo() : null)
+				.gradeName(user.getMemberGrade() != null ? user.getMemberGrade().getGradeName() : null)
 				.mileage(user.getMileage()).enabled(user.getEnabled()).build();
 	}
 

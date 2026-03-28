@@ -1,5 +1,7 @@
 package com.kh.trip.dto;
 
+import com.kh.trip.domain.enums.MemberGradeName;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,7 +16,7 @@ public class UserDTO {
 	private String userName;
 	private String email;
 	private String phone;
-	private Long gradeNo;
+	private MemberGradeName gradeName;
 	private Long mileage;
 	private String enabled;
 
