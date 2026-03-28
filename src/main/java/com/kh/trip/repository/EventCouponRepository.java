@@ -11,8 +11,7 @@ import com.kh.trip.domain.EventCoupon;
 
 public interface EventCouponRepository extends JpaRepository<EventCoupon, Long>{
 	
-	@Query("select c from EventCoupon ec left join ec.coupon c where ec.event.eventNo = :eno")
-	List<Coupon> findAllById(@Param("eno") Long eno);
-
+	@Query("select c from EventCoupon ec left join ec.coupon c where ec.event.eventNo = :eventNo")
+	List<Coupon> findCouponsByEventNo(@Param("eventNo") Long eventNo);
 	
 }
