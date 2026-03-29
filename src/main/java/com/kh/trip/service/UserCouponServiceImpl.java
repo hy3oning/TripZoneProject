@@ -91,8 +91,9 @@ public class UserCouponServiceImpl implements UserCouponService {
 					.startDate(userCoupon.getCoupon().getStartDate()).endDate(userCoupon.getCoupon().getEndDate())
 					.status(userCoupon.getCoupon().getStatus()).build();
 			return UserCouponDTO.builder().userCouponNo(userCoupon.getUserCouponNo())
-					.userNo(userCoupon.getUser().getUserNo()).couponDTO(couponDTO).issuedAt(userCoupon.getIssuedAt())
-					.usedAt(userCoupon.getUsedAt()).status(userCoupon.determineFinalStatus()).build();
+					.userNo(userCoupon.getUser().getUserNo()).couponNo(userCoupon.getCoupon().getCouponNo())
+					.couponDTO(couponDTO).issuedAt(userCoupon.getIssuedAt()).usedAt(userCoupon.getUsedAt())
+					.status(userCoupon.determineFinalStatus()).build();
 		}).collect(Collectors.toList());
 	}
 }
