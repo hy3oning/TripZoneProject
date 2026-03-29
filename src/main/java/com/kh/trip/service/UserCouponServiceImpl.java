@@ -36,11 +36,13 @@ public class UserCouponServiceImpl implements UserCouponService {
 	private final CouponRepository couponRepository;
 
 	@Override
-	public Long save(UserCouponDTO userCouponDTO) {
-		UserCoupon userCoupon = dtoToEntity(userCouponDTO);
-		
-		if (userCoupon.getStatus() == null) userCoupon.determineFinalStatus();
-		
+	public Long save(Long userNo, UserCouponDTO userCouponDTO) {
+		UserCoupon userCoupon = dtoToEntity(userNo, userCouponDTO);
+
+		if (userCoupon.getStatus() == null) {
+			userCoupon.determineFinalStatus();
+		}
+
 		return repository.save(userCoupon).getUserCouponNo();
 	}
 
@@ -61,29 +63,34 @@ public class UserCouponServiceImpl implements UserCouponService {
 	}
 
 	// dto -> entity
-	public UserCoupon dtoToEntity(UserCouponDTO userCouponDTO) {
-		User user = userRepository.findById(userCouponDTO.getUserNo())
-				.orElseThrow(() -> new IllegalAccessError("존재하지 않는 사용자 번호입니다."));
+	public UserCoupon dtoToEntity(Long userNo, UserCouponDTO userCouponDTO) {
+		 User user = userRepository.findById(userNo)
+		            .orElseThrow(() -> new IllegalAccessError("존재하지 않는 사용자 번호입니다."));
 
-		Coupon coupon = couponRepository.findById(userCouponDTO.getCouponNo())
-				.orElseThrow(() -> new IllegalAccessError("존재하지 않는 쿠폰 번호입니다."));
+		    Coupon coupon = couponRepository.findById(userCouponDTO.getCouponNo())
+		            .orElseThrow(() -> new IllegalAccessError("존재하지 않는 쿠폰 번호입니다."));
 
-		if (coupon.getStartDate().isAfter(LocalDateTime.now())) {
-			throw new IllegalStateException("아직 발급 기간이 아닌 쿠폰입니다. 발급 시작일: " + coupon.getStartDate());
-		}
+		    if (coupon.getStartDate().isAfter(LocalDateTime.now())) {
+		        throw new IllegalStateException("아직 발급 기간이 아닌 쿠폰입니다. 발급 시작일: " + coupon.getStartDate());
+		    }
 
-		boolean checkUserCoupon = repository.existenceCheck(userCouponDTO.getUserNo(), userCouponDTO.getCouponNo());
+		    boolean checkUserCoupon = repository.existenceCheck(userNo, userCouponDTO.getCouponNo());
 
-		if (checkUserCoupon) {
-			throw new IllegalStateException("이미 보유하고 계신 쿠폰번호입니다.");
-		}
+		    if (checkUserCoupon) {
+		        throw new IllegalStateException("이미 보유하고 있는 쿠폰입니다.");
+		    }
 
-		return UserCoupon.builder().user(user).coupon(coupon).issuedAt(userCouponDTO.getIssuedAt())
-				.usedAt(userCouponDTO.getUsedAt()).status(userCouponDTO.getStatus()).build();
+		    return UserCoupon.builder()
+		            .user(user)
+		            .coupon(coupon)
+		            .issuedAt(userCouponDTO.getIssuedAt())
+		            .usedAt(userCouponDTO.getUsedAt())
+		            .status(userCouponDTO.getStatus())
+		            .build();
 	}
-	
-	// entity -> dto  
-	public List<UserCouponDTO> entityToDTO(Page<UserCoupon> result){
+
+	// entity -> dto
+	public List<UserCouponDTO> entityToDTO(Page<UserCoupon> result) {
 		return result.getContent().stream().map(userCoupon -> {
 			CouponDTO couponDTO = CouponDTO.builder().couponName(userCoupon.getCoupon().getCouponName())
 					.discountType(userCoupon.getCoupon().getDiscountType())

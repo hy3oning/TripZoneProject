@@ -1,9 +1,6 @@
 package com.kh.trip.controller;
 
-import java.time.LocalDateTime;
-
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,8 +43,7 @@ public class MypageController {
 
 	@PostMapping("/bookings")
 //	@PreAuthorize("hasRole('USER')")
-	public MypageDTO.BookingCreatedResponse createBooking(
-			@AuthenticationPrincipal AuthUserPrincipal principal,
+	public MypageDTO.BookingCreatedResponse createBooking(@AuthenticationPrincipal AuthUserPrincipal principal,
 			@Valid @RequestBody MypageDTO.BookingCreateRequest request) {
 		return mypageService.createBooking(requirePrincipal(principal).getUserNo(), request);
 	}

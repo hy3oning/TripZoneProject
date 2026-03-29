@@ -6,7 +6,7 @@ import com.kh.trip.dto.UserCouponDTO;
 
 public interface UserCouponService {
 
-	Long save(UserCouponDTO userCouponDTO);
+	Long save(Long userNo, UserCouponDTO userCouponDTO);
 
 	PageResponseDTO<UserCouponDTO> findAll(Long userNo, PageRequestDTO pageRequestDTO);
 
