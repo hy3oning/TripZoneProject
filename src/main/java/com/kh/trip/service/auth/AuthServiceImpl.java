@@ -126,7 +126,10 @@ public class AuthServiceImpl implements AuthService {
 		} catch (UsernameNotFoundException e) {
 			throw new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
 		}
-
+		// 탈퇴한 회원
+		if (!authUser.isEnabled()) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "탈퇴한 회원은 로그인할 수 없습니다.");
+		}
 		// 입력한 비밀번호와 DB에 저장된 암호화 비밀번호를 비교한다.
 		if (!passwordEncoder.matches(request.getPassword(), authUser.getPassword())) {
 			throw new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
@@ -173,7 +176,11 @@ public class AuthServiceImpl implements AuthService {
 		Long userNo = jwtProvider.getUserNo(refreshToken);
 
 		AuthUserPrincipal authUser = customUserDetailsService.loadUserByUserNo(userNo);
-
+		if (!authUser.isEnabled()) {
+			savedToken.revoke();
+			userRefreshTokenRepository.save(savedToken);
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "탈퇴한 회원은 토큰을 재발급할 수 없습니다.");
+		}
 		String newAccessToken = jwtProvider.generateAccessToken(authUser);
 
 		return TokenRefreshResponseDTO.builder().grantType("Bearer").accessToken(newAccessToken)
@@ -238,7 +245,9 @@ public class AuthServiceImpl implements AuthService {
 		}
 
 		User user = userRepository.findById(userNo).orElseThrow(() -> new RuntimeException("User not found"));
-
+		if (!"1".equals(user.getEnabled())) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "탈퇴한 회원은 로그인할 수 없습니다.");
+		}
 		List<UserRole> roles = userRoleRepository.findByUserNo(userNo);
 		List<String> roleNames = roles.stream().map(UserRole::getRoleCode).toList();
 

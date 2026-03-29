@@ -50,7 +50,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 					// userNo로 실제 사용자 정보를 다시 조회해서 인증 객체를 만든다.
 					AuthUserPrincipal authUser = customUserDetailsService.loadUserByUserNo(userNo);
-
+					if (!authUser.isEnabled()) {
+						filterChain.doFilter(request, response);
+						return;
+					}
 					// 스프링 시큐리티가 사용할 인증 객체 생성
 					UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 							authUser, null, authUser.getAuthorities());

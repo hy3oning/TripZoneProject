@@ -12,10 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.domain.User;
+import com.kh.trip.domain.UserRefreshToken;
 import com.kh.trip.dto.AdminUserSearchRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.UserDTO;
 import com.kh.trip.dto.UserUpdateRequestDTO;
+import com.kh.trip.repository.UserRefreshTokenRepository;
 import com.kh.trip.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService {
 
 	private final UserRepository userRepository;
+	private final UserRefreshTokenRepository userRefreshTokenRepository;
 
 	@Override
 	public UserDTO getUser(Long userNo) {
@@ -50,6 +53,11 @@ public class UserServiceImpl implements UserService {
 		if ("0".equals(user.getEnabled())) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 탈퇴 처리된 사용자입니다.");
 		}
+		List<UserRefreshToken> refreshTokens = userRefreshTokenRepository.findByUserNo(userNo);
+		refreshTokens.stream().filter(token -> "0".equals(token.getRevokedYn())).forEach(UserRefreshToken::revoke);
+
+		userRefreshTokenRepository.saveAll(refreshTokens);
+
 		user.changeEnabled("0");
 		userRepository.save(user);
 	}
