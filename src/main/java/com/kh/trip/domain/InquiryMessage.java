@@ -27,25 +27,25 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class InquiryMessage extends BaseTimeEntity{
+public class InquiryMessage extends BaseTimeEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_inquiry_messages")
-	@SequenceGenerator(name = "seq_inquiry_messages", sequenceName = "seq_inquiry_messages")
+	@SequenceGenerator(name = "seq_inquiry_messages", sequenceName = "SEQ_INQUIRY_MESSAGES", allocationSize = 1)
 	@Column(name = "MESSAGE_NO")
 	private Long messageNo;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "INQUIRY_ROOM_NO", nullable = false)
 	private InquiryRoom inquiryRoom;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "SENDER_NO", nullable = false)
 	private User user;
-	
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "SENDER_TYPE", nullable = false)
 	private SenderType senderType;
-	
+
 	@Column(name = "CONTENT", nullable = false)
 	private String content;
 }

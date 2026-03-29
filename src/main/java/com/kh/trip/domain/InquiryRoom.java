@@ -30,28 +30,28 @@ import lombok.NoArgsConstructor;
 public class InquiryRoom extends BaseTimeEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_inquiry_rooms")
-	@SequenceGenerator(name = "seq_inquiry_rooms", sequenceName = "seq_inquiry_rooms")
+	@SequenceGenerator(name = "seq_inquiry_rooms", sequenceName = "SEQ_INQUIRY_ROOMS", allocationSize = 1)
 	@Column(name = "INQUIRY_ROOM_NO")
 	private Long inquiryRoomNo;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "USER_NO", nullable = false)
 	private User user;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "HOST_NO", nullable = false)
 	private HostProfile host;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "LODGING_NO", nullable = false)
 	private Lodging lodging;
-	
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "STATUS", nullable = false)
 	@Builder.Default
 	private InquiryRoomStatus status = InquiryRoomStatus.OPEN;
-	
+
 	public void changeStatus(InquiryRoomStatus status) {
-		this.status = status; 
+		this.status = status;
 	}
 }
