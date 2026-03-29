@@ -8,8 +8,8 @@ public interface WishListService {
 	//findAll(list)
 	PageResponseDTO<WishListDTO> findAll(Long userNo, PageRequestDTO pageRequestDTO);
 	//save
-	Long save(WishListDTO wishListDTO);
+	Long save(Long userNo, WishListDTO dto);
 	//delete
-	void delete(Long wno);
+	void delete(Long wishListNo, Long userNo);
 
 }
