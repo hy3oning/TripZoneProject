@@ -125,7 +125,7 @@ public class HostProfileServiceImpl implements HostProfileService {
 	private HostProfileDTO entityToDTO(HostProfile hostProfile) {
 		return HostProfileDTO.builder().hostNo(hostProfile.getHostNo()).userNo(hostProfile.getUser().getUserNo())
 				.businessName(hostProfile.getBusinessName()).businessNumber(hostProfile.getBusinessNumber())
-				.ownerName(hostProfile.getOwnerName()).approvalStatus(HostApprovalStatus.PENDING)
+				.ownerName(hostProfile.getOwnerName()).approvalStatus(hostProfile.getApprovalStatus().name())
 				.rejectReason(hostProfile.getRejectReason()).enabled(hostProfile.getEnabled()).build();
 	}
 

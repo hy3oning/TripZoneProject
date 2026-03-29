@@ -1,7 +1,5 @@
 package com.kh.trip.dto;
 
-import com.kh.trip.domain.enums.HostApprovalStatus;
-
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,7 +22,7 @@ public class HostProfileDTO {
 	private String businessNumber;
 	@NotBlank
 	private String ownerName;
-	private HostApprovalStatus approvalStatus;
+	private String approvalStatus;
 	private String rejectReason;
 	private String enabled;
 }
