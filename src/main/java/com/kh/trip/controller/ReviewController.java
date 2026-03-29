@@ -14,10 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kh.trip.dto.ReviewCreateDTO;
+import com.kh.trip.dto.ReviewDTO;
 import com.kh.trip.dto.ReviewStatsDTO;
-import com.kh.trip.dto.ReviewSummaryDTO;
-import com.kh.trip.dto.ReviewUpdateDTO;
 import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.service.ReviewService;
 
@@ -37,8 +35,8 @@ public class ReviewController {
 	// 리뷰 등록
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public ReviewSummaryDTO createReview(@AuthenticationPrincipal AuthUserPrincipal authUser,
-			@RequestBody ReviewCreateDTO reviewCreateDTO) {
+	public ReviewDTO createReview(@AuthenticationPrincipal AuthUserPrincipal authUser,
+			@RequestBody ReviewDTO reviewDTO) { 
 
 		// 로그인한 사용자 정보가 없으면 예외 발생
 		if (authUser == null) {
@@ -46,19 +44,19 @@ public class ReviewController {
 		}
 
 		// 로그인한 사용자 번호와 리뷰 작성 DTO를 서비스로 전달
-		return reviewService.createReview(authUser.getUserNo(), reviewCreateDTO);
+		return reviewService.createReview(authUser.getUserNo(), reviewDTO); 
 	}
 
 	// 리뷰 수정
 	@PatchMapping("/{reviewNo}")
-	public ReviewSummaryDTO updateReview(@PathVariable Long reviewNo,
-			@AuthenticationPrincipal AuthUserPrincipal authUser, @RequestBody ReviewUpdateDTO reviewUpdateDTO) {
+	public ReviewDTO updateReview(@PathVariable Long reviewNo, @AuthenticationPrincipal AuthUserPrincipal authUser,
+			@RequestBody ReviewDTO reviewDTO) { 
 
 		if (authUser == null) {
 			throw new IllegalArgumentException("로그인한 사용자만 리뷰를 수정할 수 있습니다.");
 		}
 
-		return reviewService.updateReview(authUser.getUserNo(), reviewNo, reviewUpdateDTO);
+		return reviewService.updateReview(authUser.getUserNo(), reviewNo, reviewDTO);
 	}
 
 	// 리뷰 삭제
@@ -75,7 +73,7 @@ public class ReviewController {
 
 	// 숙소별 리뷰 목록 조회
 	@GetMapping("/lodgings/{lodgingNo}")
-	public List<ReviewSummaryDTO> getReviewsByLodging(@PathVariable Long lodgingNo) {
+	public List<ReviewDTO> getReviewsByLodging(@PathVariable Long lodgingNo) {
 		return reviewService.getReviewsByLodging(lodgingNo);
 	}
 
