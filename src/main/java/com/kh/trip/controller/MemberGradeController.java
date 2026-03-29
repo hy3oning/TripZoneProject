@@ -24,40 +24,41 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @RequestMapping("/api/membergrade")
 public class MemberGradeController {
-	
+
 	private final MemberGradeService service;
-	
-	@PostMapping("/")
+
+	@PostMapping
 	public Map<String, MemberGradeName> save(@RequestBody MemberGradeDTO memberGradeDTO) {
 		log.info("MemberGradeDTO = " + memberGradeDTO);
-		MemberGradeName mgn = service.save(memberGradeDTO);
-		return Map.of("result",mgn);
+		MemberGradeName gradeName = service.save(memberGradeDTO);
+		return Map.of("result", gradeName);
 	}
-	
+
 	@GetMapping("/list")
 	public List<MemberGradeDTO> findAll() {
 		log.info("MemberGradeFindAll()");
 		return service.findAll();
 	}
-	
-	@GetMapping("/{gno}")
-	public MemberGradeDTO findById(@PathVariable(name = "gno") MemberGradeName gradeName) {
-		log.info("MemberGradeFindById()"+ gradeName);
+
+	@GetMapping("/{gradeName}")
+	public MemberGradeDTO findById(@PathVariable MemberGradeName gradeName) {
+		log.info("MemberGradeFindById()" + gradeName);
 		return service.findById(gradeName);
 	}
-	
-	@DeleteMapping("/{gno}")
-	public Map<String, String> delete(@PathVariable(name = "gno") MemberGradeName gradeName) {
+
+	@DeleteMapping("/{gradeName}")
+	public Map<String, String> delete(@PathVariable MemberGradeName gradeName) {
 		log.info("MemberGradeDelete" + gradeName);
 		service.delete(gradeName);
-		return Map.of("result","SUCCESS");
+		return Map.of("result", "SUCCESS");
 	}
-	
-	@PatchMapping("/{gno}")
-	public Map<String, String> update(@PathVariable(name = "gno") MemberGradeName gradeName, @RequestBody MemberGradeDTO memberGradeDTO) {
+
+	@PatchMapping("/{gradeName}")
+	public Map<String, String> update(@PathVariable MemberGradeName gradeName,
+			@RequestBody MemberGradeDTO memberGradeDTO) {
 		memberGradeDTO.setGradeName(gradeName);
 		log.info("MemberGradeUpdate" + gradeName);
 		service.update(memberGradeDTO);
-		return Map.of("result","SUCCESS");
+		return Map.of("result", "SUCCESS");
 	}
 }

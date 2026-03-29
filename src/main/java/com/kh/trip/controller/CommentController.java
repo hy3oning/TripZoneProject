@@ -23,41 +23,42 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/comment")
+@RequestMapping("/api/comment")
 public class CommentController {
-	
+
 	private final CommentService service;
-	
-	//댓글리스트
+
+	// 댓글리스트
 	@GetMapping("/list")
-	public PageResponseDTO<CommentDTO> findAll(PageRequestDTO pageRequestDTO){
+	public PageResponseDTO<CommentDTO> findAll(PageRequestDTO pageRequestDTO) {
 		log.info(pageRequestDTO);
 		return service.findAll(pageRequestDTO);
 	}
-	
-	//댓글저장
-	@PostMapping("/")
-	public Map<String, Object> save(@RequestBody CommentDTO commentDTO){
-		log.info("CommentDTO"+commentDTO);
-		Long cno = service.save(commentDTO);
+
+	// 댓글저장
+	@PostMapping
+	public Map<String, Object> save(@RequestBody CommentDTO commentDTO) {
+		log.info("CommentDTO" + commentDTO);
+		Long commentNo = service.save(commentDTO);
 		Map<String, Object> result = new HashMap<>();
-		result.put("CNO", cno);
+		result.put("commentNo", commentNo);
 		return result;
 	}
-	
-	//댓글수정
-	@PutMapping("/{cno}")
-	public Map<String, String> update(@PathVariable Long cno, @RequestBody CommentDTO commentDTO){
-		commentDTO.setCommentNo(cno);
-		log.info("Update:"+commentDTO);
+
+	// 댓글수정
+	@PutMapping("/{commentNo}")
+	public Map<String, String> update(@PathVariable Long commentNo, @RequestBody CommentDTO commentDTO) {
+		commentDTO.setCommentNo(commentNo);
+		log.info("Update:" + commentDTO);
 		service.update(commentDTO);
-		return Map.of("RESULT","SUCCESS");
+		return Map.of("RESULT", "SUCCESS");
 	}
-	//댓글삭제
-	@DeleteMapping("/{cno}")
-	public Map<String, String> delete(@PathVariable Long cno) {
-		log.info("Delete:" + cno);
-		service.delete(cno);
-		return Map.of("RESULT","SUCCESS");
+
+	// 댓글삭제
+	@DeleteMapping("/{commentNo}")
+	public Map<String, String> delete(@PathVariable Long commentNo) {
+		log.info("Delete:" + commentNo);
+		service.delete(commentNo);
+		return Map.of("RESULT", "SUCCESS");
 	}
 }

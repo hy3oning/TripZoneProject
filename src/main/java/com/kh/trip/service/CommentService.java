@@ -15,6 +15,6 @@ public interface CommentService {
 	//update
 	void update(CommentDTO commentDTO);
 	//delete
-	void delete(Long cno);
+	void delete(Long commentNo);
 
 }

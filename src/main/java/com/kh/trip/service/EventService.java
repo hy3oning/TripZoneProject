@@ -1,6 +1,5 @@
 package com.kh.trip.service;
 
-import org.modelmapper.internal.bytebuddy.asm.Advice.Return;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.trip.dto.EventDTO;
@@ -9,16 +8,19 @@ import com.kh.trip.dto.PageResponseDTO;
 
 @Transactional
 public interface EventService {
-	//가로로보이는 리스트
+	// 가로로보이는 리스트
 	PageResponseDTO<EventDTO> findAll(PageRequestDTO pageRequestDTO);
-	//save
+
+	// save
 	Long save(EventDTO eventDTO);
-	//update
+
+	// update
 	void update(EventDTO eventDTO);
-	//delete
-	void delete(Long eno);
-	//findById
-	EventDTO findById(Long eno);
-	
-	
+
+	// delete
+	void delete(Long eventNo);
+
+	// findById
+	EventDTO findById(Long eventNo);
+
 }

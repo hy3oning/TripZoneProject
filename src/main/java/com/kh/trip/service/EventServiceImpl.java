@@ -58,14 +58,14 @@ public class EventServiceImpl implements EventService {
 
 	// findById
 	@Override
-	public EventDTO findById(Long eno) {
+	public EventDTO findById(Long eventNo) {
 		log.info(".....................");
-		java.util.Optional<Event> result = eventRepository.findById(eno);
+		java.util.Optional<Event> result = eventRepository.findById(eventNo);
 		Event event = result.orElseThrow();
 		Long viewCount = event.getViewCount() + 1L;
 		event.changeViewCount(viewCount);
 		eventRepository.save(event);
-		List<Coupon> coupons = eventCouponRepository.findCouponsByEventNo(eno);
+		List<Coupon> coupons = eventCouponRepository.findCouponsByEventNo(eventNo);
 		List<String> couponNames = coupons.stream().map(coupon -> coupon.getCouponName()).collect(Collectors.toList());
 		return EventDTO.builder().eventNo(event.getEventNo()).title(event.getTitle()).content(event.getContent())
 				.thumbnailUrl(event.getThumbnailUrl()).startDate(event.getStartDate()).endDate(event.getEndDate())
@@ -93,8 +93,8 @@ public class EventServiceImpl implements EventService {
 		Event savedEvent = eventRepository.save(event);
 		List<Long> coupons = eventDTO.getCoupons();
 		if (coupons != null && !coupons.isEmpty()) {
-			List<EventCoupon> eventCouponList = coupons.stream().map(cno -> {
-				Coupon coupon = couponRepository.findById(cno).orElseThrow();
+			List<EventCoupon> eventCouponList = coupons.stream().map(couponNo -> {
+				Coupon coupon = couponRepository.findById(couponNo).orElseThrow();
 				return EventCoupon.builder().event(savedEvent).coupon(coupon).build();
 			}).collect(Collectors.toList());
 			eventCouponRepository.saveAll(eventCouponList);
@@ -121,9 +121,9 @@ public class EventServiceImpl implements EventService {
 
 	// delete
 	@Override
-	public void delete(Long eno) {
-		Optional<Event> result = eventRepository.findById(eno);
-		Event event = result.orElseThrow(() -> new RuntimeException("해당 ID 없음: " + eno));
+	public void delete(Long eventNo) {
+		Optional<Event> result = eventRepository.findById(eventNo);
+		Event event = result.orElseThrow(() -> new RuntimeException("해당 ID 없음: " + eventNo));
 		event.changeStatus(EventStatus.HIDDEN);
 		eventRepository.save(event);
 	}

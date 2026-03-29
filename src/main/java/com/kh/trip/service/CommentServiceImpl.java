@@ -80,11 +80,11 @@ public class CommentServiceImpl implements CommentService {
 
 	// delete
 	@Override
-	public void delete(Long cno) {
-		Optional<Comment> result = commentRepository.findById(cno);
-		Comment comment = result.orElseThrow(() -> new RuntimeException("해당 댓글 없음" + cno));
+	public void delete(Long commentNo) {
+		Optional<Comment> result = commentRepository.findById(commentNo);
+		Comment comment = result.orElseThrow(() -> new RuntimeException("해당 댓글 없음" + commentNo));
 		commentRepository.delete(comment);
-		log.info("댓글 완전 삭제 완료" + cno);
+		log.info("댓글 완전 삭제 완료" + commentNo);
 	}
 
 }

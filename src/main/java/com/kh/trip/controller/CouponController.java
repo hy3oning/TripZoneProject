@@ -23,33 +23,34 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @RequestMapping("/api/coupon")
 public class CouponController {
+
 	private final CouponService service;
-	
-	@PostMapping("/")
+
+	@PostMapping
 	public Map<String, Long> save(@RequestBody CouponDTO couponDTO) {
-		log.info("couponSave() = "+ couponDTO);
-		Long cno = service.save(couponDTO);
-		return Map.of("result",cno);
+		log.info("couponSave() = " + couponDTO);
+		Long couponNo = service.save(couponDTO);
+		return Map.of("couponNo", couponNo);
 	}
-	
+
 	@GetMapping("/list")
 	public List<CouponDTO> findAll() {
 		log.info("CouponDTOFindAll()");
 		return service.findAll();
 	}
-	
-	@PatchMapping("/{cno}")
-	public Map<String, String> update(@PathVariable(name = "cno") Long couponNo, @RequestBody CouponDTO couponDTO) {
+
+	@PatchMapping("/{couponNo}")
+	public Map<String, String> update(@PathVariable Long couponNo, @RequestBody CouponDTO couponDTO) {
 		log.info("update() couponNo= " + couponNo);
 		couponDTO.setCouponNo(couponNo);
 		service.update(couponDTO);
-		return Map.of("result","SUCCESS");
+		return Map.of("result", "SUCCESS");
 	}
-	
-	@DeleteMapping("/{cno}")
-	public Map<String, String> delete(@PathVariable(name = "cno") Long couponNo) {
+
+	@DeleteMapping("/{couponNo}")
+	public Map<String, String> delete(@PathVariable Long couponNo) {
 		log.info("delete() couponNo = " + couponNo);
 		service.delete(couponNo);
-		return Map.of("result","SUCCESS");
+		return Map.of("result", "SUCCESS");
 	}
 }
