@@ -5,6 +5,8 @@ import com.kh.trip.domain.enums.InquiryRoomStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,6 +46,7 @@ public class InquiryRoom extends BaseTimeEntity {
 	@JoinColumn(name = "LODGING_NO", nullable = false)
 	private Lodging lodging;
 	
+	@Enumerated(EnumType.STRING)
 	@Column(name = "STATUS", nullable = false)
 	@Builder.Default
 	private InquiryRoomStatus status = InquiryRoomStatus.OPEN;
