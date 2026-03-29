@@ -14,7 +14,7 @@ public class CustomServletConfig implements WebMvcConfigurer {
 
 	@Value("${com.kh.upload.path}")
 	private String uploadPath;
-	
+
 	@Override
 	public void addFormatters(FormatterRegistry registry) {
 		registry.addFormatter(new LocalDateFormatter());
@@ -24,7 +24,9 @@ public class CustomServletConfig implements WebMvcConfigurer {
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/**").allowedOrigins("*")
 				.allowedMethods("HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH").maxAge(300)
-				.allowedHeaders("Authorization", "Cache-Control", "Content-Type");
+				.allowedHeaders("Authorization", "Cache-Control", "Content-Type")
+				// 웹소켓 연결 시 필요한 다양한 헤더를 수용하도록 "*"로 설정하거나 더 확장
+				.allowedHeaders("*");
 	}
 
 	@Override
@@ -34,5 +36,5 @@ public class CustomServletConfig implements WebMvcConfigurer {
 				// 실제 D:/upload/ 폴더에서 파일을 찾아 전달
 				.addResourceLocations("file:///" + uploadPath + "/");
 	}
-	
+
 }

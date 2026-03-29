@@ -1,0 +1,31 @@
+package com.kh.trip.controller;
+
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.kh.trip.dto.InquiryMessageDTO;
+import com.kh.trip.service.InquiryMessageService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+
+@Controller
+@RequiredArgsConstructor
+@Log4j2
+@RequestMapping("/api/inquiry")
+public class InquiryMessageController {
+
+	private final InquiryMessageService service;
+	private final SimpMessagingTemplate messagingTemplate;
+
+	@MessageMapping("/send")
+	public void sendMessage(@Payload InquiryMessageDTO messageDTO) {
+		log.info("inquiryMessage sendMessage() = " + messageDTO);
+		InquiryMessageDTO savedMessage = service.save(messageDTO);
+		messagingTemplate.convertAndSend("/topic/inquiry/" + savedMessage.getInquiryRoomNo(), savedMessage);
+	}
+
+}

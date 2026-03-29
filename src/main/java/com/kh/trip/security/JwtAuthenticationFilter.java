@@ -67,4 +67,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		// 현재 필터 작업이 끝났으므로 다음 필터로 요청을 넘긴다.
 		filterChain.doFilter(request, response);
 	}
+
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+		// Preflight 지금 보내는 요청이 유효한지를 확인하기 위해 OPTIONS 메서드로 예비 요청을 보내는 것
+		if (request.getMethod().equals("OPTIONS")) {
+			return true;
+		}
+
+		String path = request.getRequestURI();
+
+		// 이미지 조회 경로는 체크하지 않고 싶을 때
+		if (path.startsWith("/api/lodgings/view/")) {
+			return true;
+		}
+		if (path.startsWith("/api/rooms/view/")) {
+			return true;
+		}
+		if (path.startsWith("/api/event/view/")) {
+			return true;
+		}
+
+		// 웹소켓 연결 경로는 토큰 체크에서 제외
+		// (연결 핸드셰이크 시점에 토큰을 검사하기 어렵기 때문)
+		if (path.startsWith("/ws")) {
+			return true;
+		}
+		return false;
+	}
+
 }
