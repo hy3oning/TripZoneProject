@@ -10,6 +10,10 @@ public interface InquiryRoomService {
 
 	List<InquiryRoomDTO> findByUserNo(Long userNo);
 
+	List<InquiryRoomDTO> findMyRooms(Long userNo);
+
+	List<InquiryRoomDTO> findSellerRooms(Long userNo);
+
 	void delete(Long roomNo);
 
 }

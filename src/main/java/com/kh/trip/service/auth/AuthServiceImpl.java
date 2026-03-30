@@ -13,10 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.kh.trip.domain.MemberGrade;
 import com.kh.trip.domain.User;
 import com.kh.trip.domain.UserAuthProvider;
 import com.kh.trip.domain.UserRefreshToken;
 import com.kh.trip.domain.UserRole;
+import com.kh.trip.domain.enums.MemberGradeName;
 import com.kh.trip.dto.auth.ChangePasswordRequestDTO;
 import com.kh.trip.dto.auth.LoginRequestDTO;
 import com.kh.trip.dto.auth.LoginResponseDTO;
@@ -27,6 +29,7 @@ import com.kh.trip.dto.auth.TokenRefreshResponseDTO;
 import com.kh.trip.dto.auth.social.GoogleLoginRequestDTO;
 import com.kh.trip.dto.auth.social.KakaoLoginRequestDTO;
 import com.kh.trip.dto.auth.social.NaverLoginRequestDTO;
+import com.kh.trip.repository.MemberGradeRepository;
 import com.kh.trip.repository.UserAuthProviderRepository;
 import com.kh.trip.repository.UserRefreshTokenRepository;
 import com.kh.trip.repository.UserRepository;
@@ -47,6 +50,9 @@ public class AuthServiceImpl implements AuthService {
 
 	// 회원 기본정보를 저장하는 repository
 	private final UserRepository userRepository;
+	
+	// 회원에게 부여할 등급정보를 불러오는 repository
+	private final MemberGradeRepository memberGradeRepository;
 
 	// 로그인 정보(loginId, passwordHash)를 저장하는 repository
 	private final UserAuthProviderRepository userAuthProviderRepository;
@@ -71,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
 	private final KakaoTokenVerifier kakaoTokenVerifier;
 
 	private final NaverTokenVerifier naverTokenVerifier;
-
+	
 	// refresh token 만료 시간(초)
 	@Value("${jwt.refresh-token-expiration}")
 	private long refreshTokenExpiration;
@@ -94,8 +100,11 @@ public class AuthServiceImpl implements AuthService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
 		}
 
+		MemberGrade basicGrade = memberGradeRepository.findById(MemberGradeName.BASIC)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "기본 등급 설정이 없습니다."));
+		
 		// USERS 테이블에 저장할 회원 기본정보 생성
-		User user = User.builder().userName(request.getUserName()).email(request.getEmail()).phone(request.getPhone())
+		User user = User.builder().userName(request.getUserName()).email(request.getEmail()).phone(request.getPhone()).memberGrade(basicGrade)
 				.enabled("1").build();
 
 		// 회원 기본정보 저장

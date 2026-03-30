@@ -1,5 +1,7 @@
 package com.kh.trip.dto;
 
+import java.time.LocalDateTime;
+
 import com.kh.trip.domain.enums.InquiryRoomStatus;
 
 import lombok.AllArgsConstructor;
@@ -19,4 +21,9 @@ public class InquiryRoomDTO {
 	private Long hostNo;
 	private Long lodgingNo;
 	private InquiryRoomStatus status;
+	private String lodgingName;
+	private String hostName;
+	private String lastMessage;
+	private LocalDateTime regDate;
+	private LocalDateTime updDate;
 }

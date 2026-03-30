@@ -8,6 +8,8 @@ public interface InquiryMessageService {
 
 	List<InquiryMessageDTO> findByRoomNo(Long roomNo);
 
+	List<InquiryMessageDTO> findByRoomNo(Long roomNo, Long userNo);
+
 	InquiryMessageDTO save(InquiryMessageDTO messageDTO);
 
 }

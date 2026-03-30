@@ -34,12 +34,25 @@ public class InquiryMessageServiceImpl implements InquiryMessageService {
 	}
 
 	@Override
+	public List<InquiryMessageDTO> findByRoomNo(Long roomNo, Long userNo) {
+		InquiryRoom room = roomRepository.findDetailById(roomNo)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
+		// 메시지 히스토리는 회원 본인 또는 해당 판매자만 볼 수 있다.
+		validateParticipant(room, userNo);
+		return findByRoomNo(roomNo);
+	}
+
+	@Override
 	public InquiryMessageDTO save(InquiryMessageDTO messageDTO) {
-		InquiryRoom room = roomRepository.findById(messageDTO.getInquiryRoomNo())
+		InquiryRoom room = roomRepository.findDetailById(messageDTO.getInquiryRoomNo())
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
 
 		if (room.getStatus() == InquiryRoomStatus.CLOSED) {
 			throw new IllegalArgumentException("닫힌 채팅방에는 메시지를 보낼 수 없습니다.");
+		}
+
+		if (messageDTO.getContent() == null || messageDTO.getContent().isBlank()) {
+			throw new IllegalArgumentException("메시지 내용은 비어 있을 수 없습니다.");
 		}
 
 		User sender = userRepository.findById(messageDTO.getSenderNo())
@@ -64,8 +77,10 @@ public class InquiryMessageServiceImpl implements InquiryMessageService {
 		InquiryMessage savedMessage = repository.save(message);
 
 		if (senderType == SenderType.USER) {
+			// 회원이 새로 보낸 메시지는 판매자 답변 대기 상태로 본다.
 			room.changeStatus(InquiryRoomStatus.WAITING);
 		} else {
+			// 판매자가 응답하면 답변 완료 상태로 바꿔서 대시보드/회원 화면이 같은 상태를 본다.
 			room.changeStatus(InquiryRoomStatus.ANSWERED);
 		}
 		roomRepository.save(room);
@@ -78,8 +93,19 @@ public class InquiryMessageServiceImpl implements InquiryMessageService {
 				.messageNo(message.getMessageNo())
 				.inquiryRoomNo(message.getInquiryRoom().getInquiryRoomNo())
 				.senderNo(message.getUser().getUserNo())
+				.senderType(message.getSenderType())
+				.senderName(message.getUser().getUserName())
 				.content(message.getContent())
+				.regDate(message.getRegDate())
 				.build();
+	}
+
+	private void validateParticipant(InquiryRoom room, Long userNo) {
+		boolean isUser = room.getUser().getUserNo().equals(userNo);
+		boolean isHost = room.getHost().getUser().getUserNo().equals(userNo);
+		if (!isUser && !isHost) {
+			throw new IllegalArgumentException("이 채팅방에 접근할 수 없습니다.");
+		}
 	}
 
 }
