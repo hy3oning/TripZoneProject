@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -32,6 +33,7 @@ public class LodgingController {
 
 	@PostMapping("/")
 	@ResponseStatus(HttpStatus.CREATED)
+	@PreAuthorize("hasAnyRole('HOST', 'ADMIN')")
 	public LodgingDTO createLodging(@ModelAttribute LodgingDTO lodgingDTO) {
 		return lodgingService.createLodging(lodgingDTO);
 	}
@@ -62,6 +64,7 @@ public class LodgingController {
 	}
 
 	@PatchMapping("/{lodgingNo}")
+	@PreAuthorize("hasAnyRole('HOST', 'ADMIN')")
 	public LodgingDTO updateLodging(@PathVariable Long lodgingNo, @ModelAttribute LodgingDTO lodgingDTO) {
 		lodgingDTO.setLodgingNo(lodgingNo);
 		return lodgingService.updateLodging(lodgingNo, lodgingDTO);
@@ -69,6 +72,7 @@ public class LodgingController {
 
 	@DeleteMapping("/{lodgingNo}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@PreAuthorize("hasAnyRole('HOST', 'ADMIN')")
 	public void deleteLodging(@PathVariable Long lodgingNo) {
 		lodgingService.deleteLodging(lodgingNo);
 	}

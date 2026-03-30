@@ -3,6 +3,7 @@ package com.kh.trip.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +36,7 @@ public class ReviewController {
 	// 리뷰 등록
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@PreAuthorize("hasRole('USER')")
 	public ReviewDTO createReview(@AuthenticationPrincipal AuthUserPrincipal authUser,
 			@RequestBody ReviewDTO reviewDTO) { 
 
@@ -49,6 +51,7 @@ public class ReviewController {
 
 	// 리뷰 수정
 	@PatchMapping("/{reviewNo}")
+	@PreAuthorize("hasRole('USER')")
 	public ReviewDTO updateReview(@PathVariable Long reviewNo, @AuthenticationPrincipal AuthUserPrincipal authUser,
 			@RequestBody ReviewDTO reviewDTO) { 
 
@@ -62,6 +65,7 @@ public class ReviewController {
 	// 리뷰 삭제
 	@DeleteMapping("/{reviewNo}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@PreAuthorize("hasRole('USER')")
 	public void deleteReview(@PathVariable Long reviewNo, @AuthenticationPrincipal AuthUserPrincipal authUser) {
 
 		if (authUser == null) {

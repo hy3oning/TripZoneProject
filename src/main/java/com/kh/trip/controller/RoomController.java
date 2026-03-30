@@ -3,6 +3,7 @@ package com.kh.trip.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -29,6 +30,7 @@ public class RoomController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@PreAuthorize("hasAnyRole('HOST', 'ADMIN')")
 	public RoomDTO createRoom(@RequestBody RoomDTO roomDTO) { 
 		return roomService.createRoom(roomDTO); 
 	}
@@ -44,12 +46,14 @@ public class RoomController {
 	}
 
 	@PatchMapping("/{roomNo}")
+	@PreAuthorize("hasAnyRole('HOST', 'ADMIN')")
 	public RoomDTO updateRoom(@PathVariable Long roomNo, @RequestBody RoomDTO roomDTO) { 
 		return roomService.updateRoom(roomNo, roomDTO); 
 	}
 
 	@DeleteMapping("/{roomNo}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@PreAuthorize("hasAnyRole('HOST', 'ADMIN')")
 	public void deleteRoom(@PathVariable Long roomNo) {
 		roomService.deleteRoom(roomNo);
 	}
