@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +46,7 @@ public class EventController {
 
 	// 이벤트변경,새로운거 저장
 	@PostMapping
+	@PreAuthorize("hasRole('ADMIN')")
 	public Map<String, Long> save(EventDTO eventDTO) {
 		log.info("EventDTO:" + eventDTO);
 		MultipartFile file = eventDTO.getFile();
@@ -57,6 +59,7 @@ public class EventController {
 
 	// 수정
 	@PutMapping("/{eventNo}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public Map<String, String> update(@PathVariable Long eventNo, EventDTO eventDTO) {
 		eventDTO.setEventNo(eventNo);
 		log.info("Update:" + eventDTO);
@@ -82,6 +85,7 @@ public class EventController {
 
 	// 삭제
 	@DeleteMapping("/{eventNo}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public Map<String, String> delete(@PathVariable Long eventNo) {
 		log.info("Delete: " + eventNo);
 		String oldFileName = service.findById(eventNo).getThumbnailUrl();

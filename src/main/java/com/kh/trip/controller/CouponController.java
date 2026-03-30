@@ -3,6 +3,7 @@ package com.kh.trip.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -34,12 +35,14 @@ public class CouponController {
 	}
 
 	@GetMapping("/list")
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
 	public List<CouponDTO> findAll() {
 		log.info("CouponDTOFindAll()");
 		return service.findAll();
 	}
 
 	@PatchMapping("/{couponNo}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public Map<String, String> update(@PathVariable Long couponNo, @RequestBody CouponDTO couponDTO) {
 		log.info("update() couponNo= " + couponNo);
 		couponDTO.setCouponNo(couponNo);
@@ -48,6 +51,7 @@ public class CouponController {
 	}
 
 	@DeleteMapping("/{couponNo}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public Map<String, String> delete(@PathVariable Long couponNo) {
 		log.info("delete() couponNo = " + couponNo);
 		service.delete(couponNo);
