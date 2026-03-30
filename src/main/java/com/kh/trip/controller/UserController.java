@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.kh.trip.dto.AdminUserSearchRequestDTO;
-import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.UserDTO;
 import com.kh.trip.dto.UserUpdateRequestDTO;
 import com.kh.trip.security.AuthUserPrincipal;
@@ -66,21 +64,6 @@ public class UserController {
 		}
 		userService.delete(userNo);
 		return Map.of("result", "SUCCESS");
-	}
-
-	// 관리자 회원 목록 조회
-	@GetMapping("/admin/userlist")
-	@PreAuthorize("hasRole('ADMIN')")
-	public PageResponseDTO<UserDTO> findUsers(AdminUserSearchRequestDTO request) {
-		// 검색조건/페이징 DTO를 서비스로 전달해 회원 목록을 조회한다.
-		return userService.findUsers(request);
-	}
-
-	// 관리자 회원 상세조회
-	@GetMapping("/admin/{userNo}/detail")
-	@PreAuthorize("hasRole('ADMIN')")
-	public UserDTO getUserDetail(@PathVariable Long userNo) {
-		return userService.getUser(userNo);
 	}
 
 }

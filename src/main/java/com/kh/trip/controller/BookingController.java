@@ -46,12 +46,6 @@ public class BookingController {
 		return service.findByUserId(userNo, pageRequestDTO);
 	}
 
-	@GetMapping("/hostlist/{hostNo}")
-	public PageResponseDTO<BookingDTO> findByHostNo(@PathVariable Long hostNo, PageRequestDTO pageRequestDTO) {
-		log.info("findByHostNo() hostNo= " + hostNo);
-		return service.findByHostNo(hostNo, pageRequestDTO);
-	}
-
 	@DeleteMapping("/{bookingNo}")
 	public Map<String, String> cancelBooking(@PathVariable Long bookingNo) {
 		log.info("findByUserId() = " + bookingNo);
