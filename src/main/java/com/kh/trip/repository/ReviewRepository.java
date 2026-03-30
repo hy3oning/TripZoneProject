@@ -3,6 +3,8 @@ package com.kh.trip.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.kh.trip.domain.Review;
@@ -26,4 +28,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
 	// 특정 숙소의 리뷰 전체 조회 (평균 계산용)
 	List<Review> findByLodging_LodgingNo(Long lodgingNo);
+
+	// 특정 숙소 번호에 해당하는 리뷰 목록을 페이징 조회 (최신순)
+	Page<Review> findByLodging_LodgingNoOrderByReviewNoDesc(Long lodgingNo, Pageable pageable);
 }
