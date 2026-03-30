@@ -37,6 +37,7 @@ public class InquiryMessageServiceImpl implements InquiryMessageService {
 	public List<InquiryMessageDTO> findByRoomNo(Long roomNo, Long userNo) {
 		InquiryRoom room = roomRepository.findDetailById(roomNo)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
+		// 메시지 히스토리는 회원 본인 또는 해당 판매자만 볼 수 있다.
 		validateParticipant(room, userNo);
 		return findByRoomNo(roomNo);
 	}
@@ -76,8 +77,10 @@ public class InquiryMessageServiceImpl implements InquiryMessageService {
 		InquiryMessage savedMessage = repository.save(message);
 
 		if (senderType == SenderType.USER) {
+			// 회원이 새로 보낸 메시지는 판매자 답변 대기 상태로 본다.
 			room.changeStatus(InquiryRoomStatus.WAITING);
 		} else {
+			// 판매자가 응답하면 답변 완료 상태로 바꿔서 대시보드/회원 화면이 같은 상태를 본다.
 			room.changeStatus(InquiryRoomStatus.ANSWERED);
 		}
 		roomRepository.save(room);

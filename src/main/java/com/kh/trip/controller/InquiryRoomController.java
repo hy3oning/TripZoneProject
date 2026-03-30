@@ -35,6 +35,7 @@ public class InquiryRoomController {
     @PostMapping("/")
     @PreAuthorize("isAuthenticated()")
     public Map<String, Long> save(@AuthenticationPrincipal AuthUserPrincipal authUser, @RequestBody InquiryRoomDTO roomDTO) {
+    	// 회원 번호는 토큰에서 고정하고, 프론트는 lodgingNo만 넘겨도 서버가 호스트를 역추적한다.
     	roomDTO.setUserNo(authUser.getUserNo());
         log.info("inquiryRoom save() = " + roomDTO);
         Long roomNo = service.save(roomDTO);
@@ -61,6 +62,7 @@ public class InquiryRoomController {
 	public List<InquiryMessageDTO> findByRoomNo(
 			@AuthenticationPrincipal AuthUserPrincipal authUser,
 			@PathVariable Long roomNo) {
+		// 메시지 조회도 로그인 사용자 기준으로 방 참여자 검증을 거친다.
 		log.info("inquiryMessage findByRoomNo() = " + roomNo);
 		return messageService.findByRoomNo(roomNo, authUser.getUserNo());
 	}

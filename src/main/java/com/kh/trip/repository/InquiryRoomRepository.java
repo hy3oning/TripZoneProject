@@ -30,6 +30,7 @@ public interface InquiryRoomRepository extends JpaRepository<InquiryRoom, Long>{
 			left join fetch r.lodging l
 			where r.inquiryRoomNo = :roomNo
 			""")
+	// 메시지 송수신 시 user/host/lodging 표시값을 같이 쓰기 때문에 상세 조회용 fetch join을 분리했다.
 	Optional<InquiryRoom> findDetailById(@Param("roomNo") Long roomNo);
 
 	@Query("""

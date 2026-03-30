@@ -36,6 +36,8 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
 		if (StompCommand.CONNECT.equals(accessor.getCommand())
 				|| StompCommand.SEND.equals(accessor.getCommand())
 				|| StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+			// 프론트가 STOMP native header의 Authorization에 Bearer 토큰을 넣으면
+			// HTTP 필터와 별도로 WebSocket 세션 인증을 복원한다.
 			if (accessor.getUser() == null) {
 				String token = extractBearerToken(accessor);
 				if (token != null && jwtProvider.validateToken(token) && "ACCESS".equals(jwtProvider.getTokenType(token))) {

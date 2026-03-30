@@ -47,6 +47,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
+    	// STOMP CONNECT/SEND/SUBSCRIBE 시점에 JWT를 해석해서 WebSocket 세션에도 인증 사용자를 심는다.
     	registration.interceptors(webSocketAuthChannelInterceptor);
     }
 
