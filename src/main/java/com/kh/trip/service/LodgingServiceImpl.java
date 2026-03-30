@@ -14,12 +14,15 @@ import com.kh.trip.domain.HostProfile;
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.LodgingImage;
 import com.kh.trip.domain.Room;
+
+import com.kh.trip.domain.RoomImage;
 import com.kh.trip.domain.enums.LodgingStatus;
 import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.LodgingDTO;
 import com.kh.trip.dto.RoomDTO;
 import com.kh.trip.repository.HostProfileRepository;
 import com.kh.trip.repository.LodgingRepository;
+import com.kh.trip.repository.RoomImageRepository;
 import com.kh.trip.repository.RoomRepository;
 import com.kh.trip.util.CustomFileUtil;
 
@@ -44,6 +47,7 @@ public class LodgingServiceImpl implements LodgingService {
 
 	private final LodgingRepository lodgingRepository;
 	private final RoomRepository roomRepository;
+	private final RoomImageRepository roomImageRepository;
 	private final HostProfileRepository hostProfileRepository;
 	private final CustomFileUtil fileUtil;
 
@@ -103,6 +107,12 @@ public class LodgingServiceImpl implements LodgingService {
 	public LodgingDTO getLodging(Long lodgingNo) {
 		Lodging lodging = lodgingRepository.findById(lodgingNo)
 				.orElseThrow(() -> new NoSuchElementException("해당 숙소를 찾을 수 없습니다. lodgingNo=" + lodgingNo));
+
+		// 일반 사용자 조회에서는 비활성화된 숙소를 막기 위한 상태 체크
+		if (lodging.getStatus() != LodgingStatus.ACTIVE) {
+			throw new NoSuchElementException("비활성화된 숙소입니다. lodgingNo=" + lodgingNo);
+		}
+
 		return toLodgingDTO(lodging);
 	}
 
@@ -155,7 +165,7 @@ public class LodgingServiceImpl implements LodgingService {
 	// 숙소 수정
 	@Override
 	public LodgingDTO updateLodging(Long lodgingNo, LodgingDTO lodgingDTO) {
-		// 1. read
+		
 		Lodging findLodging = lodgingRepository.findById(lodgingNo)
 				.orElseThrow(() -> new NoSuchElementException("수정할 숙소가 존재하지 않습니다. lodgingNo=" + lodgingNo));
 
@@ -241,6 +251,7 @@ public class LodgingServiceImpl implements LodgingService {
 
 		List<Room> roomList = roomRepository.findByLodging_LodgingNo(lodgingNo);
 		if (roomList != null && !roomList.isEmpty()) {
+			// 숙소 삭제 시 해당 숙소의 객실도 함께 예약 불가 상태로 변경
 			roomList.forEach(room -> room.changeStatus(RoomStatus.UNAVAILABLE));
 			roomRepository.saveAll(roomList);
 		}
@@ -254,16 +265,35 @@ public class LodgingServiceImpl implements LodgingService {
 	public LodgingDTO getLodgingDetail(Long lodgingNo) {
 		// 1. 숙소 기본 정보 조회 & 이미지목록 조인해서 같이 조회
 		Optional<Lodging> result = lodgingRepository.selectOne(lodgingNo);
-		Lodging lodging = result.orElseThrow();
+
+		// 예외 메시지 추가
+		Lodging lodging = result
+				.orElseThrow(() -> new NoSuchElementException("해당 숙소를 찾을 수 없습니다. lodgingNo=" + lodgingNo));
+
+		// 비활성화된 숙소는 상세 조회에서 제외
+		if (lodging.getStatus() != LodgingStatus.ACTIVE) {
+			throw new NoSuchElementException("비활성화된 숙소입니다. lodgingNo=" + lodgingNo);
+		}
 
 		// 2. 객실 목록 조회
-		List<Room> rooms = roomRepository.findByLodging_LodgingNo(lodgingNo);
+		// 상세보기에서는 AVAILABLE 상태의 객실만 조회
+		List<Room> rooms = roomRepository.findByLodging_LodgingNoAndStatusOrderByRoomNoAsc(lodgingNo,
+				RoomStatus.AVAILABLE);
 
 		// 3. lodging entity를 dto로 변환
 		LodgingDTO lodgingDTO = toLodgingDTO(lodging);
-		List<RoomDTO> roomDTOs = rooms.stream().map(this::toRoomDTO).collect(Collectors.toList());
-		// 4.lodgingDTO에 룸정보추가
+
+		// 객실 이미지까지 포함해서 RoomDTO로 변환
+		List<RoomDTO> roomDTOs = rooms.stream().map(room -> {
+			List<String> imageUrls = roomImageRepository.findByRoom_RoomNoOrderBySortOrderAsc(room.getRoomNo()).stream()
+					.map(RoomImage::getImageUrl).toList();
+
+			return toRoomDTO(room, imageUrls);
+		}).collect(Collectors.toList());
+
+		// 4. lodgingDTO에 룸정보추가
 		lodgingDTO.setRooms(roomDTOs);
+
 		return lodgingDTO;
 	}
 
@@ -367,8 +397,8 @@ public class LodgingServiceImpl implements LodgingService {
 				.build(); // Entity 생성
 	}
 
-	// Room Entity -> RoomSummaryDTO 변환도 Impl 내부에서 처리
-	private RoomDTO toRoomDTO(Room room) {
+	// 객실 이미지 URL 목록까지 포함해서 RoomDTO 생성
+	private RoomDTO toRoomDTO(Room room, List<String> imageUrls) {
 		return RoomDTO.builder().roomNo(room.getRoomNo()) // 객실 번호 세팅
 				.lodgingNo(room.getLodging().getLodgingNo()).roomName(room.getRoomName()) // 객실명 세팅
 				.roomType(room.getRoomType()) // 객실 유형 세팅
@@ -377,6 +407,7 @@ public class LodgingServiceImpl implements LodgingService {
 				.pricePerNight(room.getPricePerNight()) // 1박 가격 세팅
 				.roomCount(room.getRoomCount()) // 객실 수 세팅
 				.status(room.getStatus()) // 상태 세팅
+				.imageUrls(imageUrls) // 객실 이미지 목록 세팅
 				.build(); // DTO 생성
 	}
 }
