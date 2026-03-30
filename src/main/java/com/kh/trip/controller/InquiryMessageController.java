@@ -1,5 +1,8 @@
 package com.kh.trip.controller;
 
+import java.security.Principal;
+
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -7,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.kh.trip.dto.InquiryMessageDTO;
+import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.service.InquiryMessageService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,8 +25,15 @@ public class InquiryMessageController {
 	private final InquiryMessageService service;
 	private final SimpMessagingTemplate messagingTemplate;
 
-	@MessageMapping("/send")
-	public void sendMessage(@Payload InquiryMessageDTO messageDTO) {
+	@MessageMapping("/inquiry/{roomNo}/send")
+	public void sendMessage(@DestinationVariable Long roomNo, @Payload InquiryMessageDTO messageDTO, Principal principal) {
+		if (!(principal instanceof org.springframework.security.core.Authentication authentication)
+				|| !(authentication.getPrincipal() instanceof AuthUserPrincipal authUser)) {
+			throw new IllegalArgumentException("웹소켓 인증 정보가 없습니다.");
+		}
+
+		messageDTO.setInquiryRoomNo(roomNo);
+		messageDTO.setSenderNo(authUser.getUserNo());
 		log.info("inquiryMessage sendMessage() = " + messageDTO);
 		InquiryMessageDTO savedMessage = service.save(messageDTO);
 		messagingTemplate.convertAndSend("/topic/inquiry/" + savedMessage.getInquiryRoomNo(), savedMessage);

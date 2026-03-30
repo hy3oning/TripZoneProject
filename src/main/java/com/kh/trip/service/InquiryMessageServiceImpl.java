@@ -34,12 +34,24 @@ public class InquiryMessageServiceImpl implements InquiryMessageService {
 	}
 
 	@Override
+	public List<InquiryMessageDTO> findByRoomNo(Long roomNo, Long userNo) {
+		InquiryRoom room = roomRepository.findDetailById(roomNo)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
+		validateParticipant(room, userNo);
+		return findByRoomNo(roomNo);
+	}
+
+	@Override
 	public InquiryMessageDTO save(InquiryMessageDTO messageDTO) {
-		InquiryRoom room = roomRepository.findById(messageDTO.getInquiryRoomNo())
+		InquiryRoom room = roomRepository.findDetailById(messageDTO.getInquiryRoomNo())
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
 
 		if (room.getStatus() == InquiryRoomStatus.CLOSED) {
 			throw new IllegalArgumentException("닫힌 채팅방에는 메시지를 보낼 수 없습니다.");
+		}
+
+		if (messageDTO.getContent() == null || messageDTO.getContent().isBlank()) {
+			throw new IllegalArgumentException("메시지 내용은 비어 있을 수 없습니다.");
 		}
 
 		User sender = userRepository.findById(messageDTO.getSenderNo())
@@ -78,8 +90,19 @@ public class InquiryMessageServiceImpl implements InquiryMessageService {
 				.messageNo(message.getMessageNo())
 				.inquiryRoomNo(message.getInquiryRoom().getInquiryRoomNo())
 				.senderNo(message.getUser().getUserNo())
+				.senderType(message.getSenderType())
+				.senderName(message.getUser().getUserName())
 				.content(message.getContent())
+				.regDate(message.getRegDate())
 				.build();
+	}
+
+	private void validateParticipant(InquiryRoom room, Long userNo) {
+		boolean isUser = room.getUser().getUserNo().equals(userNo);
+		boolean isHost = room.getHost().getUser().getUserNo().equals(userNo);
+		if (!isUser && !isHost) {
+			throw new IllegalArgumentException("이 채팅방에 접근할 수 없습니다.");
+		}
 	}
 
 }

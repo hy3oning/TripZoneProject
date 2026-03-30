@@ -1,6 +1,7 @@
 package com.kh.trip.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -10,6 +11,12 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 //WebSocket 메시지 핸들링 활성화, 메시지 브로커 사용허용
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+	private final WebSocketAuthChannelInterceptor webSocketAuthChannelInterceptor;
+
+	public WebSocketConfig(WebSocketAuthChannelInterceptor webSocketAuthChannelInterceptor) {
+		this.webSocketAuthChannelInterceptor = webSocketAuthChannelInterceptor;
+	}
 	/**
      * 메시지 브로커(Message Broker) 설정을 구성
      * 클라이언트가 메시지를 보낼 때와 받을 때의 경로 규칙 정의
@@ -36,6 +43,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*") // 모든 도메인에서의 접속을 허용 (CORS 해결)
                 .withSockJS(); // WebSocket을 지원하지 않는 브라우저를 위해 SockJS 폴백 기능을 활성화.
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+    	registration.interceptors(webSocketAuthChannelInterceptor);
     }
 
 }

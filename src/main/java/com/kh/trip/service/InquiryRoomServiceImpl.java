@@ -33,14 +33,17 @@ public class InquiryRoomServiceImpl implements InquiryRoomService {
 
 	@Override
 	public Long save(InquiryRoomDTO roomDTO) {
-		return repository.findByDetail(roomDTO.getUserNo(), roomDTO.getHostNo(), roomDTO.getLodgingNo(),
+		Lodging lodging = lodgingRepository.findById(roomDTO.getLodgingNo())
+				.orElseThrow(() -> new IllegalArgumentException("숙소를 찾을 수 없습니다."));
+		HostProfile host = lodging.getHost();
+		if (host == null) {
+			throw new IllegalArgumentException("호스트를 찾을 수 없습니다.");
+		}
+
+		return repository.findByDetail(roomDTO.getUserNo(), host.getHostNo(), roomDTO.getLodgingNo(),
 				InquiryRoomStatus.CLOSED).map(room -> room.getInquiryRoomNo()).orElseGet(() -> {
 					User user = userRepository.findById(roomDTO.getUserNo())
 							.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-					HostProfile host = hostRepository.findById(roomDTO.getHostNo())
-							.orElseThrow(() -> new IllegalArgumentException("호스트를 찾을 수 없습니다."));
-					Lodging lodging = lodgingRepository.findById(roomDTO.getLodgingNo())
-							.orElseThrow(() -> new IllegalArgumentException("숙소를 찾을 수 없습니다."));
 
 					InquiryRoom newRoom = InquiryRoom.builder()
 							.user(user)
@@ -74,6 +77,22 @@ public class InquiryRoomServiceImpl implements InquiryRoomService {
 	}
 
 	@Override
+	public List<InquiryRoomDTO> findMyRooms(Long userNo) {
+		return repository.findDetailByUserNo(userNo, InquiryRoomStatus.CLOSED).stream()
+				.map(this::entityToDTO)
+				.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<InquiryRoomDTO> findSellerRooms(Long userNo) {
+		HostProfile host = hostRepository.findByUser_UserNo(userNo)
+				.orElseThrow(() -> new IllegalArgumentException("판매자 정보를 찾을 수 없습니다."));
+		return repository.findDetailByHostNo(host.getHostNo(), InquiryRoomStatus.CLOSED).stream()
+				.map(this::entityToDTO)
+				.collect(Collectors.toList());
+	}
+
+	@Override
 	public void delete(Long roomNo) {
 		Optional<InquiryRoom> result = repository.findById(roomNo);
 		InquiryRoom room = result.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
@@ -88,6 +107,10 @@ public class InquiryRoomServiceImpl implements InquiryRoomService {
 				.hostNo(room.getHost().getHostNo())
 				.lodgingNo(room.getLodging().getLodgingNo())
 				.status(room.getStatus())
+				.lodgingName(room.getLodging().getLodgingName())
+				.hostName(room.getHost().getBusinessName())
+				.regDate(room.getRegDate())
+				.updDate(room.getUpdDate())
 				.build();
 	}
 
