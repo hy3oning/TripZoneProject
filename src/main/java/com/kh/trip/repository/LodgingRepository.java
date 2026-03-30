@@ -3,6 +3,8 @@ package com.kh.trip.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -37,6 +39,9 @@ public interface LodgingRepository extends JpaRepository<Lodging, Long> {
 
 	// host 객체 안의 userNo 기준으로 조회가 필요할 때 사용
 	List<Lodging> findByHost_HostNo(Long hostNo);
+	
+	// ACTIVE 상태 숙소를 페이징 조회
+	Page<Lodging> findByStatus(LodgingStatus status, Pageable pageable);
 
 	/**
 	 * 숙소 상세 조회용 메서드
