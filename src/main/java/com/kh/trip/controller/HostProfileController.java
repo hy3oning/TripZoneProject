@@ -20,7 +20,9 @@ import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.service.HostProfileService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/hosts")
@@ -32,7 +34,6 @@ public class HostProfileController {
 	@PreAuthorize("hasRole('USER')")
 	public Long register(@AuthenticationPrincipal AuthUserPrincipal authUser,
 			@RequestBody HostProfileDTO hostProfileDTO) {
-
 		hostProfileDTO.setUserNo(authUser.getUserNo());
 		return hostProfileService.register(hostProfileDTO);
 	}
@@ -40,7 +41,7 @@ public class HostProfileController {
 	@GetMapping
 	@PreAuthorize("hasRole('ADMIN')")
 	public PageResponseDTO<HostProfileDTO> getList(PageRequestDTO pageRequestDTO) {
-	    return hostProfileService.getList(pageRequestDTO);
+		return hostProfileService.getList(pageRequestDTO);
 	}
 
 	@GetMapping("/{hostNo}")

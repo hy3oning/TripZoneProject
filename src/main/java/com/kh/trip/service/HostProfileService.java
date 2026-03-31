@@ -8,11 +8,10 @@ public interface HostProfileService {
 
 	Long register(HostProfileDTO hostProfileDTO);
 
-
-    PageResponseDTO<HostProfileDTO> getList(PageRequestDTO pageRequestDTO);
+	PageResponseDTO<HostProfileDTO> getList(PageRequestDTO pageRequestDTO);
 
 	HostProfileDTO get(Long hostNo);
-	
+
 	HostProfileDTO getByUserNo(Long userNo);
 
 	void approve(Long hostNo, Long adminUserNo);
