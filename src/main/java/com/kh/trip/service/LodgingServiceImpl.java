@@ -1,7 +1,9 @@
 package com.kh.trip.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,6 +29,7 @@ import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.RoomDTO;
 import com.kh.trip.repository.HostProfileRepository;
 import com.kh.trip.repository.LodgingRepository;
+import com.kh.trip.repository.ReviewRepository;
 import com.kh.trip.repository.RoomImageRepository;
 import com.kh.trip.repository.RoomRepository;
 import com.kh.trip.util.CustomFileUtil;
@@ -54,6 +57,7 @@ public class LodgingServiceImpl implements LodgingService {
 	private final RoomRepository roomRepository;
 	private final RoomImageRepository roomImageRepository;
 	private final HostProfileRepository hostProfileRepository;
+	private final ReviewRepository reviewRepository;
 	private final CustomFileUtil fileUtil;
 
 	// 숙소 등록
@@ -121,7 +125,9 @@ public class LodgingServiceImpl implements LodgingService {
 			throw new NoSuchElementException("비활성화된 숙소입니다. lodgingNo=" + lodgingNo);
 		}
 
-		return toLodgingDTO(lodging);
+		LodgingDTO lodgingDTO = toLodgingDTO(lodging);
+		applyReviewSummaries(List.of(lodgingDTO));
+		return lodgingDTO;
 	}
 
 	// 숙소 전체 목록 조회
@@ -144,6 +150,8 @@ public class LodgingServiceImpl implements LodgingService {
 
 			return lodgingDTO;
 		}).collect(Collectors.toList());
+
+		applyReviewSummaries(dtoList);
 		return dtoList;
 	}
 	
@@ -167,6 +175,8 @@ public class LodgingServiceImpl implements LodgingService {
 				.map(this::toLodgingDTO)
 				.toList();
 
+		applyReviewSummaries(dtoList);
+
 		//  PageResponseDTO 
 		return PageResponseDTO.<LodgingDTO>withAll()
 				.dtoList(dtoList)
@@ -183,8 +193,11 @@ public class LodgingServiceImpl implements LodgingService {
 			throw new IllegalArgumentException("지역 값이 비어 있습니다.");
 		}
 
-		return lodgingRepository.findByRegionAndStatus(region, LodgingStatus.ACTIVE).stream().map(this::toLodgingDTO)
+		List<LodgingDTO> dtoList = lodgingRepository.findByRegionAndStatus(region, LodgingStatus.ACTIVE).stream()
+				.map(this::toLodgingDTO)
 				.toList();
+		applyReviewSummaries(dtoList);
+		return dtoList;
 	}
 
 	// 숙소명 키워드 검색
@@ -195,8 +208,10 @@ public class LodgingServiceImpl implements LodgingService {
 			throw new IllegalArgumentException("검색어가 비어 있습니다.");
 		}
 
-		return lodgingRepository.findByLodgingNameContainingAndStatus(keyword, LodgingStatus.ACTIVE).stream()
+		List<LodgingDTO> dtoList = lodgingRepository.findByLodgingNameContainingAndStatus(keyword, LodgingStatus.ACTIVE).stream()
 				.map(this::toLodgingDTO).toList();
+		applyReviewSummaries(dtoList);
+		return dtoList;
 	}
 
 	// 숙소 수정
@@ -318,7 +333,39 @@ public class LodgingServiceImpl implements LodgingService {
 		LodgingDTO lodgingDTO = toLodgingDTO(lodging);
 		lodgingDTO.setRooms(loadAvailableRoomDTOs(lodgingNo));
 
+		applyReviewSummaries(List.of(lodgingDTO));
 		return lodgingDTO;
+	}
+
+	private void applyReviewSummaries(List<LodgingDTO> dtoList) {
+		if (dtoList == null || dtoList.isEmpty()) {
+			return;
+		}
+
+		List<Long> lodgingNos = dtoList.stream()
+				.map(LodgingDTO::getLodgingNo)
+				.filter(java.util.Objects::nonNull)
+				.toList();
+
+		if (lodgingNos.isEmpty()) {
+			return;
+		}
+
+		Map<Long, ReviewRepository.LodgingReviewSummary> summaryMap = reviewRepository.summarizeVisibleByLodgingNos(lodgingNos)
+				.stream()
+				.collect(Collectors.toMap(ReviewRepository.LodgingReviewSummary::getLodgingNo, summary -> summary, (left, right) -> left, HashMap::new));
+
+		dtoList.forEach(lodgingDTO -> {
+			ReviewRepository.LodgingReviewSummary summary = summaryMap.get(lodgingDTO.getLodgingNo());
+			if (summary == null) {
+				lodgingDTO.setReviewCount(0L);
+				lodgingDTO.setReviewAverage(0.0);
+				return;
+			}
+
+			lodgingDTO.setReviewCount(summary.getReviewCount() != null ? summary.getReviewCount() : 0L);
+			lodgingDTO.setReviewAverage(summary.getReviewAverage() != null ? summary.getReviewAverage() : 0.0);
+		});
 	}
 
 	private List<RoomDTO> loadAvailableRoomDTOs(Long lodgingNo) {
@@ -385,6 +432,8 @@ public class LodgingServiceImpl implements LodgingService {
 				.checkInTime(lodging.getCheckInTime()) // 체크인 시간 세팅
 				.checkOutTime(lodging.getCheckOutTime()) // 체크아웃 시간 세팅
 				.status(lodging.getStatus()) // 상태 세팅
+				.reviewAverage(0.0)
+				.reviewCount(0L)
 				.build(); // DTO 생성
 
 		List<LodgingImage> imageList = lodging.getImageList();

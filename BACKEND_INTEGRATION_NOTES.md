@@ -236,6 +236,66 @@
   - 리뷰 작성 폼은 사진 첨부 UI가 있었지만 실제로는 업로드가 연결되지 않아 공지 문구만 뜨고 있었다.
   - 기존 업로드 유틸과 `/api/view/**`를 재사용하면 새 스토리지 구조 없이 바로 붙일 수 있다.
 
+### 14. 숙소 목록/상세에 리뷰 집계 추가
+
+- 백엔드 파일
+  - `src/main/java/com/kh/trip/dto/LodgingDTO.java`
+  - `src/main/java/com/kh/trip/repository/ReviewRepository.java`
+  - `src/main/java/com/kh/trip/service/LodgingServiceImpl.java`
+
+- 프론트 파일
+  - `trip-zone/frontend/src/services/lodgingService.js`
+
+- 추가 내용
+  - `LodgingDTO`에 `reviewAverage`, `reviewCount` 추가
+  - 숙소 목록/상세/검색/지역 조회 시 숙소 번호 묶음 기준으로 공개 리뷰 집계를 한 번에 조회
+  - 프론트 숙소 카드와 상세 상단은 더 이상 mock 리뷰 문구를 쓰지 않고 API의 집계값을 사용
+
+- 이유
+  - 기존 숙소 카드가 `후기 준비 중` 또는 mock 숫자를 보여줘 실제 DB 리뷰와 맞지 않았다.
+  - 숙소별 리뷰 API를 각각 다시 호출하면 요청 수가 늘어나므로, 숙소 목록 응답에 집계를 함께 넣는 방식이 실무적으로 맞다.
+
+### 15. 실데이터 검증 중 발견된 문의 등록 버그 수정
+
+- 백엔드 파일
+  - `src/main/java/com/kh/trip/controller/InquiryController.java`
+  - `src/main/java/com/kh/trip/domain/enums/InquiryType.java`
+  - `src/main/java/com/kh/trip/service/MypageServiceImpl.java`
+
+- 추가 내용
+  - `POST /api/inquiry`는 더 이상 body의 `userNo`를 신뢰하지 않고 인증 사용자 번호를 서버에서 채운다.
+  - 문의 유형 enum에 `BOOKING`, `PAYMENT`를 모두 포함해 프론트 옵션과 백엔드 계약을 맞췄다.
+  - 로컬 검증 DB의 `INQUIRIES.INQUIRY_TYPE` 체크 제약도 `BOOKING/SYSTEM/MANAGEMENT/PAYMENT/ETC`를 허용하도록 맞췄다.
+
+- 이유
+  - 프론트는 문의 생성 시 `userNo`를 보내지 않아도 되는 구조였는데, 백엔드는 `userNo`를 body에서 기대하고 있어 `The given id must not be null` 500이 발생했다.
+  - 문의 생성 기본값이 `BOOKING`인데 백엔드 enum/DB 제약이 이를 허용하지 않아 예약 문의에서 같은 류의 런타임 오류가 다시 발생할 수 있었다.
+
+### 16. 판매자 예약 완료 처리 런타임 버그 수정
+
+- 백엔드 파일
+  - `src/main/java/com/kh/trip/repository/MemberGradeRepository.java`
+
+- 추가 내용
+  - `findByGradeName()`에 `@Param("grade")`를 추가해 JPA named parameter 바인딩 오류를 제거했다.
+
+- 이유
+  - 판매자 대시보드에서 예약을 `COMPLETED`로 바꾸는 실검증 중 `No argument for named parameter ':grade'` 예외가 발생했다.
+  - 이 쿼리 버그 때문에 숙박 완료, 마일리지 적립, 회원 등급 갱신까지 이어지는 실제 운영 흐름이 중간에 끊기고 있었다.
+
+## 실데이터 검증 메모
+
+- 판매자 신청
+  - 일반 유저 `verifyuser1 / Trip1234!`로 신청 생성 후 관리자 승인까지 확인
+- 판매자 대시보드
+  - 승인된 호스트 계정 `zeus / 1234`로 실데이터 조회 확인
+- 실시간 숙소 문의
+  - 회원 문의 생성, 판매자 답장, 상태 `WAITING -> ANSWERED` 변경 확인
+- 관리자 문의
+  - `BOOKING`, `PAYMENT` 유형 문의 생성과 목록/상세 메타 반영 확인
+- 리뷰 작성/운영
+  - 예약 생성 -> 결제 완료 -> 숙박 완료 -> 이미지 업로드 -> 리뷰 작성 -> 관리자 숨김까지 전부 확인
+
 ## 검증 결과
 
 ### 프론트

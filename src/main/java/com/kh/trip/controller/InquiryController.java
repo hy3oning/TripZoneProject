@@ -10,10 +10,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import com.kh.trip.dto.InquiryDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
+import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.service.InquiryService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,8 +29,12 @@ public class InquiryController {
 	private final InquiryService service;
 
 	@PostMapping
-	public Map<String, Long> save(@RequestBody InquiryDTO inquiryDTO) {
+	public Map<String, Long> save(@AuthenticationPrincipal AuthUserPrincipal authUser, @RequestBody InquiryDTO inquiryDTO) {
 		log.info("inquiry:save()" + inquiryDTO);
+		if (authUser == null) {
+			throw new IllegalArgumentException("로그인이 필요합니다.");
+		}
+		inquiryDTO.setUserNo(authUser.getUserNo());
 		Long inquiryNo = service.save(inquiryDTO);
 		return Map.of("result", inquiryNo);
 	}

@@ -1,5 +1,7 @@
 package com.kh.trip.config;
 
+import java.nio.file.Paths;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
@@ -33,8 +35,8 @@ public class CustomServletConfig implements WebMvcConfigurer {
 	public void addResourceHandlers(ResourceHandlerRegistry registry) {
 		// 브라우저에서 접근하는 url(/api/view/파일명)
 		registry.addResourceHandler("/api/view/**")
-				// 실제 D:/upload/ 폴더에서 파일을 찾아 전달
-				.addResourceLocations("file:///" + uploadPath + "/");
+				// 실제 업로드 폴더에서 파일을 찾아 전달
+				.addResourceLocations(Paths.get(uploadPath).toAbsolutePath().normalize().toUri().toString());
 	}
 
 }

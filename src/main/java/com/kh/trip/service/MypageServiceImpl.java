@@ -675,9 +675,11 @@ public class MypageServiceImpl implements MypageService {
 			return null;
 		}
 		return switch (type) {
+		case BOOKING -> "BOOKING";
+		case PAYMENT -> "PAYMENT";
 		case SYSTEM -> "SYSTEM";
-		case MANAGEMENT -> "PAYMENT";
-		case ETC -> "LODGING";
+		case MANAGEMENT -> "MANAGEMENT";
+		case ETC -> "ETC";
 		};
 	}
 

@@ -36,6 +36,8 @@ public class LodgingDTO {
 	private String checkInTime; // 체크인 시간
 	private String checkOutTime; // 체크아웃 시간
 	private LodgingStatus status; // 숙소 상태
+	private Double reviewAverage; // 리뷰 평균 평점
+	private Long reviewCount; // 공개 리뷰 수
 
 	// 업로드 받을 파일들
 	@Builder.Default

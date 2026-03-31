@@ -13,14 +13,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.domain.HostProfile;
 import com.kh.trip.domain.User;
-import com.kh.trip.domain.UserRole;
 import com.kh.trip.domain.enums.HostApprovalStatus;
 import com.kh.trip.dto.HostProfileDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.repository.HostProfileRepository;
 import com.kh.trip.repository.UserRepository;
-import com.kh.trip.repository.UserRoleRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,7 +29,7 @@ public class HostProfileServiceImpl implements HostProfileService {
 
 	private final HostProfileRepository hostProfileRepository;
 	private final UserRepository userRepository;
-	private final UserRoleRepository userRoleRepository;
+	private final HostRoleSyncService hostRoleSyncService;
 
 	@Override
 	public Long register(HostProfileDTO hostProfileDTO) {
@@ -83,12 +81,7 @@ public class HostProfileServiceImpl implements HostProfileService {
 		}
 		hostProfile.approve(adminUserNo);
 		hostProfileRepository.save(hostProfile);
-
-		Long userNo = hostProfile.getUser().getUserNo();
-		if (!userRoleRepository.existsByUserNoAndRoleCode(userNo, "ROLE_HOST")) {
-			UserRole hostRole = UserRole.builder().userNo(userNo).roleCode("ROLE_HOST").build();
-			userRoleRepository.save(hostRole);
-		}
+		hostRoleSyncService.syncAndGetRoleNames(hostProfile.getUser().getUserNo());
 	}
 
 	@Override
@@ -101,6 +94,7 @@ public class HostProfileServiceImpl implements HostProfileService {
 		}
 		hostProfile.reject(adminUserNo, rejectReason);
 		hostProfileRepository.save(hostProfile);
+		hostRoleSyncService.syncAndGetRoleNames(hostProfile.getUser().getUserNo());
 	}
 
 	@Override
@@ -136,6 +130,7 @@ public class HostProfileServiceImpl implements HostProfileService {
 		}
 		hostProfile.changeEnabled("0");
 		hostProfileRepository.save(hostProfile);
+		hostRoleSyncService.syncAndGetRoleNames(hostProfile.getUser().getUserNo());
 	}
 
 	@Override
@@ -147,6 +142,7 @@ public class HostProfileServiceImpl implements HostProfileService {
 		}
 		hostProfile.changeEnabled("1");
 		hostProfileRepository.save(hostProfile);
+		hostRoleSyncService.syncAndGetRoleNames(hostProfile.getUser().getUserNo());
 	}
 
 	private HostProfile dtoToEntity(HostProfileDTO hostProfileDTO) {

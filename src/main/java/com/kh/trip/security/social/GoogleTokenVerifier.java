@@ -1,8 +1,11 @@
 package com.kh.trip.security.social;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * 구글에서 발급한 ID Token을 검증하고 사용자 정보를 추출하는 클래스
@@ -53,8 +56,11 @@ public class GoogleTokenVerifier {
 			return SocialUserInfo.builder().providerCode("GOOGLE").providerUserId(providerUserId).email(email)
 					.userName(userName != null ? userName : email).build();
 
+		} catch (RestClientResponseException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+					"Google token verification failed: " + e.getResponseBodyAsString(), e);
 		} catch (Exception e) {
-			throw new RuntimeException("Invalid Google idToken");
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Invalid Google idToken", e);
 		}
 	}
 }

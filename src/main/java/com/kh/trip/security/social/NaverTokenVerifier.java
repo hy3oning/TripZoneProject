@@ -5,13 +5,16 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 @Component
 public class NaverTokenVerifier {
@@ -92,8 +95,11 @@ public class NaverTokenVerifier {
 			return SocialUserInfo.builder().providerCode("NAVER").providerUserId(providerUserId).email(email)
 					.userName(userName != null ? userName : email).build();
 
+		} catch (RestClientResponseException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+					"Naver token exchange failed: " + e.getResponseBodyAsString(), e);
 		} catch (Exception e) {
-			throw new RuntimeException("Invalid Naver code");
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Invalid Naver code", e);
 		}
 	}
 }

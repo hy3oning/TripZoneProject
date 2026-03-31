@@ -37,7 +37,7 @@ public class MypageController {
 	}
 
 	@GetMapping("/host-profile")
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("hasAnyRole('USER', 'HOST')")
 	public HostProfileDTO getMyHostProfile(@AuthenticationPrincipal AuthUserPrincipal principal) {
 		return hostProfileService.getByUserNo(requirePrincipal(principal).getUserNo());
 	}
@@ -46,6 +46,12 @@ public class MypageController {
 	@PreAuthorize("hasRole('USER')")
 	public MypageDTO.BookingResponse getBookings(@AuthenticationPrincipal AuthUserPrincipal principal) {
 		return mypageService.getBookings(requirePrincipal(principal).getUserNo());
+	}
+
+	@GetMapping("/profile")
+	@PreAuthorize("hasRole('USER')")
+	public MypageDTO.ProfileResponse getProfile(@AuthenticationPrincipal AuthUserPrincipal principal) {
+		return mypageService.getProfile(requirePrincipal(principal).getUserNo());
 	}
 
 	@PostMapping("/bookings")

@@ -41,6 +41,7 @@ import com.kh.trip.security.social.GoogleTokenVerifier;
 import com.kh.trip.security.social.KakaoTokenVerifier;
 import com.kh.trip.security.social.NaverTokenVerifier;
 import com.kh.trip.security.social.SocialUserInfo;
+import com.kh.trip.service.HostRoleSyncService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -77,6 +78,8 @@ public class AuthServiceImpl implements AuthService {
 	private final KakaoTokenVerifier kakaoTokenVerifier;
 
 	private final NaverTokenVerifier naverTokenVerifier;
+
+	private final HostRoleSyncService hostRoleSyncService;
 	
 	// refresh token 만료 시간(초)
 	@Value("${jwt.refresh-token-expiration}")
@@ -278,8 +281,7 @@ public class AuthServiceImpl implements AuthService {
 		if (!"1".equals(user.getEnabled())) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "탈퇴한 회원은 로그인할 수 없습니다.");
 		}
-		List<UserRole> roles = userRoleRepository.findByUserNo(userNo);
-		List<String> roleNames = roles.stream().map(UserRole::getRoleCode).toList();
+		List<String> roleNames = hostRoleSyncService.syncAndGetRoleNames(userNo);
 
 		AuthUserPrincipal authUser = new AuthUserPrincipal(user.getUserNo(), user.getEmail(), "", user.getUserName(),
 				user.getEmail(), user.getPhone(), user.getEnabled(), roleNames);

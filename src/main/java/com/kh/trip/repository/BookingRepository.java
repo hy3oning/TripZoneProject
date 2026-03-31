@@ -19,7 +19,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 	@Query("select b from Booking b where b.user.userNo = :userNo")
 	Page<Booking> findByUserId(@Param("userNo") Long userNo, Pageable pageable);
 
-	@EntityGraph(attributePaths = { "room", "room.lodging", "room.lodging.imageList" })
+	@EntityGraph(attributePaths = { "room", "room.lodging" })
 	@Query("select b from Booking b where b.user.userNo = :userNo order by b.regDate desc")
 	List<Booking> findMypageBookings(@Param("userNo") Long userNo);
 

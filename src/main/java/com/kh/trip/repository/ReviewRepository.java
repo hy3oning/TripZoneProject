@@ -6,10 +6,18 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.kh.trip.domain.Review;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
+
+	interface LodgingReviewSummary {
+		Long getLodgingNo();
+		Long getReviewCount();
+		Double getReviewAverage();
+	}
 
 	// 특정 숙소 번호의 리뷰 목록을 최신순(리뷰번호 내림차순)으로 조회
 	List<Review> findByLodging_LodgingNoOrderByReviewNoDesc(Long lodgingNo);
@@ -31,4 +39,16 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
 	// 특정 숙소 번호에 해당하는 리뷰 목록을 페이징 조회 (최신순)
 	Page<Review> findByLodging_LodgingNoOrderByReviewNoDesc(Long lodgingNo, Pageable pageable);
+
+	@Query("""
+			select r.lodging.lodgingNo as lodgingNo,
+			       count(r) as reviewCount,
+			       avg(r.rating) as reviewAverage
+			from Review r
+			left join ReviewVisibility rv on rv.reviewNo = r.reviewNo
+			where r.lodging.lodgingNo in :lodgingNos
+			  and (rv.reviewNo is null or rv.visible = true)
+			group by r.lodging.lodgingNo
+			""")
+	List<LodgingReviewSummary> summarizeVisibleByLodgingNos(@Param("lodgingNos") List<Long> lodgingNos);
 }

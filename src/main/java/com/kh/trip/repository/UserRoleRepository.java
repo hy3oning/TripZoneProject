@@ -13,4 +13,6 @@ public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
 
 	// 특정 회원이 해당 권한을 이미 가지고 있는지 확인한다.
 	boolean existsByUserNoAndRoleCode(Long userNo, String roleCode);
+
+	void deleteByUserNoAndRoleCode(Long userNo, String roleCode);
 }
