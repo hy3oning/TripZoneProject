@@ -48,6 +48,7 @@ public class AdminController {
 
 	// 관리자 호스트승인
 	@PatchMapping("/{hostNo}/approve")
+	@PreAuthorize("hasRole('ADMIN')")
 	public Map<String, String> approve(@PathVariable Long hostNo, @AuthenticationPrincipal AuthUserPrincipal authUser) {
 		hostProfileService.approve(hostNo, authUser.getUserNo());
 		return Map.of("result", "SUCCESS");
@@ -55,6 +56,7 @@ public class AdminController {
 
 	//관리자 호스트 승인거절
 	@PatchMapping("/{hostNo}/reject")
+	@PreAuthorize("hasRole('ADMIN')")
 	public Map<String, String> reject(@PathVariable Long hostNo, @RequestBody HostProfileDTO hostProfileDTO,
 			@AuthenticationPrincipal AuthUserPrincipal authUser) {
 		hostProfileService.reject(hostNo, authUser.getUserNo(), hostProfileDTO.getRejectReason());
