@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -89,6 +90,12 @@ public class MypageController {
 	@PreAuthorize("hasRole('USER')")
 	public MypageDTO.InquiryResponse getInquiries(@AuthenticationPrincipal AuthUserPrincipal principal) {
 		return mypageService.getInquiries(requirePrincipal(principal).getUserNo());
+	}
+
+	@GetMapping("/inquiries/{inquiryNo}")
+	public MypageDTO.InquiryDetailResponse getInquiryDetail(@AuthenticationPrincipal AuthUserPrincipal principal,
+			@PathVariable Long inquiryNo) {
+		return mypageService.getInquiryDetail(requirePrincipal(principal).getUserNo(), inquiryNo);
 	}
 
 	private AuthUserPrincipal requirePrincipal(AuthUserPrincipal principal) {

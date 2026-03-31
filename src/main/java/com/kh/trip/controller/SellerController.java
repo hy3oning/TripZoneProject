@@ -1,7 +1,11 @@
 package com.kh.trip.controller;
 
+import java.util.Map;
+
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,5 +29,11 @@ public class SellerController {
 	public PageResponseDTO<BookingDTO> findByHostNo(@PathVariable Long hostNo, PageRequestDTO pageRequestDTO) {
 		log.info("findByHostNo() hostNo= " + hostNo);
 		return bookingService.findByHostNo(hostNo, pageRequestDTO);
+	}
+
+	@PatchMapping("/bookings/{bookingNo}/status")
+	public BookingDTO updateBookingStatus(@PathVariable Long bookingNo, @RequestBody Map<String, String> payload) {
+		log.info("updateBookingStatus() bookingNo= {}", bookingNo);
+		return bookingService.updateStatus(bookingNo, payload.get("status"));
 	}
 }

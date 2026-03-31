@@ -1,7 +1,10 @@
 package com.kh.trip.service;
 
-import com.kh.trip.dto.PageRequestDTO;
-import com.kh.trip.dto.PageResponseDTO;
+import java.util.List;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import com.kh.trip.dto.ReviewAdminDTO;
 import com.kh.trip.dto.ReviewDTO;
 import com.kh.trip.dto.ReviewStatsDTO;
 
@@ -16,10 +19,16 @@ public interface ReviewService {
 	// 리뷰 삭제
 	void deleteReview(Long loginUserNo, Long reviewNo);
 
-	// 페이징 처리 조회
-	PageResponseDTO<ReviewDTO> getReviewsByLodging(Long lodgingNo, PageRequestDTO pageRequestDTO);
+	// 숙소별 리뷰 목록 조회
+	List<ReviewDTO> getReviewsByLodging(Long lodgingNo);
 
 	// 숙소별 리뷰 통계 조회
 	ReviewStatsDTO getReviewStatsByLodging(Long lodgingNo);
+
+	List<ReviewAdminDTO> getAdminReviews();
+
+	ReviewAdminDTO updateReviewVisibility(Long reviewNo, String status);
+
+	List<String> uploadReviewImages(List<MultipartFile> files);
 
 }

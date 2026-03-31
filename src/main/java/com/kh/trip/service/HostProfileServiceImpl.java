@@ -164,8 +164,9 @@ public class HostProfileServiceImpl implements HostProfileService {
 				.businessName(hostProfile.getBusinessName()).businessNumber(hostProfile.getBusinessNumber())
 				.ownerName(hostProfile.getOwnerName()).account(hostProfile.getAccount())
 				.approvalStatus(hostProfile.getApprovalStatus().name()).rejectReason(hostProfile.getRejectReason())
-				.enabled(hostProfile.getEnabled()).build();
-
+				.enabled(hostProfile.getEnabled())
+				.regDate(hostProfile.getRegDate() != null ? hostProfile.getRegDate().toString() : null)
+				.updDate(hostProfile.getUpdDate() != null ? hostProfile.getUpdDate().toString() : null).build();
 	}
 
 }

@@ -2,27 +2,28 @@ package com.kh.trip.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.trip.domain.Booking;
 import com.kh.trip.domain.Review;
 import com.kh.trip.domain.ReviewImage;
+import com.kh.trip.domain.ReviewVisibility;
 import com.kh.trip.domain.enums.BookingStatus;
-import com.kh.trip.dto.PageRequestDTO;
-import com.kh.trip.dto.PageResponseDTO;
-import com.kh.trip.dto.ReviewDTO;
+import com.kh.trip.dto.ReviewAdminDTO;
+import com.kh.trip.dto.ReviewDTO; 
 import com.kh.trip.dto.ReviewStatsDTO;
 import com.kh.trip.repository.BookingRepository;
 import com.kh.trip.repository.ReviewImageRepository;
 import com.kh.trip.repository.ReviewRepository;
+import com.kh.trip.repository.ReviewVisibilityRepository;
+import com.kh.trip.util.CustomFileUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,6 +35,8 @@ public class ReviewServiceImpl implements ReviewService {
 	private final ReviewRepository reviewRepository; // 리뷰 저장/조회 repository
 	private final BookingRepository bookingRepository; // 예약 정보 검증용 repository
 	private final ReviewImageRepository reviewImageRepository; // 리뷰 이미지 저장,조회,삭제 repository
+	private final ReviewVisibilityRepository reviewVisibilityRepository;
+	private final CustomFileUtil fileUtil;
 
 	@Override
 	public ReviewDTO createReview(Long loginUserNo, ReviewDTO reviewDTO) {
@@ -206,30 +209,22 @@ public class ReviewServiceImpl implements ReviewService {
 	// 숙소별 리뷰 목록 조회
 	@Override
 	@Transactional(readOnly = true)
-	public PageResponseDTO<ReviewDTO> getReviewsByLodging(Long lodgingNo, PageRequestDTO pageRequestDTO) {
+	public List<ReviewDTO> getReviewsByLodging(Long lodgingNo) {
 
 		if (lodgingNo == null) {
 			throw new IllegalArgumentException("숙소 번호는 필수입니다.");
 		}
 
-		// page는 1부터 시작하지만 PageRequest는 0부터 시작하므로 -1 처리
-		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, pageRequestDTO.getSize(),
-				Sort.by("reviewNo").descending());
+		// 특정 숙소의 리뷰들을 조회하면서, 각 리뷰의 이미지도 실제 조회해서 DTO에 포함
+		List<Review> visibleReviews = filterVisibleReviews(reviewRepository.findByLodging_LodgingNoOrderByReviewNoDesc(lodgingNo));
 
-		// 숙소별 리뷰를 최신순으로 페이징 조회
-		Page<Review> result = reviewRepository.findByLodging_LodgingNoOrderByReviewNoDesc(lodgingNo, pageable);
-
-		// Entity -> DTO 변환 후 기존 PageResponseDTO로 감싸서 반환
-		List<ReviewDTO> dtoList = result.getContent().stream().map(review -> {
+		return visibleReviews.stream().map(review -> {
 			List<String> imageUrls = reviewImageRepository
 					.findByReview_ReviewNoOrderBySortOrderAsc(review.getReviewNo()).stream()
 					.map(ReviewImage::getImageUrl).toList();
 
 			return toReviewDTO(review, imageUrls);
 		}).toList();
-
-		return PageResponseDTO.<ReviewDTO>withAll().dtoList(dtoList).pageRequestDTO(pageRequestDTO)
-				.totalCount(result.getTotalElements()).build();
 	}
 
 	// 숙소별 리뷰 통계 조회
@@ -241,21 +236,22 @@ public class ReviewServiceImpl implements ReviewService {
 			throw new IllegalArgumentException("숙소 번호는 필수입니다.");
 		}
 
+		List<Review> reviews = filterVisibleReviews(reviewRepository.findByLodging_LodgingNo(lodgingNo));
+
 		// 전체 리뷰 개수
-		long totalReviewCount = reviewRepository.countByLodging_LodgingNo(lodgingNo);
+		long totalReviewCount = reviews.size();
 
 		// 별점별 개수
-		long rating5Count = reviewRepository.countByLodging_LodgingNoAndRating(lodgingNo, 5);
-		long rating4Count = reviewRepository.countByLodging_LodgingNoAndRating(lodgingNo, 4);
-		long rating3Count = reviewRepository.countByLodging_LodgingNoAndRating(lodgingNo, 3);
-		long rating2Count = reviewRepository.countByLodging_LodgingNoAndRating(lodgingNo, 2);
-		long rating1Count = reviewRepository.countByLodging_LodgingNoAndRating(lodgingNo, 1);
+		long rating5Count = reviews.stream().filter(review -> review.getRating() == 5).count();
+		long rating4Count = reviews.stream().filter(review -> review.getRating() == 4).count();
+		long rating3Count = reviews.stream().filter(review -> review.getRating() == 3).count();
+		long rating2Count = reviews.stream().filter(review -> review.getRating() == 2).count();
+		long rating1Count = reviews.stream().filter(review -> review.getRating() == 1).count();
 
 		// 평균 평점 계산
 		double averageRating = 0.0;
 
 		if (totalReviewCount > 0) {
-			List<Review> reviews = reviewRepository.findByLodging_LodgingNo(lodgingNo);
 			double sum = reviews.stream().mapToInt(Review::getRating).sum();
 			averageRating = sum / totalReviewCount;
 			// 소수점 1자리까지 반올림
@@ -264,6 +260,58 @@ public class ReviewServiceImpl implements ReviewService {
 
 		return toReviewStatsDTO(totalReviewCount, averageRating, rating5Count, rating4Count, rating3Count, rating2Count,
 				rating1Count);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<ReviewAdminDTO> getAdminReviews() {
+		List<Review> reviews = reviewRepository.findAll().stream()
+				.sorted((left, right) -> right.getReviewNo().compareTo(left.getReviewNo()))
+				.toList();
+		Map<Long, Boolean> visibilityMap = loadVisibilityMap(reviews);
+
+		return reviews.stream()
+				.map(review -> toReviewAdminDTO(review, visibilityMap.getOrDefault(review.getReviewNo(), true)))
+				.toList();
+	}
+
+	@Override
+	public ReviewAdminDTO updateReviewVisibility(Long reviewNo, String status) {
+		Review review = reviewRepository.findByReviewNo(reviewNo)
+				.orElseThrow(() -> new IllegalArgumentException("해당 리뷰를 찾을 수 없습니다."));
+
+		boolean visible;
+		if ("VISIBLE".equals(status)) {
+			visible = true;
+		} else if ("HIDDEN".equals(status)) {
+			visible = false;
+		} else {
+			throw new IllegalArgumentException("지원하지 않는 리뷰 상태입니다. status=" + status);
+		}
+
+		ReviewVisibility reviewVisibility = reviewVisibilityRepository.findById(reviewNo)
+				.orElse(ReviewVisibility.builder().reviewNo(reviewNo).build());
+		reviewVisibility.changeVisible(visible);
+		reviewVisibilityRepository.save(reviewVisibility);
+
+		return toReviewAdminDTO(review, visible);
+	}
+
+	@Override
+	public List<String> uploadReviewImages(List<MultipartFile> files) {
+		if (files == null || files.isEmpty()) {
+			return List.of();
+		}
+
+		List<MultipartFile> validFiles = files.stream()
+				.filter(file -> file != null && !file.isEmpty())
+				.toList();
+
+		if (validFiles.isEmpty()) {
+			return List.of();
+		}
+
+		return fileUtil.saveFiles(validFiles);
 	}
 
 	// Review 엔티티 + 리뷰 이미지 URL 목록을 합쳐서 ReviewDTO로 변환
@@ -306,6 +354,39 @@ public class ReviewServiceImpl implements ReviewService {
 				.rating3Count(r3) // 별점 3점
 				.rating2Count(r2) // 별점 2점
 				.rating1Count(r1) // 별점 1점
+				.build();
+	}
+
+	private List<Review> filterVisibleReviews(List<Review> reviews) {
+		Map<Long, Boolean> visibilityMap = loadVisibilityMap(reviews);
+		return reviews.stream()
+				.filter(review -> visibilityMap.getOrDefault(review.getReviewNo(), true))
+				.toList();
+	}
+
+	private Map<Long, Boolean> loadVisibilityMap(List<Review> reviews) {
+		Map<Long, Boolean> visibilityMap = new HashMap<>();
+		if (reviews.isEmpty()) {
+			return visibilityMap;
+		}
+
+		List<Long> reviewNos = reviews.stream().map(Review::getReviewNo).toList();
+		reviewVisibilityRepository.findByReviewNoIn(reviewNos)
+				.forEach(item -> visibilityMap.put(item.getReviewNo(), item.isVisible()));
+		return visibilityMap;
+	}
+
+	private ReviewAdminDTO toReviewAdminDTO(Review review, boolean visible) {
+		return ReviewAdminDTO.builder()
+				.reviewNo(review.getReviewNo())
+				.lodgingNo(review.getLodging().getLodgingNo())
+				.lodgingName(review.getLodging().getLodgingName())
+				.userNo(review.getUser().getUserNo())
+				.userName(review.getUser().getUserName())
+				.rating(review.getRating())
+				.content(review.getContent())
+				.status(visible ? "VISIBLE" : "HIDDEN")
+				.regDate(review.getRegDate())
 				.build();
 	}
 

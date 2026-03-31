@@ -232,25 +232,46 @@ public class AuthServiceImpl implements AuthService {
 		if (authProviderOpt.isPresent()) {
 			userNo = authProviderOpt.get().getUserNo();
 		} else {
-			if (userRepository.existsByEmail(socialUser.getEmail())) {
-				throw new RuntimeException("Email already exists");
+			Optional<User> existingUserOpt = userRepository.findByEmail(socialUser.getEmail());
+
+			if (existingUserOpt.isPresent()) {
+				User existingUser = existingUserOpt.get();
+
+				UserAuthProvider authProvider = UserAuthProvider.builder()
+						.userNo(existingUser.getUserNo())
+						.providerCode(socialUser.getProviderCode())
+						.providerUserId(socialUser.getProviderUserId())
+						.build();
+
+				userAuthProviderRepository.save(authProvider);
+				userNo = existingUser.getUserNo();
+			} else {
+				MemberGrade basicGrade = memberGradeRepository.findById(MemberGradeName.BASIC)
+						.orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "기본 등급 설정이 없습니다."));
+
+				User newUser = User.builder()
+						.userName(socialUser.getUserName())
+						.email(socialUser.getEmail())
+						.phone("SOCIAL")
+						.memberGrade(basicGrade)
+						.enabled("1")
+						.build();
+
+				User savedUser = userRepository.save(newUser);
+
+				UserAuthProvider authProvider = UserAuthProvider.builder()
+						.userNo(savedUser.getUserNo())
+						.providerCode(socialUser.getProviderCode())
+						.providerUserId(socialUser.getProviderUserId())
+						.build();
+
+				userAuthProviderRepository.save(authProvider);
+
+				UserRole userRole = UserRole.builder().userNo(savedUser.getUserNo()).roleCode("ROLE_USER").build();
+				userRoleRepository.save(userRole);
+
+				userNo = savedUser.getUserNo();
 			}
-
-			User newUser = User.builder().userName(socialUser.getUserName()).email(socialUser.getEmail())
-					.phone("SOCIAL").enabled("1").build();
-
-			User savedUser = userRepository.save(newUser);
-
-			UserAuthProvider authProvider = UserAuthProvider.builder().userNo(savedUser.getUserNo())
-					.providerCode(socialUser.getProviderCode()).providerUserId(socialUser.getProviderUserId()).build();
-
-			userAuthProviderRepository.save(authProvider);
-
-			UserRole userRole = UserRole.builder().userNo(savedUser.getUserNo()).roleCode("ROLE_USER").build();
-
-			userRoleRepository.save(userRole);
-
-			userNo = savedUser.getUserNo();
 		}
 
 		User user = userRepository.findById(userNo).orElseThrow(() -> new RuntimeException("User not found"));
@@ -287,14 +308,14 @@ public class AuthServiceImpl implements AuthService {
 	@Override
 	@Transactional
 	public LoginResponseDTO kakaoLogin(KakaoLoginRequestDTO request) {
-		SocialUserInfo socialUser = kakaoTokenVerifier.verify(request.getCode());
+		SocialUserInfo socialUser = kakaoTokenVerifier.verify(request.getCode(), request.getRedirectUri());
 		return socialLogin(socialUser);
 	}
 
 	@Override
 	@Transactional
 	public LoginResponseDTO naverLogin(NaverLoginRequestDTO request) {
-		SocialUserInfo socialUser = naverTokenVerifier.verify(request.getCode());
+		SocialUserInfo socialUser = naverTokenVerifier.verify(request.getCode(), request.getState());
 		return socialLogin(socialUser);
 	}
 

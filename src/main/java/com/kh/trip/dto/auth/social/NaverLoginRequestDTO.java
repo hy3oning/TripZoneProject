@@ -10,4 +10,7 @@ public class NaverLoginRequestDTO {
 
 	@NotBlank(message = "code is required")
 	private String code;
+
+	@NotBlank(message = "state is required")
+	private String state;
 }

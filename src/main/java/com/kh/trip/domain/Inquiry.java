@@ -56,8 +56,18 @@ public class Inquiry extends BaseTimeEntity {
 	@Column(name = "STATUS", nullable = false)
 	private InquiryStatus status = InquiryStatus.PENDING;
 
+	@Column(name = "RELATED_BOOKING_NO", length = 40)
+	private String relatedBookingNo;
+
+	@Column(name = "RELATED_LODGING_NAME", length = 200)
+	private String relatedLodgingName;
+
 	public void changeTitle(String title) {
 		this.title = title;
+	}
+
+	public void changeInquiryType(InquiryType inquiryType) {
+		this.inquiryType = inquiryType;
 	}
 
 	public void changeContent(String content) {
@@ -66,6 +76,14 @@ public class Inquiry extends BaseTimeEntity {
 
 	public void changeStatus(InquiryStatus status) {
 		this.status = status;
+	}
+
+	public void changeRelatedBookingNo(String relatedBookingNo) {
+		this.relatedBookingNo = relatedBookingNo;
+	}
+
+	public void changeRelatedLodgingName(String relatedLodgingName) {
+		this.relatedLodgingName = relatedLodgingName;
 	}
 
 }

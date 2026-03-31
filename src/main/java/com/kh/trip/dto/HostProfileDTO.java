@@ -22,4 +22,6 @@ public class HostProfileDTO {
 	private String approvalStatus;
 	private String rejectReason;
 	private String enabled;
+	private String regDate;
+	private String updDate;
 }

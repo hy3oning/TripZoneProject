@@ -114,6 +114,9 @@ public class EventServiceImpl implements EventService {
 		event.changeStartDate(eventDTO.getStartDate());
 		event.changeEndDate(eventDTO.getEndDate());
 		event.changeThumbnailUrl(eventDTO.getThumbnailUrl());
+		if (eventDTO.getStatus() != null) {
+			event.changeStatus(eventDTO.getStatus());
+		}
 		log.info("DB 조회 시도 ID: " + eventDTO.getEventNo());
 		eventRepository.findAll().forEach(e -> log.info("DB에 있는 ID: " + e.getEventNo()));
 		eventRepository.save(event);

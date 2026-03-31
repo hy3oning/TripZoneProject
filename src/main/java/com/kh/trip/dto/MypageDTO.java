@@ -98,6 +98,7 @@ public class MypageDTO {
 	@NoArgsConstructor
 	@AllArgsConstructor
 	public static class BookingItem {
+		private Long bookingNo;
 		private String bookingId;
 		private Long lodgingId;
 		private String lodgingName;
@@ -319,6 +320,34 @@ public class MypageDTO {
 		private String bookingNo;
 		private String updatedAt;
 		private String preview;
+	}
+
+	@Getter
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class InquiryDetailResponse {
+		private Long id;
+		private String title;
+		private String type;
+		private String status;
+		private String actor;
+		private String lodging;
+		private String bookingNo;
+		private String updatedAt;
+		private String body;
+		private List<InquiryMessageItem> messages;
+	}
+
+	@Getter
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class InquiryMessageItem {
+		private String id;
+		private String sender;
+		private String time;
+		private String body;
 	}
 
 }

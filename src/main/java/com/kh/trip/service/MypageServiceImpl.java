@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.domain.Booking;
+import com.kh.trip.domain.Comment;
 import com.kh.trip.domain.Inquiry;
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.MileageHistory;
@@ -38,6 +39,7 @@ import com.kh.trip.dto.MypageDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.repository.BookingRepository;
+import com.kh.trip.repository.CommentRepository;
 import com.kh.trip.repository.InquiryRepository;
 import com.kh.trip.repository.MileageHistoryRepository;
 import com.kh.trip.repository.MypageBookingRepository;
@@ -63,6 +65,7 @@ public class MypageServiceImpl implements MypageService {
 	private final UserRepository userRepository;
 	private final UserAuthProviderRepository userAuthProviderRepository;
 	private final BookingRepository bookingRepository;
+	private final CommentRepository commentRepository;
 	private final MypageBookingRepository mypageBookingRepository;
 	private final UserCouponRepository userCouponRepository;
 	private final MileageHistoryRepository mileageHistoryRepository;
@@ -264,6 +267,31 @@ public class MypageServiceImpl implements MypageService {
 				.items(items).build();
 	}
 
+	@Override
+	public MypageDTO.InquiryDetailResponse getInquiryDetail(Long userNo, Long inquiryNo) {
+		Inquiry inquiry = inquiryRepository.findById(inquiryNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "문의 정보를 찾을 수 없습니다."));
+
+		if (!inquiry.getUser().getUserNo().equals(userNo)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 문의만 조회할 수 있습니다.");
+		}
+
+		List<Comment> comments = commentRepository.findByInquiry_InquiryNoOrderByRegDateAsc(inquiryNo);
+
+		return MypageDTO.InquiryDetailResponse.builder()
+				.id(inquiry.getInquiryNo())
+				.title(inquiry.getTitle())
+				.type(toInquiryType(inquiry.getInquiryType()))
+				.status(toInquiryStatus(inquiry.getStatus()))
+				.actor("회원")
+				.lodging(resolveInquiryLodging(inquiry))
+				.bookingNo(resolveInquiryBookingNo(inquiry))
+				.updatedAt(formatDateTime(inquiry.getUpdDate() != null ? inquiry.getUpdDate() : inquiry.getRegDate()))
+				.body(inquiry.getContent())
+				.messages(buildInquiryMessages(inquiry, comments))
+				.build();
+	}
+
 	private User getUser(Long userNo) {
 		return userRepository.findById(userNo)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -332,9 +360,14 @@ public class MypageServiceImpl implements MypageService {
 		boolean hasPayment = payments.stream()
 				.anyMatch(payment -> payment.getBooking().getBookingNo().equals(booking.getBookingNo()));
 
-		return MypageDTO.BookingItem.builder().bookingId(bookingCode).lodgingId(lodging.getLodgingNo())
-				.lodgingName(lodging.getLodgingName()).name(lodging.getLodgingName())
-				.roomId(booking.getRoom().getRoomNo()).roomName(booking.getRoom().getRoomName())
+		return MypageDTO.BookingItem.builder()
+				.bookingNo(booking.getBookingNo())
+				.bookingId(bookingCode)
+				.lodgingId(lodging.getLodgingNo())
+				.lodgingName(lodging.getLodgingName())
+				.name(lodging.getLodgingName())
+				.roomId(booking.getRoom().getRoomNo())
+				.roomName(booking.getRoom().getRoomName())
 				.checkInDate(formatLocalDate(booking.getCheckInDate()))
 				.checkOutDate(formatLocalDate(booking.getCheckOutDate()))
 				.stay(formatStay(booking.getCheckInDate(), booking.getCheckOutDate()))
@@ -396,11 +429,51 @@ public class MypageServiceImpl implements MypageService {
 	}
 
 	private MypageDTO.InquiryItem toInquiryItem(Inquiry inquiry) {
-		return MypageDTO.InquiryItem.builder().id(inquiry.getInquiryNo()).title(inquiry.getTitle())
-				.type(toInquiryType(inquiry.getInquiryType())).status(toInquiryStatus(inquiry.getStatus())).actor("회원")
-				.lodging(null).bookingNo(null)
+		return MypageDTO.InquiryItem.builder()
+				.id(inquiry.getInquiryNo())
+				.title(inquiry.getTitle())
+				.type(toInquiryType(inquiry.getInquiryType()))
+				.status(toInquiryStatus(inquiry.getStatus()))
+				.actor("회원")
+				.lodging(resolveInquiryLodging(inquiry))
+				.bookingNo(resolveInquiryBookingNo(inquiry))
 				.updatedAt(inquiry.getUpdDate() != null ? DATE_TIME_FORMAT.format(inquiry.getUpdDate()) : null)
 				.preview(inquiry.getContent()).build();
+	}
+
+	private String resolveInquiryLodging(Inquiry inquiry) {
+		if (inquiry.getRelatedLodgingName() == null || inquiry.getRelatedLodgingName().isBlank()) {
+			return "운영 문의";
+		}
+		return inquiry.getRelatedLodgingName();
+	}
+
+	private String resolveInquiryBookingNo(Inquiry inquiry) {
+		if (inquiry.getRelatedBookingNo() == null || inquiry.getRelatedBookingNo().isBlank()) {
+			return "-";
+		}
+		return inquiry.getRelatedBookingNo();
+	}
+
+	private List<MypageDTO.InquiryMessageItem> buildInquiryMessages(Inquiry inquiry, List<Comment> comments) {
+		List<MypageDTO.InquiryMessageItem> messages = new java.util.ArrayList<>();
+		messages.add(MypageDTO.InquiryMessageItem.builder()
+				.id("inquiry-" + inquiry.getInquiryNo())
+				.sender("회원")
+				.time(formatDateTime(inquiry.getRegDate()))
+				.body(inquiry.getContent())
+				.build());
+
+		messages.addAll(comments.stream()
+				.map(comment -> MypageDTO.InquiryMessageItem.builder()
+						.id("comment-" + comment.getCommentNo())
+						.sender("운영팀")
+						.time(formatDateTime(comment.getRegDate()))
+						.body(comment.getContent())
+						.build())
+				.toList());
+
+		return messages;
 	}
 
 	private List<WishList> loadWishlistRows(Long userNo) {
@@ -617,6 +690,10 @@ public class MypageServiceImpl implements MypageService {
 		case COMPLETED -> "ANSWERED";
 		case DELETE -> "CLOSED";
 		};
+	}
+
+	private String formatDateTime(LocalDateTime value) {
+		return value != null ? DATE_TIME_FORMAT.format(value) : "방금 전";
 	}
 
 	private long defaultLong(Long value) {

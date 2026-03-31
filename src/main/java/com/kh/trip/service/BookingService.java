@@ -14,6 +14,8 @@ public interface BookingService {
 
 	PageResponseDTO<BookingDTO> findByHostNo(Long hostNo, PageRequestDTO pageRequestDTO);
 
+	BookingDTO updateStatus(Long bookingNo, String status);
+
 	void cancelBooking(Long bookingNo);
 	
 	void complete(Long bookingNo);

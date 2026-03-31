@@ -146,6 +146,30 @@ public class BookingServiceImpl implements BookingService {
 	}
 
 	@Override
+	public BookingDTO updateStatus(Long bookingNo, String status) {
+		BookingStatus nextStatus;
+		try {
+			nextStatus = BookingStatus.valueOf(status);
+		} catch (IllegalArgumentException | NullPointerException error) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "지원하지 않는 예약 상태입니다. status=" + status);
+		}
+
+		if (nextStatus == BookingStatus.CONFIRMED) {
+			return confirmBooking(bookingNo);
+		}
+		if (nextStatus == BookingStatus.COMPLETED) {
+			complete(bookingNo);
+			return findById(bookingNo);
+		}
+		if (nextStatus == BookingStatus.CANCELED) {
+			cancelBooking(bookingNo);
+			return findById(bookingNo);
+		}
+
+		throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "판매자 화면에서 변경할 수 없는 예약 상태입니다. status=" + status);
+	}
+
+	@Override
 	public void cancelBooking(Long bookingNo) {
 		Booking booking = repository.findById(bookingNo).orElseThrow(
 				() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 예약입니다. bookingNo=" + bookingNo));
@@ -177,6 +201,28 @@ public class BookingServiceImpl implements BookingService {
 			roomRepository.save(room);
 		}
 
+	}
+
+	private BookingDTO confirmBooking(Long bookingNo) {
+		Booking booking = repository.findById(bookingNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 예약입니다."));
+
+		if (booking.getStatus() == BookingStatus.CONFIRMED) {
+			return entityToDTO(bookingNo);
+		}
+		if (booking.getStatus() == BookingStatus.CANCELED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "취소된 예약은 확정할 수 없습니다.");
+		}
+		if (booking.getStatus() == BookingStatus.COMPLETED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 완료된 예약입니다.");
+		}
+		if (booking.getStatus() != BookingStatus.PENDING) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "대기 상태 예약만 확정할 수 있습니다.");
+		}
+
+		booking.confirm();
+		repository.save(booking);
+		return entityToDTO(bookingNo);
 	}
 
 	public List<BookingDTO> entityToDTO(Page<Booking> result) {

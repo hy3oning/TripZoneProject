@@ -11,7 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @Component
 public class KakaoTokenVerifier {
@@ -29,9 +32,10 @@ public class KakaoTokenVerifier {
 	@Value("${kakao.redirect-uri}")
 	private String kakaoRedirectUri;
 
-	public SocialUserInfo verify(String code) {
+	public SocialUserInfo verify(String code, String redirectUri) {
 		try {
 			RestTemplate restTemplate = new RestTemplate();
+			String resolvedRedirectUri = redirectUri != null && !redirectUri.isBlank() ? redirectUri : kakaoRedirectUri;
 
 			HttpHeaders tokenHeaders = new HttpHeaders();
 			tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -39,7 +43,7 @@ public class KakaoTokenVerifier {
 			MultiValueMap<String, String> tokenBody = new LinkedMultiValueMap<>();
 			tokenBody.add("grant_type", "authorization_code");
 			tokenBody.add("client_id", kakaoClientId);
-			tokenBody.add("redirect_uri", kakaoRedirectUri);
+			tokenBody.add("redirect_uri", resolvedRedirectUri);
 			tokenBody.add("code", code);
 
 			if (kakaoClientSecret != null && !kakaoClientSecret.isBlank()) {
@@ -94,8 +98,11 @@ public class KakaoTokenVerifier {
 			return SocialUserInfo.builder().providerCode("KAKAO").providerUserId(providerUserId).email(email)
 					.userName(userName != null ? userName : email).build();
 
+		} catch (RestClientResponseException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+					"Kakao token exchange failed: " + e.getResponseBodyAsString(), e);
 		} catch (Exception e) {
-			throw new RuntimeException("Invalid Kakao code");
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Invalid Kakao code", e);
 		}
 	}
 }

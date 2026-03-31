@@ -25,4 +25,6 @@ public interface MypageService {
 	MypageDTO.WishlistResponse getWishlist(Long userNo);
 
 	MypageDTO.InquiryResponse getInquiries(Long userNo);
+
+	MypageDTO.InquiryDetailResponse getInquiryDetail(Long userNo, Long inquiryNo);
 }

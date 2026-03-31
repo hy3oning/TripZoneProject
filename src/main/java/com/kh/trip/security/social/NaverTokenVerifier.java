@@ -29,7 +29,7 @@ public class NaverTokenVerifier {
 	@Value("${naver.redirect-uri}")
 	private String naverRedirectUri;
 
-	public SocialUserInfo verify(String code) {
+	public SocialUserInfo verify(String code, String state) {
 		try {
 			RestTemplate restTemplate = new RestTemplate();
 
@@ -42,6 +42,7 @@ public class NaverTokenVerifier {
 			tokenBody.add("client_secret", naverClientSecret);
 			tokenBody.add("redirect_uri", naverRedirectUri);
 			tokenBody.add("code", code);
+			tokenBody.add("state", state);
 
 			HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenBody, tokenHeaders);
 

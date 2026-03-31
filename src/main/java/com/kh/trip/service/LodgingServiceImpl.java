@@ -135,6 +135,7 @@ public class LodgingServiceImpl implements LodgingService {
 			LodgingImage image = (LodgingImage) arr[1];
 
 			LodgingDTO lodgingDTO = toLodgingDTO(lodging);
+			lodgingDTO.setRooms(loadAvailableRoomDTOs(lodging.getLodgingNo()));
 
 			String imageStr = image != null ? image.getFileName() : null;
 			if (imageStr != null) {
@@ -313,24 +314,23 @@ public class LodgingServiceImpl implements LodgingService {
 
 		// 2. 객실 목록 조회
 		// 상세보기에서는 AVAILABLE 상태의 객실만 조회
+		// 3. lodging entity를 dto로 변환
+		LodgingDTO lodgingDTO = toLodgingDTO(lodging);
+		lodgingDTO.setRooms(loadAvailableRoomDTOs(lodgingNo));
+
+		return lodgingDTO;
+	}
+
+	private List<RoomDTO> loadAvailableRoomDTOs(Long lodgingNo) {
 		List<Room> rooms = roomRepository.findByLodging_LodgingNoAndStatusOrderByRoomNoAsc(lodgingNo,
 				RoomStatus.AVAILABLE);
 
-		// 3. lodging entity를 dto로 변환
-		LodgingDTO lodgingDTO = toLodgingDTO(lodging);
-
-		// 객실 이미지까지 포함해서 RoomDTO로 변환
-		List<RoomDTO> roomDTOs = rooms.stream().map(room -> {
+		return rooms.stream().map(room -> {
 			List<String> imageUrls = roomImageRepository.findByRoom_RoomNoOrderBySortOrderAsc(room.getRoomNo()).stream()
 					.map(RoomImage::getImageUrl).toList();
 
 			return toRoomDTO(room, imageUrls);
 		}).collect(Collectors.toList());
-
-		// 4. lodgingDTO에 룸정보추가
-		lodgingDTO.setRooms(roomDTOs);
-
-		return lodgingDTO;
 	}
 
 	// DTO -> Entity 변환 메서드를 Impl 내부로 이동
