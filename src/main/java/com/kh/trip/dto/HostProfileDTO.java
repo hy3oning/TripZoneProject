@@ -18,6 +18,7 @@ public class HostProfileDTO {
 	private String businessName;
 	private String businessNumber;
 	private String ownerName;
+	private String account;
 	private String approvalStatus;
 	private String rejectReason;
 	private String enabled;

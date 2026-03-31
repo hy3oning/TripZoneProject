@@ -3,11 +3,14 @@ package com.kh.trip.service;
 import java.util.List;
 
 import com.kh.trip.dto.LodgingDTO;
+import com.kh.trip.dto.PageRequestDTO;
+import com.kh.trip.dto.PageResponseDTO;
 
 public interface LodgingService {
 
-	// 숙소 등록
+	// 숙소 등록,페이징처리
 	LodgingDTO createLodging(LodgingDTO lodgingDTO);
+	PageResponseDTO<LodgingDTO> getAllLodgings(PageRequestDTO pageRequestDTO);
 
 	// 숙소 단건 조회
 	LodgingDTO getLodging(Long lodgingNo);
@@ -29,5 +32,6 @@ public interface LodgingService {
 	
 	//숙소 상세조회 
 	LodgingDTO getLodgingDetail(Long lodgingNo);
+		
 
 }

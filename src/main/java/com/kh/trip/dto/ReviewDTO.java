@@ -21,6 +21,7 @@ public class ReviewDTO {
 	private Long bookingNo; // 어떤 예약에 대한 리뷰인지
 	private Long userNo; // 작성 회원 번호
 	private Long lodgingNo; // 어떤 숙소에 대한 리뷰인지
+	private String userName; // 작성자명
 	private Integer rating; // 평점
 	private String content; // 리뷰 내용
 	private LocalDateTime regDate; // 작성일

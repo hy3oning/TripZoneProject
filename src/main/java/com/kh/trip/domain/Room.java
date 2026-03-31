@@ -12,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -48,7 +49,8 @@ public class Room extends BaseTimeEntity {
 	@Column(name = "ROOM_TYPE", nullable = false, length = 50) // 객실 유형
 	private String roomType;
 
-	@Column(name = "ROOM_DESCRIPTION", length = 2000) // 객실 설명
+	@Lob
+	@Column(name = "ROOM_DESCRIPTION") // 객실 설명
 	private String roomDescription;
 
 	@Column(name = "MAX_GUEST_COUNT", nullable = false) // 최대 인원

@@ -49,7 +49,7 @@ public class MemberGrade extends BaseTimeEntity {
 
 	@Column(name = "STATUS", nullable = false)
 	@Builder.Default
-	private boolean status = true; // 삭제시 false == 0
+	private Integer status = 1; // 삭제시 false == 0
 
 	public void changeName(MemberGradeName gradeName) {
 		this.gradeName = gradeName;
@@ -71,7 +71,7 @@ public class MemberGrade extends BaseTimeEntity {
 		this.benefitDESC = benefit;
 	}
 
-	public void changeStatus(boolean status) {
+	public void changeStatus(Integer status) {
 		this.status = status;
 	}
 }

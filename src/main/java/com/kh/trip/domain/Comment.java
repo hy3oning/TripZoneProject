@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -40,6 +41,7 @@ public class Comment extends BaseTimeEntity {
 	@JoinColumn(name = "ADMIN_NO", nullable = false)
 	private User user;
 
+	@Lob
 	@Column(name = "CONTENT", nullable = false)
 	private String content;
 

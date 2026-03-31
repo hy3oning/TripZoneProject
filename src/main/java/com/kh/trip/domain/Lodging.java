@@ -17,6 +17,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
@@ -93,7 +94,8 @@ public class Lodging extends BaseTimeEntity {
 
 	// 숙소 설명
 	// 숙소 소개나 특징 등을 작성하는 필드
-	@Column(name = "DESCRIPTION", length = 2000)
+	@Lob
+	@Column(name = "DESCRIPTION")
 	private String description;
 
 	// 체크인 시간

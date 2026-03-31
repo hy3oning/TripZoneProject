@@ -2,7 +2,6 @@ package com.kh.trip.controller;
 
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,8 +17,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.kh.trip.dto.ReviewDTO;
 import com.kh.trip.dto.ReviewAdminDTO;
+import com.kh.trip.dto.ReviewDTO;
 import com.kh.trip.dto.ReviewStatsDTO;
 import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.service.ReviewService;
@@ -42,7 +41,7 @@ public class ReviewController {
 	@ResponseStatus(HttpStatus.CREATED)
 	@PreAuthorize("hasRole('USER')")
 	public ReviewDTO createReview(@AuthenticationPrincipal AuthUserPrincipal authUser,
-			@RequestBody ReviewDTO reviewDTO) { 
+			@RequestBody ReviewDTO reviewDTO) {
 
 		// 로그인한 사용자 정보가 없으면 예외 발생
 		if (authUser == null) {
@@ -50,7 +49,7 @@ public class ReviewController {
 		}
 
 		// 로그인한 사용자 번호와 리뷰 작성 DTO를 서비스로 전달
-		return reviewService.createReview(authUser.getUserNo(), reviewDTO); 
+		return reviewService.createReview(authUser.getUserNo(), reviewDTO);
 	}
 
 	@PostMapping("/images")
@@ -69,7 +68,7 @@ public class ReviewController {
 	@PatchMapping("/{reviewNo}")
 	@PreAuthorize("hasRole('USER')")
 	public ReviewDTO updateReview(@PathVariable Long reviewNo, @AuthenticationPrincipal AuthUserPrincipal authUser,
-			@RequestBody ReviewDTO reviewDTO) { 
+			@RequestBody ReviewDTO reviewDTO) {
 
 		if (authUser == null) {
 			throw new IllegalArgumentException("로그인한 사용자만 리뷰를 수정할 수 있습니다.");

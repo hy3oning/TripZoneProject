@@ -2,6 +2,10 @@ package com.kh.trip.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,10 +13,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.trip.domain.HostProfile;
 import com.kh.trip.domain.User;
+import com.kh.trip.domain.UserRole;
 import com.kh.trip.domain.enums.HostApprovalStatus;
 import com.kh.trip.dto.HostProfileDTO;
+import com.kh.trip.dto.PageRequestDTO;
+import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.repository.HostProfileRepository;
 import com.kh.trip.repository.UserRepository;
+import com.kh.trip.repository.UserRoleRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,6 +31,7 @@ public class HostProfileServiceImpl implements HostProfileService {
 
 	private final HostProfileRepository hostProfileRepository;
 	private final UserRepository userRepository;
+	private final UserRoleRepository userRoleRepository;
 
 	@Override
 	public Long register(HostProfileDTO hostProfileDTO) {
@@ -39,9 +48,16 @@ public class HostProfileServiceImpl implements HostProfileService {
 	}
 
 	@Override
-	public List<HostProfileDTO> getList() {
-		List<HostProfile> hostProfileList = hostProfileRepository.findAll();
-		return hostProfileList.stream().map(this::entityToDTO).toList();
+	public PageResponseDTO<HostProfileDTO> getList(PageRequestDTO pageRequestDTO) {
+		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, pageRequestDTO.getSize(),
+				Sort.by("hostNo").descending());
+
+		Page<HostProfile> result = hostProfileRepository.findAll(pageable);
+
+		List<HostProfileDTO> dtoList = result.stream().map(this::entityToDTO).toList();
+
+		return PageResponseDTO.<HostProfileDTO>withAll().dtoList(dtoList).pageRequestDTO(pageRequestDTO)
+				.totalCount(result.getTotalElements()).build();
 	}
 
 	@Override
@@ -52,15 +68,27 @@ public class HostProfileServiceImpl implements HostProfileService {
 	}
 
 	@Override
+	public HostProfileDTO getByUserNo(Long userNo) {
+		HostProfile hostProfile = hostProfileRepository.findByUser_UserNo(userNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "호스트 신청 정보가 없습니다."));
+		return entityToDTO(hostProfile);
+	}
+
+	@Override
 	public void approve(Long hostNo, Long adminUserNo) {
 		HostProfile hostProfile = hostProfileRepository.findById(hostNo)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 호스트 프로필 입니다."));
 		if (hostProfile.getApprovalStatus() != HostApprovalStatus.PENDING) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "대기 상태의 호스트 프로필만 승인할 수 있습니다.");
 		}
-
 		hostProfile.approve(adminUserNo);
 		hostProfileRepository.save(hostProfile);
+
+		Long userNo = hostProfile.getUser().getUserNo();
+		if (!userRoleRepository.existsByUserNoAndRoleCode(userNo, "ROLE_HOST")) {
+			UserRole hostRole = UserRole.builder().userNo(userNo).roleCode("ROLE_HOST").build();
+			userRoleRepository.save(hostRole);
+		}
 	}
 
 	@Override
@@ -76,18 +104,26 @@ public class HostProfileServiceImpl implements HostProfileService {
 	}
 
 	@Override
-	public void update(Long hostNo, HostProfileDTO hostProfileDTO) {
+	public void update(Long hostNo, Long userNo, HostProfileDTO hostProfileDTO) {
 		HostProfile hostProfile = hostProfileRepository.findById(hostNo)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 호스트 프로필 입니다."));
-		if (hostProfile.getApprovalStatus() != HostApprovalStatus.REJECTED) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "반려된 호스트 프로필만 수정 후 재신청할 수 있습니다.");
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "호스트 신청 정보가 없습니다."));
+
+		if (!hostProfile.getUser().getUserNo().equals(userNo)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 신청만 수정할 수 있습니다.");
 		}
+
+		if (hostProfile.getApprovalStatus() != HostApprovalStatus.REJECTED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "반려된 신청만 수정 후 재신청할 수 있습니다.");
+		}
+
 		if (!hostProfile.getBusinessNumber().equals(hostProfileDTO.getBusinessNumber())
 				&& hostProfileRepository.existsByBusinessNumber(hostProfileDTO.getBusinessNumber())) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 등록된 사업자등록번호입니다.");
 		}
+
 		hostProfile.updateForResubmit(hostProfileDTO.getBusinessName(), hostProfileDTO.getBusinessNumber(),
-				hostProfileDTO.getOwnerName());
+				hostProfileDTO.getOwnerName(), hostProfileDTO.getAccount());
+
 		hostProfileRepository.save(hostProfile);
 	}
 
@@ -119,14 +155,16 @@ public class HostProfileServiceImpl implements HostProfileService {
 
 		return HostProfile.builder().user(user).businessName(hostProfileDTO.getBusinessName())
 				.businessNumber(hostProfileDTO.getBusinessNumber()).ownerName(hostProfileDTO.getOwnerName())
-				.approvalStatus(HostApprovalStatus.PENDING).build();
+				.account(hostProfileDTO.getAccount()).approvalStatus(HostApprovalStatus.PENDING).build();
+
 	}
 
 	private HostProfileDTO entityToDTO(HostProfile hostProfile) {
 		return HostProfileDTO.builder().hostNo(hostProfile.getHostNo()).userNo(hostProfile.getUser().getUserNo())
 				.businessName(hostProfile.getBusinessName()).businessNumber(hostProfile.getBusinessNumber())
-				.ownerName(hostProfile.getOwnerName()).approvalStatus(hostProfile.getApprovalStatus().name())
-				.rejectReason(hostProfile.getRejectReason()).enabled(hostProfile.getEnabled())
+				.ownerName(hostProfile.getOwnerName()).account(hostProfile.getAccount())
+				.approvalStatus(hostProfile.getApprovalStatus().name()).rejectReason(hostProfile.getRejectReason())
+				.enabled(hostProfile.getEnabled())
 				.regDate(hostProfile.getRegDate() != null ? hostProfile.getRegDate().toString() : null)
 				.updDate(hostProfile.getUpdDate() != null ? hostProfile.getUpdDate().toString() : null).build();
 	}

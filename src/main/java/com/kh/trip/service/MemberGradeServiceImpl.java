@@ -28,7 +28,7 @@ public class MemberGradeServiceImpl implements MemberGradeService{
 	@Override
 	public MemberGradeName save(MemberGradeDTO memberGradeDTO) {
 		MemberGrade memberGrade = modelMapper.map(memberGradeDTO, MemberGrade.class);
-		memberGrade.changeStatus(true);
+		memberGrade.changeStatus(1);
 		return repository.save(memberGrade).getGradeName();
 	}
 
@@ -52,7 +52,7 @@ public class MemberGradeServiceImpl implements MemberGradeService{
 	public void delete(MemberGradeName gradeName) {
 		Optional<MemberGrade> result = repository.findById(gradeName);
 		MemberGrade grade = result.orElseThrow();
-		grade.changeStatus(false);
+		grade.changeStatus(0);
 		repository.save(grade);
 	}
 

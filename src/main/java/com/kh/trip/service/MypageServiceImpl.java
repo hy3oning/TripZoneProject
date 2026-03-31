@@ -36,6 +36,8 @@ import com.kh.trip.domain.enums.PaymentPayMethod;
 import com.kh.trip.domain.enums.PaymentStatus;
 import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.MypageDTO;
+import com.kh.trip.dto.PageRequestDTO;
+import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.repository.BookingRepository;
 import com.kh.trip.repository.CommentRepository;
 import com.kh.trip.repository.InquiryRepository;
@@ -85,11 +87,12 @@ public class MypageServiceImpl implements MypageService {
 				.overview(MypageDTO.Overview.builder()
 						.upcomingBookingCount(bookings.stream().filter(this::isUpcomingBooking).count())
 						.wishlistCount(wishlists.size())
-						.availableCouponCount(coupons.stream().filter(coupon -> resolveCouponStatus(coupon) == CouponStatus.ACTIVE).count())
-						.paidCount(payments.stream().filter(payment -> payment.getPaymentStatus() == PaymentStatus.PAID).count())
+						.availableCouponCount(coupons.stream()
+								.filter(coupon -> resolveCouponStatus(coupon) == CouponStatus.ACTIVE).count())
+						.paidCount(payments.stream().filter(payment -> payment.getPaymentStatus() == PaymentStatus.PAID)
+								.count())
 						.build())
-				.menus(defaultMenus())
-				.build();
+				.menus(defaultMenus()).build();
 	}
 
 	@Override
@@ -97,15 +100,12 @@ public class MypageServiceImpl implements MypageService {
 		User user = getUser(userNo);
 		List<UserAuthProvider> authProviders = userAuthProviderRepository.findByUserNo(userNo);
 
-		return MypageDTO.ProfileResponse.builder()
-				.summary(toProfileSummary(user, authProviders))
-				.details(List.of(
-						profileDetail("이메일", user.getEmail()),
-						profileDetail("전화번호", user.getPhone()),
+		return MypageDTO.ProfileResponse.builder().summary(toProfileSummary(user, authProviders))
+				.details(List.of(profileDetail("이메일", user.getEmail()), profileDetail("전화번호", user.getPhone()),
 						profileDetail("로그인 방식", resolveLoginMethod(authProviders)),
-						profileDetail("회원 등급", user.getMemberGrade() != null ? user.getMemberGrade().getGradeName().name() : null),
-						profileDetail("마케팅 수신", null),
-						profileDetail("최근 로그인", resolveLastLoginAt(authProviders))))
+						profileDetail("회원 등급",
+								user.getMemberGrade() != null ? user.getMemberGrade().getGradeName().name() : null),
+						profileDetail("마케팅 수신", null), profileDetail("최근 로그인", resolveLastLoginAt(authProviders))))
 				.build();
 	}
 
@@ -114,15 +114,13 @@ public class MypageServiceImpl implements MypageService {
 		List<Booking> bookings = bookingRepository.findMypageBookings(userNo);
 		List<Payment> payments = paymentRepository.findMypagePayments(userNo);
 
-		return MypageDTO.BookingResponse.builder()
-				.summary(MypageDTO.BookingSummary.builder()
-						.totalCount(bookings.size())
-						.upcomingCount(bookings.stream().filter(this::isUpcomingBooking).count())
-						.completedCount(bookings.stream().filter(booking -> booking.getStatus() == BookingStatus.COMPLETED).count())
-						.canceledCount(bookings.stream().filter(booking -> booking.getStatus() == BookingStatus.CANCELED).count())
-						.build())
-				.items(bookings.stream().map(booking -> toBookingItem(booking, payments)).toList())
-				.build();
+		return MypageDTO.BookingResponse.builder().summary(MypageDTO.BookingSummary.builder()
+				.totalCount(bookings.size()).upcomingCount(bookings.stream().filter(this::isUpcomingBooking).count())
+				.completedCount(
+						bookings.stream().filter(booking -> booking.getStatus() == BookingStatus.COMPLETED).count())
+				.canceledCount(
+						bookings.stream().filter(booking -> booking.getStatus() == BookingStatus.CANCELED).count())
+				.build()).items(bookings.stream().map(booking -> toBookingItem(booking, payments)).toList()).build();
 	}
 
 	@Override
@@ -135,7 +133,8 @@ public class MypageServiceImpl implements MypageService {
 		validateBookingRequest(request, room);
 		validateRoomAvailability(request, room);
 
-		long nights = ChronoUnit.DAYS.between(request.getCheckInDate().toLocalDate(), request.getCheckOutDate().toLocalDate());
+		long nights = ChronoUnit.DAYS.between(request.getCheckInDate().toLocalDate(),
+				request.getCheckOutDate().toLocalDate());
 		long roomPrice = (long) room.getPricePerNight() * nights;
 		long totalPrice = roomPrice;
 		long discountAmount = 0L;
@@ -163,19 +162,11 @@ public class MypageServiceImpl implements MypageService {
 			discountAmount = roomPrice - totalPrice;
 		}
 
-		Booking booking = Booking.builder()
-				.user(user)
-				.room(room)
-				.userCoupon(userCoupon)
-				.checkInDate(request.getCheckInDate())
-				.checkOutDate(request.getCheckOutDate())
-				.guestCount(request.getGuestCount())
-				.pricePerNight(Long.valueOf(room.getPricePerNight()))
-				.discountAmount(discountAmount)
-				.totalPrice(totalPrice)
-				.requestMessage(request.getRequestMessage())
-				.status(BookingStatus.PENDING)
-				.build();
+		Booking booking = Booking.builder().user(user).room(room).userCoupon(userCoupon)
+				.checkInDate(request.getCheckInDate()).checkOutDate(request.getCheckOutDate())
+				.guestCount(request.getGuestCount()).pricePerNight(Long.valueOf(room.getPricePerNight()))
+				.discountAmount(discountAmount).totalPrice(totalPrice).requestMessage(request.getRequestMessage())
+				.status(BookingStatus.PENDING).build();
 
 		Booking savedBooking = mypageBookingRepository.save(booking);
 
@@ -184,101 +175,96 @@ public class MypageServiceImpl implements MypageService {
 			userCoupon.changeStatus(CouponStatus.USED);
 		}
 
-		return MypageDTO.BookingCreatedResponse.builder()
-				.bookingNo(savedBooking.getBookingNo())
-				.bookingId("B-" + savedBooking.getBookingNo())
-				.bookingStatus(savedBooking.getStatus().name())
+		return MypageDTO.BookingCreatedResponse.builder().bookingNo(savedBooking.getBookingNo())
+				.bookingId("B-" + savedBooking.getBookingNo()).bookingStatus(savedBooking.getStatus().name())
 				.bookingStatusLabel(toBookingStatusLabel(savedBooking.getStatus()))
-				.totalPrice(savedBooking.getTotalPrice())
-				.amount(formatWon(savedBooking.getTotalPrice()))
-				.createdAt(savedBooking.getRegDate())
-				.build();
+				.totalPrice(savedBooking.getTotalPrice()).amount(formatWon(savedBooking.getTotalPrice()))
+				.createdAt(savedBooking.getRegDate()).build();
 	}
 
 	@Override
 	public MypageDTO.CouponResponse getCoupons(Long userNo) {
 		List<UserCoupon> coupons = userCouponRepository.findMypageCoupons(userNo);
 
-		return MypageDTO.CouponResponse.builder()
-				.summary(MypageDTO.CouponSummary.builder()
-						.availableCount(coupons.stream().filter(coupon -> resolveCouponStatus(coupon) == CouponStatus.ACTIVE).count())
-						.expiringSoonCount(coupons.stream().filter(this::isExpiringSoonCoupon).count())
-						.usedCount(coupons.stream().filter(coupon -> resolveCouponStatus(coupon) == CouponStatus.USED).count())
-						.build())
-				.items(coupons.stream().map(this::toCouponItem).toList())
-				.build();
+		return MypageDTO.CouponResponse.builder().summary(MypageDTO.CouponSummary.builder()
+				.availableCount(
+						coupons.stream().filter(coupon -> resolveCouponStatus(coupon) == CouponStatus.ACTIVE).count())
+				.expiringSoonCount(coupons.stream().filter(this::isExpiringSoonCoupon).count())
+				.usedCount(coupons.stream().filter(coupon -> resolveCouponStatus(coupon) == CouponStatus.USED).count())
+				.build()).items(coupons.stream().map(this::toCouponItem).toList()).build();
 	}
 
 	@Override
 	public MypageDTO.MileageResponse getMileage(Long userNo) {
 		User user = getUser(userNo);
-		List<MileageHistory> rows = mileageHistoryRepository.findMypageMileage(userNo);
+		List<MileageHistory> rows = mileageHistoryRepository
+				.findByUser_UserNoOrderByRegDateDesc(userNo, Pageable.unpaged()).getContent();
 		YearMonth currentMonth = YearMonth.now();
 
-		return MypageDTO.MileageResponse.builder()
-				.summary(MypageDTO.MileageSummary.builder()
-						.balance(defaultLong(user.getMileage()))
-						.earnedThisMonth(rows.stream()
-								.filter(history -> isSameMonth(history.getRegDate(), currentMonth))
-								.filter(history -> history.getChangeType() == MileageChangeType.EARN)
-								.mapToLong(MileageHistory::getChangeAmount)
-								.sum())
-						.usedThisMonth(rows.stream()
-								.filter(history -> isSameMonth(history.getRegDate(), currentMonth))
-								.filter(history -> history.getChangeType() == MileageChangeType.USE)
-								.mapToLong(MileageHistory::getChangeAmount)
-								.sum())
-						.build())
-				.items(rows.stream().map(this::toMileageItem).toList())
-				.build();
+		return MypageDTO.MileageResponse.builder().summary(MypageDTO.MileageSummary.builder()
+				.balance(defaultLong(user.getMileage()))
+				.earnedThisMonth(rows.stream().filter(history -> isSameMonth(history.getRegDate(), currentMonth))
+						.filter(history -> history.getChangeType() == MileageChangeType.EARN)
+						.mapToLong(MileageHistory::getChangeAmount).sum())
+				.usedThisMonth(rows.stream().filter(history -> isSameMonth(history.getRegDate(), currentMonth))
+						.filter(history -> history.getChangeType() == MileageChangeType.USE)
+						.mapToLong(MileageHistory::getChangeAmount).sum())
+				.build()).items(rows.stream().map(this::toMileageItem).toList()).build();
+	}
+
+	@Override
+	public PageResponseDTO<MypageDTO.MileageItem> getMileageHistory(Long userNo, PageRequestDTO pageRequestDTO) {
+		int page = pageRequestDTO.getPage() <= 0 ? 1 : pageRequestDTO.getPage();
+		int size = pageRequestDTO.getSize() <= 0 ? 10 : pageRequestDTO.getSize();
+
+		Pageable pageable = org.springframework.data.domain.PageRequest.of(page - 1, size);
+
+		org.springframework.data.domain.Page<MileageHistory> result = mileageHistoryRepository
+				.findByUser_UserNoOrderByRegDateDesc(userNo, pageable);
+
+		List<MypageDTO.MileageItem> dtoList = result.stream().map(this::toMileageItem).toList();
+
+		return PageResponseDTO.<MypageDTO.MileageItem>withAll().dtoList(dtoList).pageRequestDTO(pageRequestDTO)
+				.totalCount(result.getTotalElements()).build();
 	}
 
 	@Override
 	public MypageDTO.PaymentResponse getPayments(Long userNo) {
 		List<MypageDTO.PaymentItem> items = paymentRepository.findMypagePayments(userNo).stream()
-				.map(this::toPaymentItem)
-				.toList();
+				.map(this::toPaymentItem).toList();
 
 		return MypageDTO.PaymentResponse.builder()
-				.summary(MypageDTO.PaymentSummary.builder()
-						.paymentCount(items.size())
-						.paidAmountTotal(items.stream()
-								.filter(item -> "PAID".equals(item.getStatus()))
-								.mapToLong(MypageDTO.PaymentItem::getPaymentAmount)
-								.sum())
-						.refundAmountTotal(items.stream()
-								.mapToLong(MypageDTO.PaymentItem::getRefundAmount)
-								.sum())
+				.summary(MypageDTO.PaymentSummary.builder().paymentCount(items.size())
+						.paidAmountTotal(items.stream().filter(item -> "PAID".equals(item.getStatus()))
+								.mapToLong(MypageDTO.PaymentItem::getPaymentAmount).sum())
+						.refundAmountTotal(items.stream().mapToLong(MypageDTO.PaymentItem::getRefundAmount).sum())
 						.paidCount(items.stream().filter(item -> "PAID".equals(item.getStatus())).count())
 						.refundedCount(items.stream().filter(item -> "REFUNDED".equals(item.getStatus())).count())
-						.recentPaidAmount(items.stream().filter(item -> "PAID".equals(item.getStatus())).map(MypageDTO.PaymentItem::getAmount).findFirst().orElse("-"))
-						.recentRefundedAmount(items.stream().filter(item -> "REFUNDED".equals(item.getStatus())).map(MypageDTO.PaymentItem::getAmount).findFirst().orElse("-"))
+						.recentPaidAmount(items.stream().filter(item -> "PAID".equals(item.getStatus()))
+								.map(MypageDTO.PaymentItem::getAmount).findFirst().orElse("-"))
+						.recentRefundedAmount(items.stream().filter(item -> "REFUNDED".equals(item.getStatus()))
+								.map(MypageDTO.PaymentItem::getAmount).findFirst().orElse("-"))
 						.build())
-				.items(items)
-				.build();
+				.items(items).build();
 	}
 
 	@Override
 	public MypageDTO.WishlistResponse getWishlist(Long userNo) {
 		return MypageDTO.WishlistResponse.builder()
-				.items(loadWishlistRows(userNo).stream().map(this::toWishlistItem).toList())
-				.build();
+				.items(loadWishlistRows(userNo).stream().map(this::toWishlistItem).toList()).build();
 	}
 
 	@Override
 	public MypageDTO.InquiryResponse getInquiries(Long userNo) {
 		List<MypageDTO.InquiryItem> items = inquiryRepository.findMypageInquiries(userNo).stream()
-				.map(this::toInquiryItem)
-				.toList();
+				.map(this::toInquiryItem).toList();
 
 		return MypageDTO.InquiryResponse.builder()
 				.summary(MypageDTO.InquirySummary.builder()
 						.openCount(items.stream().filter(item -> "OPEN".equals(item.getStatus())).count())
 						.answeredCount(items.stream().filter(item -> "ANSWERED".equals(item.getStatus())).count())
-						.closedCount(items.stream().filter(item -> "CLOSED".equals(item.getStatus())).count())
-						.build())
-				.items(items)
-				.build();
+						.closedCount(items.stream().filter(item -> "CLOSED".equals(item.getStatus())).count()).build())
+				.items(items).build();
 	}
 
 	@Override
@@ -334,11 +320,8 @@ public class MypageServiceImpl implements MypageService {
 
 	private void validateRoomAvailability(MypageDTO.BookingCreateRequest request, Room room) {
 		List<BookingStatus> activeStatuses = List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED);
-		long overlappingCount = mypageBookingRepository.countOverlappingBookings(
-				room.getRoomNo(),
-				request.getCheckInDate(),
-				request.getCheckOutDate(),
-				activeStatuses);
+		long overlappingCount = mypageBookingRepository.countOverlappingBookings(room.getRoomNo(),
+				request.getCheckInDate(), request.getCheckOutDate(), activeStatuses);
 
 		if (overlappingCount >= room.getRoomCount()) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "선택한 날짜에는 예약 가능한 객실이 없습니다.");
@@ -346,8 +329,7 @@ public class MypageServiceImpl implements MypageService {
 	}
 
 	private List<MypageDTO.MenuItem> defaultMenus() {
-		return List.of(
-				menu("내 정보 관리", "등급과 회원 정보를 확인하고 수정 흐름을 준비합니다.", "/my/profile"),
+		return List.of(menu("내 정보 관리", "등급과 회원 정보를 확인하고 수정 흐름을 준비합니다.", "/my/profile"),
 				menu("쿠폰 리스트", "보유 쿠폰을 최신순으로 확인합니다.", "/my/coupons"),
 				menu("예약 내역", "최신 예약 상태와 후기 작성 흐름을 확인합니다.", "/my/bookings"),
 				menu("마일리지 내역", "보유 마일리지와 적립/사용 내역을 확인합니다.", "/my/mileage"),
@@ -361,13 +343,11 @@ public class MypageServiceImpl implements MypageService {
 	}
 
 	private MypageDTO.ProfileSummary toProfileSummary(User user, List<UserAuthProvider> authProviders) {
-		return MypageDTO.ProfileSummary.builder()
-				.name(user.getUserName())
+		return MypageDTO.ProfileSummary.builder().name(user.getUserName())
 				.grade(user.getMemberGrade() != null ? user.getMemberGrade().getGradeName().name() : null)
 				.gradeHint("누적 마일리지 " + NUMBER_FORMAT.format(defaultLong(user.getMileage())))
 				.status("1".equals(user.getEnabled()) ? "활성 회원" : "비활성 회원")
-				.joinedAt(user.getRegDate() != null ? DATE_FORMAT.format(user.getRegDate()) + " 가입" : null)
-				.build();
+				.joinedAt(user.getRegDate() != null ? DATE_FORMAT.format(user.getRegDate()) + " 가입" : null).build();
 	}
 
 	private MypageDTO.ProfileDetail profileDetail(String label, String value) {
@@ -377,7 +357,8 @@ public class MypageServiceImpl implements MypageService {
 	private MypageDTO.BookingItem toBookingItem(Booking booking, List<Payment> payments) {
 		Lodging lodging = booking.getRoom().getLodging();
 		String bookingCode = "B-" + booking.getBookingNo();
-		boolean hasPayment = payments.stream().anyMatch(payment -> payment.getBooking().getBookingNo().equals(booking.getBookingNo()));
+		boolean hasPayment = payments.stream()
+				.anyMatch(payment -> payment.getBooking().getBookingNo().equals(booking.getBookingNo()));
 
 		return MypageDTO.BookingItem.builder()
 				.bookingNo(booking.getBookingNo())
@@ -390,54 +371,42 @@ public class MypageServiceImpl implements MypageService {
 				.checkInDate(formatLocalDate(booking.getCheckInDate()))
 				.checkOutDate(formatLocalDate(booking.getCheckOutDate()))
 				.stay(formatStay(booking.getCheckInDate(), booking.getCheckOutDate()))
-				.guestCount(defaultLong(booking.getGuestCount()))
-				.status(booking.getStatus().name())
-				.bookingStatus(booking.getStatus().name())
-				.bookingStatusLabel(toBookingStatusLabel(booking.getStatus()))
+				.guestCount(defaultLong(booking.getGuestCount())).status(booking.getStatus().name())
+				.bookingStatus(booking.getStatus().name()).bookingStatusLabel(toBookingStatusLabel(booking.getStatus()))
 				.bookingAmount(defaultLong(booking.getTotalPrice()))
 				.price(formatWon(defaultLong(booking.getTotalPrice())))
-				.canCancel(booking.getStatus() == BookingStatus.PENDING || booking.getStatus() == BookingStatus.CONFIRMED)
-				.canReview(booking.getStatus() == BookingStatus.COMPLETED)
-				.canViewPayment(hasPayment)
-				.build();
+				.canCancel(
+						booking.getStatus() == BookingStatus.PENDING || booking.getStatus() == BookingStatus.CONFIRMED)
+				.canReview(booking.getStatus() == BookingStatus.COMPLETED).canViewPayment(hasPayment).build();
 	}
 
 	private MypageDTO.CouponItem toCouponItem(UserCoupon coupon) {
 		CouponStatus status = resolveCouponStatus(coupon);
-		return MypageDTO.CouponItem.builder()
-				.id(coupon.getUserCouponNo())
-				.userCouponId(coupon.getUserCouponNo())
-				.couponName(coupon.getCoupon().getCouponName())
-				.name(coupon.getCoupon().getCouponName())
+		return MypageDTO.CouponItem.builder().id(coupon.getUserCouponNo()).userCouponId(coupon.getUserCouponNo())
+				.couponName(coupon.getCoupon().getCouponName()).name(coupon.getCoupon().getCouponName())
 				.couponType(coupon.getCoupon().getDiscountType().name())
-				.discountValue(defaultLong(coupon.getCoupon().getDiscountValue()))
-				.discountLabel(formatDiscount(coupon))
-				.status(toCouponStatusLabel(status))
-				.statusLabel(toCouponStatusLabel(status))
+				.discountValue(defaultLong(coupon.getCoupon().getDiscountValue())).discountLabel(formatDiscount(coupon))
+				.status(toCouponStatusLabel(status)).statusLabel(toCouponStatusLabel(status))
 				.expire(formatCouponExpire(coupon, status))
-				.expiredAt(coupon.getCoupon().getEndDate() != null ? DATE_FORMAT.format(coupon.getCoupon().getEndDate()) : null)
-				.target(null)
-				.appliesTo(null)
-				.isUsable(status == CouponStatus.ACTIVE)
-				.issuedAt(coupon.getIssuedAt() != null ? DATE_FORMAT.format(coupon.getIssuedAt()) : null)
-				.build();
+				.expiredAt(coupon.getCoupon().getEndDate() != null ? DATE_FORMAT.format(coupon.getCoupon().getEndDate())
+						: null)
+				.target(null).appliesTo(null).isUsable(status == CouponStatus.ACTIVE)
+				.issuedAt(coupon.getIssuedAt() != null ? DATE_FORMAT.format(coupon.getIssuedAt()) : null).build();
 	}
 
 	private MypageDTO.MileageItem toMileageItem(MileageHistory history) {
-		boolean minus = history.getChangeType() == MileageChangeType.USE || history.getChangeType() == MileageChangeType.EXPIRE;
+		boolean minus = history.getChangeType() == MileageChangeType.USE
+				|| history.getChangeType() == MileageChangeType.EXPIRE;
 		long amount = defaultLong(history.getChangeAmount());
-		return MypageDTO.MileageItem.builder()
-				.label(history.getReason())
+		return MypageDTO.MileageItem.builder().label(history.getReason())
 				.amount((minus ? "-" : "+") + NUMBER_FORMAT.format(amount))
 				.time(history.getRegDate() != null ? DATE_FORMAT.format(history.getRegDate()) : null)
-				.type(toMileageTypeLabel(history.getChangeType()))
-				.build();
+				.type(toMileageTypeLabel(history.getChangeType())).build();
 	}
 
 	private MypageDTO.PaymentItem toPaymentItem(Payment payment) {
 		String status = resolvePaymentStatus(payment);
-		return MypageDTO.PaymentItem.builder()
-				.paymentId(payment.getPaymentId())
+		return MypageDTO.PaymentItem.builder().paymentId(payment.getPaymentId())
 				.bookingId("B-" + payment.getBooking().getBookingNo())
 				.bookingNo("B-" + payment.getBooking().getBookingNo())
 				.lodgingName(payment.getBooking().getRoom().getLodging().getLodgingName())
@@ -447,25 +416,16 @@ public class MypageServiceImpl implements MypageService {
 				.amount("REFUNDED".equals(status)
 						? "-" + NUMBER_FORMAT.format(defaultLong(payment.getRefundAmount())) + "원"
 						: formatWon(defaultLong(payment.getPaymentAmount())))
-				.status(status)
-				.paymentStatus(status)
-				.paymentStatusLabel(toPaymentStatusLabel(status))
+				.status(status).paymentStatus(status).paymentStatusLabel(toPaymentStatusLabel(status))
 				.paymentMethod(payment.getPayMethod() != null ? payment.getPayMethod().name() : null)
-				.paymentMethodLabel(toPaymentMethodLabel(payment.getPayMethod()))
-				.paidAt(resolvePaymentDate(payment))
-				.detail(buildPaymentDetail(payment, status))
-				.build();
+				.paymentMethodLabel(toPaymentMethodLabel(payment.getPayMethod())).paidAt(resolvePaymentDate(payment))
+				.detail(buildPaymentDetail(payment, status)).build();
 	}
 
 	private MypageDTO.WishlistItem toWishlistItem(WishList wishList) {
 		Lodging lodging = wishList.getLodging();
-		return MypageDTO.WishlistItem.builder()
-				.lodgingId(lodging.getLodgingNo())
-				.name(lodging.getLodgingName())
-				.meta(buildWishlistMeta(lodging))
-				.price(null)
-				.status("찜한 숙소")
-				.build();
+		return MypageDTO.WishlistItem.builder().lodgingId(lodging.getLodgingNo()).name(lodging.getLodgingName())
+				.meta(buildWishlistMeta(lodging)).price(null).status("찜한 숙소").build();
 	}
 
 	private MypageDTO.InquiryItem toInquiryItem(Inquiry inquiry) {
@@ -478,8 +438,7 @@ public class MypageServiceImpl implements MypageService {
 				.lodging(resolveInquiryLodging(inquiry))
 				.bookingNo(resolveInquiryBookingNo(inquiry))
 				.updatedAt(inquiry.getUpdDate() != null ? DATE_TIME_FORMAT.format(inquiry.getUpdDate()) : null)
-				.preview(inquiry.getContent())
-				.build();
+				.preview(inquiry.getContent()).build();
 	}
 
 	private String resolveInquiryLodging(Inquiry inquiry) {
@@ -553,28 +512,21 @@ public class MypageServiceImpl implements MypageService {
 			return false;
 		}
 		LocalDateTime now = LocalDateTime.now();
-		return !coupon.getCoupon().getEndDate().isBefore(now) && !coupon.getCoupon().getEndDate().isAfter(now.plusDays(7));
+		return !coupon.getCoupon().getEndDate().isBefore(now)
+				&& !coupon.getCoupon().getEndDate().isAfter(now.plusDays(7));
 	}
 
 	private String resolveLoginMethod(List<UserAuthProvider> authProviders) {
 		if (authProviders.isEmpty()) {
 			return null;
 		}
-		return authProviders.stream()
-				.map(UserAuthProvider::getProviderCode)
-				.distinct()
-				.map(this::toProviderLabel)
-				.reduce((left, right) -> left + ", " + right)
-				.orElse(null);
+		return authProviders.stream().map(UserAuthProvider::getProviderCode).distinct().map(this::toProviderLabel)
+				.reduce((left, right) -> left + ", " + right).orElse(null);
 	}
 
 	private String resolveLastLoginAt(List<UserAuthProvider> authProviders) {
-		return authProviders.stream()
-				.map(UserAuthProvider::getLastLoginAt)
-				.filter(java.util.Objects::nonNull)
-				.max(Comparator.naturalOrder())
-				.map(DATE_TIME_FORMAT::format)
-				.orElse(null);
+		return authProviders.stream().map(UserAuthProvider::getLastLoginAt).filter(java.util.Objects::nonNull)
+				.max(Comparator.naturalOrder()).map(DATE_TIME_FORMAT::format).orElse(null);
 	}
 
 	private String formatLocalDate(LocalDateTime value) {

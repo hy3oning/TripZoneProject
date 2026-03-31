@@ -81,8 +81,9 @@ public class ReviewServiceImpl implements ReviewService {
 			throw new IllegalArgumentException("본인의 예약에 대해서만 리뷰를 작성할 수 있습니다.");
 		}
 
-		// 예약한 숙소와 요청한 숙소가 같은지 확인
-		if (!booking.getRoom().getLodging().getLodgingNo().equals(reviewDTO.getLodgingNo())) {
+		// lodgingNo가 넘어온 경우에만 추가 검증
+		if (reviewDTO.getLodgingNo() != null
+				&& !booking.getRoom().getLodging().getLodgingNo().equals(reviewDTO.getLodgingNo())) {
 			throw new IllegalArgumentException("예약한 숙소에 대해서만 리뷰를 작성할 수 있습니다.");
 		}
 
@@ -92,8 +93,7 @@ public class ReviewServiceImpl implements ReviewService {
 		}
 
 		// 리뷰 엔티티 생성
-		Review review = Review.builder()
-				.booking(booking) // Booking 엔티티 세팅
+		Review review = Review.builder().booking(booking) // Booking 엔티티 세팅
 				.user(booking.getUser()) // 작성자는 로그인한 사용자 엔티티로 저장
 				.lodging(booking.getRoom().getLodging()) // 숙소 엔티티 세팅
 				.rating(reviewDTO.getRating()) // 평점 세팅
@@ -109,8 +109,7 @@ public class ReviewServiceImpl implements ReviewService {
 		// 저장된 리뷰 이미지 URL 목록 실제 조회
 		List<String> imageUrls = reviewImageRepository
 				.findByReview_ReviewNoOrderBySortOrderAsc(savedReview.getReviewNo()).stream()
-				.map(ReviewImage::getImageUrl)  
-				.toList();
+				.map(ReviewImage::getImageUrl).toList();
 
 		return toReviewDTO(savedReview, imageUrls); // ReviewDTO 반환
 	}
@@ -151,23 +150,32 @@ public class ReviewServiceImpl implements ReviewService {
 			throw new IllegalArgumentException("본인이 작성한 리뷰만 수정할 수 있습니다.");
 		}
 
-		// 수정
-		review.changeRating(reviewDTO.getRating());
-		review.changeContent(reviewDTO.getContent().trim());
+		// 부분 수정
+		if (reviewDTO.getRating() != null) {
+			if (reviewDTO.getRating() < 1 || reviewDTO.getRating() > 5) {
+				throw new IllegalArgumentException("평점은 1점부터 5점까지 가능합니다.");
+			}
+			review.changeRating(reviewDTO.getRating());
+		}
+
+		if (reviewDTO.getContent() != null) {
+			if (reviewDTO.getContent().isBlank()) {
+				throw new IllegalArgumentException("리뷰 내용은 비워둘 수 없습니다.");
+			}
+			review.changeContent(reviewDTO.getContent().trim());
+		}
 
 		Review updatedReview = reviewRepository.save(review);
 
-		// 수정 시 기존 이미지 전부 삭제
-		reviewImageRepository.deleteByReview_ReviewNo(reviewNo);
-
-		// 새 이미지 다시 저장
-		saveReviewImages(updatedReview, reviewDTO.getImageUrls());
+		// imageUrl이 넘어온 경우에만 이미지가 교체
+		if (reviewDTO.getImageUrls() != null) {
+			reviewImageRepository.deleteByReview_ReviewNo(reviewNo);
+			saveReviewImages(updatedReview, reviewDTO.getImageUrls());
+		}
 
 		// 수정 후 이미지 URL 목록 실제 조회
-		List<String> imageUrls = reviewImageRepository.findByReview_ReviewNoOrderBySortOrderAsc(reviewNo)
-				.stream()
-				.map(ReviewImage::getImageUrl) 
-				.toList();
+		List<String> imageUrls = reviewImageRepository.findByReview_ReviewNoOrderBySortOrderAsc(reviewNo).stream()
+				.map(ReviewImage::getImageUrl).toList();
 
 		return toReviewDTO(updatedReview, imageUrls); // ReviewDTO 반환
 	}
@@ -202,7 +210,7 @@ public class ReviewServiceImpl implements ReviewService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<ReviewDTO> getReviewsByLodging(Long lodgingNo) {
-		// 숙소 번호가 없으면 예외
+
 		if (lodgingNo == null) {
 			throw new IllegalArgumentException("숙소 번호는 필수입니다.");
 		}
@@ -213,10 +221,9 @@ public class ReviewServiceImpl implements ReviewService {
 		return visibleReviews.stream().map(review -> {
 			List<String> imageUrls = reviewImageRepository
 					.findByReview_ReviewNoOrderBySortOrderAsc(review.getReviewNo()).stream()
-					.map(ReviewImage::getImageUrl) // imageUrl 문자열 목록으로 변경
-					.toList();
+					.map(ReviewImage::getImageUrl).toList();
 
-			return toReviewDTO(review, imageUrls); // ReviewDTO로 변환
+			return toReviewDTO(review, imageUrls);
 		}).toList();
 	}
 
@@ -312,6 +319,7 @@ public class ReviewServiceImpl implements ReviewService {
 		return ReviewDTO.builder() // builder 방식으로 생성
 				.reviewNo(review.getReviewNo()) // 리뷰 번호 세팅
 				.bookingNo(review.getBooking().getBookingNo()) // Booking 엔티티에서 예약 번호 꺼내기
+				.userName(review.getUser().getUserName()) // 작성자 이름
 				.userNo(review.getUser().getUserNo()) // 작성자 회원 번호 세팅
 				.lodgingNo(review.getLodging().getLodgingNo()) // 숙소 번호 세팅
 				.rating(review.getRating()) // 평점 세팅
@@ -329,8 +337,8 @@ public class ReviewServiceImpl implements ReviewService {
 		}
 
 		// 전달받은 이미지 URL들을 순서대로 REVIEW_IMAGES에 저장
-		IntStream.range(0, imageUrls.size()).mapToObj(index -> ReviewImage.builder()
-				.review(review) // 어떤 리뷰의 이미지인지 Review 엔티티 자체를 저장
+		IntStream.range(0, imageUrls.size()).mapToObj(index -> ReviewImage.builder().review(review) // 어떤 리뷰의 이미지인지
+																									// Review 엔티티 자체를 저장
 				.imageUrl(imageUrls.get(index)) // 이미지 URL
 				.sortOrder(index + 1) // 정렬 순서 1부터 시작
 				.build()).forEach(reviewImageRepository::save);

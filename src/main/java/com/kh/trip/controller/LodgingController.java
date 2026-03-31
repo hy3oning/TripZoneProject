@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.trip.dto.LodgingDTO;
+import com.kh.trip.dto.PageRequestDTO;
+import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.service.LodgingService;
 import com.kh.trip.util.CustomFileUtil;
 
@@ -29,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 public class LodgingController {
 
 	private final LodgingService lodgingService;
-	private final CustomFileUtil fileUtil; 
+	private final CustomFileUtil fileUtil;
 
 	@PostMapping("/")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -51,6 +53,11 @@ public class LodgingController {
 	@GetMapping("/list")
 	public List<LodgingDTO> getAllLodgings() {
 		return lodgingService.getAllLodgings();
+	}
+
+	@GetMapping("/page")
+	public PageResponseDTO<LodgingDTO> getAllLodgings(PageRequestDTO pageRequestDTO) {
+		return lodgingService.getAllLodgings(pageRequestDTO);
 	}
 
 	@GetMapping("/region")
@@ -81,4 +88,5 @@ public class LodgingController {
 	public LodgingDTO getLodgingDetail(@PathVariable Long lodgingNo) {
 		return lodgingService.getLodgingDetail(lodgingNo); // 상세 DTO 반환
 	}
+
 }

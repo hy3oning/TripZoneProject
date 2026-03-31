@@ -6,6 +6,10 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,11 +18,12 @@ import com.kh.trip.domain.HostProfile;
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.LodgingImage;
 import com.kh.trip.domain.Room;
-
 import com.kh.trip.domain.RoomImage;
 import com.kh.trip.domain.enums.LodgingStatus;
 import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.LodgingDTO;
+import com.kh.trip.dto.PageRequestDTO;
+import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.RoomDTO;
 import com.kh.trip.repository.HostProfileRepository;
 import com.kh.trip.repository.LodgingRepository;
@@ -100,6 +105,9 @@ public class LodgingServiceImpl implements LodgingService {
 
 		return toLodgingDTO(savedLodging);
 	}
+	
+	
+	
 
 	// 숙소 단건 조회
 	@Override
@@ -137,6 +145,34 @@ public class LodgingServiceImpl implements LodgingService {
 			return lodgingDTO;
 		}).collect(Collectors.toList());
 		return dtoList;
+	}
+	
+	//숙소 목록 페이징 
+	@Override
+	@Transactional(readOnly = true)
+	public PageResponseDTO<LodgingDTO> getAllLodgings(PageRequestDTO pageRequestDTO) {
+
+		// page는 1부터 시작하지만 PageRequest는 0부터 시작하므로 -1
+		Pageable pageable = PageRequest.of(
+				pageRequestDTO.getPage() - 1,
+				pageRequestDTO.getSize(),
+				Sort.by("lodgingNo").descending()
+		);
+
+		// ACTIVE 상태 숙소만 페이징 조회
+		Page<Lodging> result = lodgingRepository.findByStatus(LodgingStatus.ACTIVE, pageable);
+
+		// Entity -> DTO 변환
+		List<LodgingDTO> dtoList = result.getContent().stream()
+				.map(this::toLodgingDTO)
+				.toList();
+
+		//  PageResponseDTO 
+		return PageResponseDTO.<LodgingDTO>withAll()
+				.dtoList(dtoList)
+				.pageRequestDTO(pageRequestDTO)
+				.totalCount(result.getTotalElements())
+				.build();
 	}
 
 	// 지역으로 숙소 목록 조회

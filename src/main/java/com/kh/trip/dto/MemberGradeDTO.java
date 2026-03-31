@@ -19,5 +19,5 @@ public class MemberGradeDTO {
 	private Long minStayCount;
 	private double mileageRate;
 	private String benefitDESC;
-	private boolean status;
+	private Integer status;
 }

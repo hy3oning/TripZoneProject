@@ -49,6 +49,9 @@ public class HostProfile extends BaseTimeEntity {
 	@Column(name = "OWNER_NAME", nullable = false, length = 100)
 	private String ownerName;
 
+	@Column(name = "ACCOUNT", nullable = false, length = 200)
+	private String account;
+
 	@Builder.Default
 	@Enumerated(EnumType.STRING)
 	@Column(name = "APPROVAL_STATUS", nullable = false, length = 20)
@@ -85,14 +88,14 @@ public class HostProfile extends BaseTimeEntity {
 		this.rejectReason = rejectReason;
 	}
 
-	public void updateForResubmit(String businessName, String businessNumber, String ownerName) {
+	public void updateForResubmit(String businessName, String businessNumber, String ownerName, String account) {
 		this.businessName = businessName;
 		this.businessNumber = businessNumber;
 		this.ownerName = ownerName;
+		this.account = account;
 		this.approvalStatus = HostApprovalStatus.PENDING;
 		this.approvedBy = null;
 		this.approvedAt = null;
 		this.rejectReason = null;
-
 	}
 }

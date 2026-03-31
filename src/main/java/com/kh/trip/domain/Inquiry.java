@@ -13,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -46,6 +47,7 @@ public class Inquiry extends BaseTimeEntity {
 	@Column(name = "TITLE", nullable = false, length = 300)
 	private String title;
 
+	@Lob
 	@Column(name = "CONTENT", nullable = false, length = 3000)
 	private String content;
 

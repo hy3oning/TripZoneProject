@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -48,7 +49,8 @@ public class Review extends BaseTimeEntity {
 	@Column(name = "RATING", nullable = false) // 평점 컬럼
 	private Integer rating; // 평점 (1~5)
 
-	@Column(name = "CONTENT", nullable = false, length = 1000) // 리뷰 내용
+	@Lob
+	@Column(name = "CONTENT", nullable = false) // 리뷰 내용
 	private String content; // 리뷰 본문
 
 	public void changeRating(Integer rating) {
