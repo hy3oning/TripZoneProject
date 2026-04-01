@@ -1,6 +1,7 @@
 package com.kh.trip.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,8 +39,12 @@ public class MypageController {
 
 	@GetMapping("/host-profile")
 	@PreAuthorize("hasAnyRole('USER', 'HOST')")
-	public HostProfileDTO getMyHostProfile(@AuthenticationPrincipal AuthUserPrincipal principal) {
-		return hostProfileService.getByUserNo(requirePrincipal(principal).getUserNo());
+	public ResponseEntity<HostProfileDTO> getMyHostProfile(@AuthenticationPrincipal AuthUserPrincipal principal) {
+		HostProfileDTO hostProfile = hostProfileService.getByUserNo(requirePrincipal(principal).getUserNo());
+		if (hostProfile == null) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(hostProfile);
 	}
 
 	@GetMapping("/bookings")

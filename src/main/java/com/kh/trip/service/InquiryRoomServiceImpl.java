@@ -33,19 +33,24 @@ public class InquiryRoomServiceImpl implements InquiryRoomService {
 
 	@Override
 	public Long save(InquiryRoomDTO roomDTO) {
+		User user = userRepository.findById(roomDTO.getUserNo())
+				.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 		Lodging lodging = lodgingRepository.findById(roomDTO.getLodgingNo())
 				.orElseThrow(() -> new IllegalArgumentException("숙소를 찾을 수 없습니다."));
 		HostProfile host = lodging.getHost();
 		if (host == null) {
 			throw new IllegalArgumentException("호스트를 찾을 수 없습니다.");
 		}
+		if (host.getUser() == null || host.getUser().getUserNo() == null) {
+			throw new IllegalArgumentException("숙소 판매자 계정이 올바르지 않습니다.");
+		}
+		if (host.getUser().getUserNo().equals(user.getUserNo())) {
+			throw new IllegalArgumentException("본인 숙소에는 문의방을 생성할 수 없습니다.");
+		}
 
 		return repository.findByDetail(roomDTO.getUserNo(), host.getHostNo(), roomDTO.getLodgingNo(),
 				InquiryRoomStatus.CLOSED).map(room -> room.getInquiryRoomNo()).orElseGet(() -> {
 					// 동일 회원-동일 숙소 조합의 열린 방이 있으면 재사용하고, 없을 때만 새 방을 만든다.
-					User user = userRepository.findById(roomDTO.getUserNo())
-							.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
 					InquiryRoom newRoom = InquiryRoom.builder()
 							.user(user)
 							.host(host)
@@ -88,19 +93,32 @@ public class InquiryRoomServiceImpl implements InquiryRoomService {
 	@Override
 	public List<InquiryRoomDTO> findSellerRooms(Long userNo) {
 		// 판매자 대시보드용 목록. 로그인 userNo -> HostProfile -> 담당 문의방 순으로 찾는다.
-		HostProfile host = hostRepository.findByUser_UserNo(userNo)
-				.orElseThrow(() -> new IllegalArgumentException("판매자 정보를 찾을 수 없습니다."));
+		HostProfile host = getOwnedHostProfile(userNo);
 		return repository.findDetailByHostNo(host.getHostNo(), InquiryRoomStatus.CLOSED).stream()
 				.map(this::entityToDTO)
 				.collect(Collectors.toList());
 	}
 
 	@Override
-	public void delete(Long roomNo) {
-		Optional<InquiryRoom> result = repository.findById(roomNo);
+	public void delete(Long roomNo, Long userNo) {
+		Optional<InquiryRoom> result = repository.findDetailById(roomNo);
 		InquiryRoom room = result.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
+		validateParticipant(room, userNo);
 		room.changeStatus(InquiryRoomStatus.CLOSED);
 		repository.save(room);
+	}
+
+	private HostProfile getOwnedHostProfile(Long userNo) {
+		return hostRepository.findByUser_UserNo(userNo)
+				.orElseThrow(() -> new IllegalArgumentException("판매자 정보를 찾을 수 없습니다."));
+	}
+
+	private void validateParticipant(InquiryRoom room, Long userNo) {
+		boolean isUser = room.getUser().getUserNo().equals(userNo);
+		boolean isHost = room.getHost().getUser() != null && room.getHost().getUser().getUserNo().equals(userNo);
+		if (!isUser && !isHost) {
+			throw new IllegalArgumentException("이 채팅방에 접근할 수 없습니다.");
+		}
 	}
 
 	private InquiryRoomDTO entityToDTO(InquiryRoom room) {

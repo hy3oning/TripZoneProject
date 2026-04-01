@@ -14,6 +14,6 @@ public interface InquiryRoomService {
 
 	List<InquiryRoomDTO> findSellerRooms(Long userNo);
 
-	void delete(Long roomNo);
+	void delete(Long roomNo, Long userNo);
 
 }

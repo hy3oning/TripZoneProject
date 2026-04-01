@@ -45,6 +45,9 @@ public class CouponServiceImpl implements CouponService {
 		coupon.changeDiscountValue(couponDTO.getDiscountValue());
 		coupon.changeStartDate(couponDTO.getStartDate());
 		coupon.changeEndDate(couponDTO.getEndDate());
+		if (couponDTO.getStatus() != null) {
+			coupon.changeStatus(couponDTO.getStatus());
+		}
 		repository.save(coupon);
 	}
 

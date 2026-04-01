@@ -69,8 +69,8 @@ public class InquiryRoomController {
 
     @DeleteMapping("/{roomNo}")
     @PreAuthorize("isAuthenticated()")
-    public void delete(@PathVariable Long roomNo) {
+    public void delete(@AuthenticationPrincipal AuthUserPrincipal authUser, @PathVariable Long roomNo) {
     	 log.info("inquiryRoom delete() = " + roomNo);
-         service.delete(roomNo);
+         service.delete(roomNo, authUser.getUserNo());
     }
 }

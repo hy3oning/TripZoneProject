@@ -8,6 +8,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.sql.DataSource;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -59,6 +61,7 @@ public class LodgingServiceImpl implements LodgingService {
 	private final HostProfileRepository hostProfileRepository;
 	private final ReviewRepository reviewRepository;
 	private final CustomFileUtil fileUtil;
+	private final DataSource dataSource;
 
 	// 숙소 등록
 	@Override
@@ -99,6 +102,8 @@ public class LodgingServiceImpl implements LodgingService {
 		List<Room> roomList = lodgingDTO.getRooms() == null ? List.of()
 				: lodgingDTO.getRooms().stream().map(this::toRoomEntity).collect(Collectors.toList());
 
+		// 레거시 스키마는 이미지 번호를 두 컬럼에 동시에 요구한다.
+		assignLodgingImageNumbers(lodging);
 		// 숙소 먼저 저장해서 lodgingNo 생성
 		Lodging savedLodging = lodgingRepository.save(lodging);
 
@@ -226,32 +231,34 @@ public class LodgingServiceImpl implements LodgingService {
 
 		applyLodgingUpdate(findLodging, lodgingDTO);
 
-		// 화면에서 변화 없이 계속 유지된 파일들
-		List<String> uploadFileNames = lodgingDTO.getUploadFileNames() == null ? new ArrayList<>()
-				: new ArrayList<>(lodgingDTO.getUploadFileNames());
-
-		// 새로업로드된 파일을 내부폴더 중복되지않는 파일명으로 저장하고, 저장된 이름을 리스트로 가져온다.
+		boolean hasImagePayload = lodgingDTO.getUploadFileNames() != null;
 		List<String> currentUploadFileNames = saveUploadedFiles(lodgingDTO.getFiles());
+		boolean hasNewUploadedFiles = currentUploadFileNames != null && !currentUploadFileNames.isEmpty();
+		List<String> uploadFileNames = oldFileNames;
 
-		// 유지되는 파일들 + 새로 업로드된 파일 이름들이 저장해야 하는 파일 목록이 됨
-		if (currentUploadFileNames != null && !currentUploadFileNames.isEmpty()) {
-			uploadFileNames.addAll(currentUploadFileNames);
-		}
+		if (hasImagePayload || hasNewUploadedFiles) {
+			uploadFileNames = lodgingDTO.getUploadFileNames() == null ? new ArrayList<>() : new ArrayList<>(lodgingDTO.getUploadFileNames());
+			if (hasNewUploadedFiles) {
+				uploadFileNames.addAll(currentUploadFileNames);
+			}
 
-		// 기존의 이미지 파일명을 모두 삭제한다.
-		findLodging.clearList();
+			findLodging.clearList();
 
-		if (!uploadFileNames.isEmpty()) {
-			uploadFileNames.forEach(uploadName -> {
-				findLodging.addImageString(uploadName);
-			});
+			if (!uploadFileNames.isEmpty()) {
+				uploadFileNames.forEach(uploadName -> {
+					findLodging.addImageString(uploadName);
+				});
+			}
+
+			assignLodgingImageNumbers(findLodging);
 		}
 
 		Lodging updatedLodging = lodgingRepository.save(findLodging);
+		List<String> finalUploadFileNames = uploadFileNames;
 
 		// 예전 파일들 중에서 더 이상 유지되지 않는 실제 파일 삭제
 		if (oldFileNames != null && !oldFileNames.isEmpty()) {
-			List<String> removeFiles = oldFileNames.stream().filter(fileName -> !uploadFileNames.contains(fileName))
+			List<String> removeFiles = oldFileNames.stream().filter(fileName -> !finalUploadFileNames.contains(fileName))
 					.toList();
 
 			fileUtil.deleteFiles(removeFiles);
@@ -468,6 +475,29 @@ public class LodgingServiceImpl implements LodgingService {
 		}
 
 		return imageList.stream().map(LodgingImage::getFileName).toList();
+	}
+
+	private void assignLodgingImageNumbers(Lodging lodging) {
+		if (lodging.getImageList() == null || lodging.getImageList().isEmpty()) {
+			return;
+		}
+
+		lodging.getImageList().stream()
+				.filter(image -> image.getImageNo() == null)
+				.forEach(image -> image.assignImageNo(nextLodgingImageNo()));
+	}
+
+	private Long nextLodgingImageNo() {
+		try (var connection = dataSource.getConnection();
+				var preparedStatement = connection.prepareStatement("select SEQ_LODGING_IMAGES.nextval from dual");
+				var resultSet = preparedStatement.executeQuery()) {
+			if (!resultSet.next()) {
+				throw new IllegalStateException("SEQ_LODGING_IMAGES 값을 읽지 못했습니다.");
+			}
+			return resultSet.getLong(1);
+		} catch (Exception exception) {
+			throw new IllegalStateException("SEQ_LODGING_IMAGES 값을 읽지 못했습니다.", exception);
+		}
 	}
 
 	// RoomSummaryDTO -> Room Entity 변환도 Impl 내부에서 처리

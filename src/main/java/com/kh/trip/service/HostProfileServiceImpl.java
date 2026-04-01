@@ -67,9 +67,7 @@ public class HostProfileServiceImpl implements HostProfileService {
 
 	@Override
 	public HostProfileDTO getByUserNo(Long userNo) {
-		HostProfile hostProfile = hostProfileRepository.findByUser_UserNo(userNo)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "호스트 신청 정보가 없습니다."));
-		return entityToDTO(hostProfile);
+		return hostProfileRepository.findByUser_UserNo(userNo).map(this::entityToDTO).orElse(null);
 	}
 
 	@Override
