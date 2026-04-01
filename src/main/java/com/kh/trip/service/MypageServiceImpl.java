@@ -105,6 +105,7 @@ public class MypageServiceImpl implements MypageService {
 						profileDetail("로그인 방식", resolveLoginMethod(authProviders)),
 						profileDetail("회원 등급",
 								user.getMemberGrade() != null ? user.getMemberGrade().getGradeName().name() : null),
+						profileDetail("비밀번호", "********"),
 						profileDetail("마케팅 수신", null), profileDetail("최근 로그인", resolveLastLoginAt(authProviders))))
 				.build();
 	}

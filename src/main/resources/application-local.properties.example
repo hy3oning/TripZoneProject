@@ -8,5 +8,8 @@ spring.jpa.generate-ddl=false
 spring.jpa.properties.hibernate.hbm2ddl.auto=none
 spring.jpa.properties.jakarta.persistence.schema-generation.database.action=none
 
+spring.servlet.multipart.max-file-size=20MB
+spring.servlet.multipart.max-request-size=50MB
+
 # Optional override for local upload storage
 com.kh.upload.path=${user.home}/.tripzone/upload

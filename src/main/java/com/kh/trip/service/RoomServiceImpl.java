@@ -102,6 +102,17 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	public RoomDTO getRoomForManagement(Long roomNo) {
+		Room room = roomRepository.findById(roomNo)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 객실입니다. roomNo=" + roomNo));
+
+		List<String> imageUrls = roomImageRepository.findByRoom_RoomNoOrderBySortOrderAsc(roomNo).stream()
+				.map(RoomImage::getImageUrl).toList();
+
+		return toRoomDTO(room, imageUrls);
+	}
+
+	@Override
 	@Transactional
 	public RoomDTO updateRoom(Long roomNo, RoomDTO roomDTO) {
 		// 수정할 객실 조회
