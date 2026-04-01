@@ -307,6 +307,9 @@ public class BookingServiceImpl implements BookingService {
 		updateMemberGrade(user);
 		userRepository.save(user);
 		repository.save(booking);
+		Room room = roomRepository.findById(booking.getRoom().getRoomNo()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "객실을 찾을 수 없습니다."));
+		room.changeStatus(RoomStatus.AVAILABLE);
+		roomRepository.save(room);
 	}
 
 	private void updateMemberGrade(User user) {
