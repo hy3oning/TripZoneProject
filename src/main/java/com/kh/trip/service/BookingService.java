@@ -16,6 +16,8 @@ public interface BookingService {
 
 	BookingDTO updateStatus(Long bookingNo, String status);
 
+	BookingDTO updateStatus(Long bookingNo, Long hostNo, String status);
+
 	void cancelBooking(Long bookingNo);
 	
 	void complete(Long bookingNo);

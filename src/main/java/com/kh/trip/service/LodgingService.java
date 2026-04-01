@@ -18,6 +18,9 @@ public interface LodgingService {
 	// 숙소 전체 목록 조회
 	List<LodgingDTO> getAllLodgings();
 
+	// 판매자 본인 숙소 목록 조회
+	List<LodgingDTO> getLodgingsByHostNo(Long hostNo);
+
 	// 지역으로 숙소 목록 조회
 	List<LodgingDTO> getLodgingsByRegion(String region);
 

@@ -147,6 +147,20 @@ public class BookingServiceImpl implements BookingService {
 
 	@Override
 	public BookingDTO updateStatus(Long bookingNo, String status) {
+		return updateStatus(bookingNo, null, status);
+	}
+
+	@Override
+	public BookingDTO updateStatus(Long bookingNo, Long hostNo, String status) {
+		if (hostNo != null) {
+			Booking booking = repository.findById(bookingNo)
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 예약입니다."));
+			Long ownerHostNo = booking.getRoom().getLodging().getHost().getHostNo();
+			if (!hostNo.equals(ownerHostNo)) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 숙소 예약만 변경할 수 있습니다.");
+			}
+		}
+
 		BookingStatus nextStatus;
 		try {
 			nextStatus = BookingStatus.valueOf(status);

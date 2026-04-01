@@ -159,6 +159,17 @@ public class LodgingServiceImpl implements LodgingService {
 		applyReviewSummaries(dtoList);
 		return dtoList;
 	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<LodgingDTO> getLodgingsByHostNo(Long hostNo) {
+		List<LodgingDTO> dtoList = lodgingRepository.findByHost_HostNo(hostNo).stream()
+				.map(this::toLodgingDTO)
+				.peek(dto -> dto.setRooms(loadRoomDTOs(dto.getLodgingNo())))
+				.toList();
+		applyReviewSummaries(dtoList);
+		return dtoList;
+	}
 	
 	//숙소 목록 페이징 
 	@Override
@@ -378,7 +389,15 @@ public class LodgingServiceImpl implements LodgingService {
 	private List<RoomDTO> loadAvailableRoomDTOs(Long lodgingNo) {
 		List<Room> rooms = roomRepository.findByLodging_LodgingNoAndStatusOrderByRoomNoAsc(lodgingNo,
 				RoomStatus.AVAILABLE);
+		return mapRoomDTOs(rooms);
+	}
 
+	private List<RoomDTO> loadRoomDTOs(Long lodgingNo) {
+		List<Room> rooms = roomRepository.findByLodging_LodgingNo(lodgingNo);
+		return mapRoomDTOs(rooms);
+	}
+
+	private List<RoomDTO> mapRoomDTOs(List<Room> rooms) {
 		return rooms.stream().map(room -> {
 			List<String> imageUrls = roomImageRepository.findByRoom_RoomNoOrderBySortOrderAsc(room.getRoomNo()).stream()
 					.map(RoomImage::getImageUrl).toList();
