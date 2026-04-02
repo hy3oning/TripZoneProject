@@ -4,7 +4,6 @@ import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -28,7 +27,6 @@ import com.kh.trip.domain.UserCoupon;
 import com.kh.trip.domain.WishList;
 import com.kh.trip.domain.enums.BookingStatus;
 import com.kh.trip.domain.enums.CouponStatus;
-import com.kh.trip.domain.enums.DiscountType;
 import com.kh.trip.domain.enums.InquiryStatus;
 import com.kh.trip.domain.enums.InquiryType;
 import com.kh.trip.domain.enums.MileageChangeType;
@@ -122,65 +120,6 @@ public class MypageServiceImpl implements MypageService {
 				.canceledCount(
 						bookings.stream().filter(booking -> booking.getStatus() == BookingStatus.CANCELED).count())
 				.build()).items(bookings.stream().map(booking -> toBookingItem(booking, payments)).toList()).build();
-	}
-
-	@Override
-	@Transactional
-	public MypageDTO.BookingCreatedResponse createBooking(Long userNo, MypageDTO.BookingCreateRequest request) {
-		User user = getUser(userNo);
-		Room room = roomRepository.findByRoomNo(request.getRoomNo())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "객실을 찾을 수 없습니다."));
-
-		validateBookingRequest(request, room);
-		validateRoomAvailability(request, room);
-
-		long nights = ChronoUnit.DAYS.between(request.getCheckInDate().toLocalDate(),
-				request.getCheckOutDate().toLocalDate());
-		long roomPrice = (long) room.getPricePerNight() * nights;
-		long totalPrice = roomPrice;
-		long discountAmount = 0L;
-
-		UserCoupon userCoupon = null;
-		if (request.getUserCouponNo() != null) {
-			userCoupon = userCouponRepository.findById(request.getUserCouponNo())
-					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "쿠폰을 찾을 수 없습니다."));
-
-			if (!userCoupon.getUser().getUserNo().equals(userNo)) {
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "본인 쿠폰만 사용할 수 있습니다.");
-			}
-
-			CouponStatus couponStatus = resolveCouponStatus(userCoupon);
-			if (couponStatus != CouponStatus.ACTIVE) {
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "사용 가능한 쿠폰이 아닙니다.");
-			}
-
-			DiscountType discountType = userCoupon.getCoupon().getDiscountType();
-			long discountValue = userCoupon.getCoupon().getDiscountValue();
-			totalPrice = discountType.calculate(roomPrice, discountValue);
-			if (totalPrice < 0) {
-				totalPrice = 0L;
-			}
-			discountAmount = roomPrice - totalPrice;
-		}
-
-		Booking booking = Booking.builder().user(user).room(room).userCoupon(userCoupon)
-				.checkInDate(request.getCheckInDate()).checkOutDate(request.getCheckOutDate())
-				.guestCount(request.getGuestCount()).pricePerNight(Long.valueOf(room.getPricePerNight()))
-				.discountAmount(discountAmount).totalPrice(totalPrice).requestMessage(request.getRequestMessage())
-				.status(BookingStatus.PENDING).build();
-
-		Booking savedBooking = mypageBookingRepository.save(booking);
-
-		if (userCoupon != null) {
-			userCoupon.changeUsedAt(LocalDateTime.now());
-			userCoupon.changeStatus(CouponStatus.USED);
-		}
-
-		return MypageDTO.BookingCreatedResponse.builder().bookingNo(savedBooking.getBookingNo())
-				.bookingId("B-" + savedBooking.getBookingNo()).bookingStatus(savedBooking.getStatus().name())
-				.bookingStatusLabel(toBookingStatusLabel(savedBooking.getStatus()))
-				.totalPrice(savedBooking.getTotalPrice()).amount(formatWon(savedBooking.getTotalPrice()))
-				.createdAt(savedBooking.getRegDate()).build();
 	}
 
 	@Override
