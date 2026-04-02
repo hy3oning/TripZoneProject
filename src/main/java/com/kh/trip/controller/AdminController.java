@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.kh.trip.dto.AdminStaticDTO;
 import com.kh.trip.dto.AdminUserSearchRequestDTO;
 import com.kh.trip.dto.HostProfileDTO;
 import com.kh.trip.dto.InquiryDTO;
@@ -20,6 +21,7 @@ import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.UserDTO;
 import com.kh.trip.domain.enums.InquiryStatus;
 import com.kh.trip.security.AuthUserPrincipal;
+import com.kh.trip.service.AdminStaticService;
 import com.kh.trip.service.HostProfileService;
 import com.kh.trip.service.InquiryService;
 import com.kh.trip.service.UserService;
@@ -36,6 +38,7 @@ public class AdminController {
 	private final UserService userService;
 	private final HostProfileService hostProfileService;
 	private final InquiryService inquiryService;
+	private final AdminStaticService adminStaticService;
 	
 	// 관리자 회원 목록 조회
 	@GetMapping("/admin/userlist")
@@ -96,5 +99,11 @@ public class AdminController {
 		};
 
 		return inquiryService.updateStatus(inquiryNo, nextStatus);
+	}
+	
+	@GetMapping("/")
+	@PreAuthorize("hasRole('ADMIN')")
+	public AdminStaticDTO adminStatic() {
+		return adminStaticService.adminStatic();
 	}
 }
