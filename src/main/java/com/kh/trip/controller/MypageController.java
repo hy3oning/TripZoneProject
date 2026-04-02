@@ -6,8 +6,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,7 +18,6 @@ import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.service.HostProfileService;
 import com.kh.trip.service.MypageService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -57,13 +54,6 @@ public class MypageController {
 	@PreAuthorize("hasRole('USER')")
 	public MypageDTO.ProfileResponse getProfile(@AuthenticationPrincipal AuthUserPrincipal principal) {
 		return mypageService.getProfile(requirePrincipal(principal).getUserNo());
-	}
-
-	@PostMapping("/bookings")
-	@PreAuthorize("hasRole('USER')")
-	public MypageDTO.BookingCreatedResponse createBooking(@AuthenticationPrincipal AuthUserPrincipal principal,
-			@Valid @RequestBody MypageDTO.BookingCreateRequest request) {
-		return mypageService.createBooking(requirePrincipal(principal).getUserNo(), request);
 	}
 
 	@GetMapping("/coupons")
