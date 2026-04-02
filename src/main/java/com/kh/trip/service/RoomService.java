@@ -16,6 +16,8 @@ public interface RoomService {
 	// 객실 상세 조회 기능
 	RoomDTO getRoomDetail(Long roomNo);
 
+	RoomDTO getRoomForManagement(Long roomNo);
+
 	// 객실 수정 기능
 	RoomDTO updateRoom(Long roomNo, RoomDTO updateDTO);
 
