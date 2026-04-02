@@ -8,12 +8,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.kh.trip.domain.Booking;
 import com.kh.trip.domain.Lodging;
 import com.kh.trip.domain.enums.BookingStatus;
+
+import jakarta.persistence.LockModeType;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 	@Query("select b from Booking b where b.user.userNo = :userNo")
@@ -39,6 +42,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 	@Query("select b.bookingNo from Booking b where b.checkOutDate <= :today and b.status = :status")
 	List<Long> findBookingNosToComplete(@Param("today")LocalDateTime today,@Param("status") BookingStatus status);
 
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select count(b) > 0 from Booking b where b.room.roomNo = :roomNo and b.status != :status and b.checkInDate < :checkOutDate and b.checkOutDate > :checkInDate")
 	boolean existsAlreadyBooking(@Param("roomNo")Long roomNo,@Param("status")BookingStatus status, @Param("checkInDate")LocalDateTime checkInDate, @Param("checkOutDate")LocalDateTime checkOutDate);
 
