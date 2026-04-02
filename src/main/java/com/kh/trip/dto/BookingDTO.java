@@ -19,6 +19,7 @@ import lombok.Setter;
 public class BookingDTO {
 	private Long bookingNo;
 	private Long userNo;
+	private String userName;
 	private Long roomNo;
 	private Long userCouponNo;
 	private LocalDateTime checkInDate;

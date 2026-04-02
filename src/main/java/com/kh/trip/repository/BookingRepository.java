@@ -39,4 +39,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 	@Query("select b.bookingNo from Booking b where b.checkOutDate <= :today and b.status = :status")
 	List<Long> findBookingNosToComplete(@Param("today")LocalDateTime today,@Param("status") BookingStatus status);
 
+	@Query("select count(b) > 0 from Booking b where b.room.roomNo = :roomNo and b.status != :status and b.checkInDate < :checkOutDate and b.checkOutDate > :checkInDate")
+	boolean existsAlreadyBooking(@Param("roomNo")Long roomNo,@Param("status")BookingStatus status, @Param("checkInDate")LocalDateTime checkInDate, @Param("checkOutDate")LocalDateTime checkOutDate);
+
 }

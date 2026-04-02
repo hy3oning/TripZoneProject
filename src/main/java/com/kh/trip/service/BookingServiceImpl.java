@@ -71,6 +71,13 @@ public class BookingServiceImpl implements BookingService {
 
 		if (room.getStatus().equals(RoomStatus.UNAVAILABLE))
 			throw new IllegalArgumentException("예약이 불가한 방입니다.");
+		
+		boolean isReserved = repository.existsAlreadyBooking(bookingDTO.getRoomNo(),  BookingStatus.CANCELED, bookingDTO.getCheckInDate().toLocalDate().atStartOfDay(), 
+		        bookingDTO.getCheckOutDate().toLocalDate().atStartOfDay());
+
+		    if (isReserved) {
+		        throw new IllegalArgumentException("선택하신 날짜로는 예약이 불가한 객실입니다.");
+		    }
 
 		// 숙박 일수 계산 (체크아웃 날짜 - 체크인 날짜)
 		Long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate().toLocalDate(),
@@ -104,9 +111,7 @@ public class BookingServiceImpl implements BookingService {
 				.guestCount(bookingDTO.getGuestCount()).pricePerNight(Long.valueOf(room.getPricePerNight()))
 				.discountAmount(discountAmount).totalPrice(totalPrice).status(BookingStatus.PENDING).build();
 		Long bookingNo = repository.save(booking).getBookingNo();
-
-		room.changeStatus(RoomStatus.UNAVAILABLE);
-		roomRepository.save(room);
+		
 		if (userCoupon != null) {
 			userCoupon.changeUsedAt(LocalDateTime.now());
 			userCoupon.changeStatus(CouponStatus.USED);
@@ -208,11 +213,6 @@ public class BookingServiceImpl implements BookingService {
 		if (booking.getStatus() == BookingStatus.PENDING) {
 			booking.cancel();
 			repository.save(booking);
-
-			Room room = roomRepository.findById(booking.getRoom().getRoomNo())
-					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "객실을 찾을 수 없습니다."));
-			room.changeStatus(RoomStatus.AVAILABLE);
-			roomRepository.save(room);
 		}
 
 	}
@@ -241,7 +241,7 @@ public class BookingServiceImpl implements BookingService {
 
 	public List<BookingDTO> entityToDTO(Page<Booking> result) {
 		return result.getContent().stream().map(booking -> BookingDTO.builder().bookingNo(booking.getBookingNo())
-				.userNo(booking.getUser().getUserNo()).roomNo(booking.getRoom().getRoomNo())
+				.userNo(booking.getUser().getUserNo()).roomNo(booking.getRoom().getRoomNo()).userName(booking.getUser().getUserName())
 				.lodgingName(booking.getRoom().getLodging().getLodgingName())
 				.userCouponNo(booking.getUserCoupon() != null ? booking.getUserCoupon().getUserCouponNo() : null)
 				.roomName(booking.getRoom().getRoomName()).checkInDate(booking.getCheckInDate())
@@ -307,9 +307,6 @@ public class BookingServiceImpl implements BookingService {
 		updateMemberGrade(user);
 		userRepository.save(user);
 		repository.save(booking);
-		Room room = roomRepository.findById(booking.getRoom().getRoomNo()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "객실을 찾을 수 없습니다."));
-		room.changeStatus(RoomStatus.AVAILABLE);
-		roomRepository.save(room);
 	}
 
 	private void updateMemberGrade(User user) {
