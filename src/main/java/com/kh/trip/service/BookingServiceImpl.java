@@ -28,6 +28,7 @@ import com.kh.trip.domain.enums.DiscountType;
 import com.kh.trip.domain.enums.MemberGradeName;
 import com.kh.trip.domain.enums.MileageChangeType;
 import com.kh.trip.domain.enums.MileageStatus;
+import com.kh.trip.domain.enums.PaymentStatus;
 import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.BookingDTO;
 import com.kh.trip.dto.PageRequestDTO;
@@ -71,13 +72,14 @@ public class BookingServiceImpl implements BookingService {
 
 		if (room.getStatus().equals(RoomStatus.UNAVAILABLE))
 			throw new IllegalArgumentException("예약이 불가한 방입니다.");
-		
-		boolean isReserved = repository.existsAlreadyBooking(bookingDTO.getRoomNo(),  BookingStatus.CANCELED, bookingDTO.getCheckInDate().toLocalDate().atStartOfDay(), 
-		        bookingDTO.getCheckOutDate().toLocalDate().atStartOfDay());
 
-		    if (isReserved) {
-		        throw new IllegalArgumentException("선택하신 날짜로는 예약이 불가한 객실입니다.");
-		    }
+		boolean isReserved = repository.existsAlreadyBooking(bookingDTO.getRoomNo(), BookingStatus.CANCELED,
+				bookingDTO.getCheckInDate().toLocalDate().atStartOfDay(),
+				bookingDTO.getCheckOutDate().toLocalDate().atStartOfDay());
+
+		if (isReserved) {
+			throw new IllegalArgumentException("선택하신 날짜로는 예약이 불가한 객실입니다.");
+		}
 
 		// 숙박 일수 계산 (체크아웃 날짜 - 체크인 날짜)
 		Long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate().toLocalDate(),
@@ -111,7 +113,7 @@ public class BookingServiceImpl implements BookingService {
 				.guestCount(bookingDTO.getGuestCount()).pricePerNight(Long.valueOf(room.getPricePerNight()))
 				.discountAmount(discountAmount).totalPrice(totalPrice).status(BookingStatus.PENDING).build();
 		Long bookingNo = repository.save(booking).getBookingNo();
-		
+
 		if (userCoupon != null) {
 			userCoupon.changeUsedAt(LocalDateTime.now());
 			userCoupon.changeStatus(CouponStatus.USED);
@@ -234,15 +236,26 @@ public class BookingServiceImpl implements BookingService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "대기 상태 예약만 확정할 수 있습니다.");
 		}
 
-		booking.confirm();
-		repository.save(booking);
-		return entityToDTO(bookingNo);
+		Payment payment = paymentRepository.findFirstByBooking_BookingNoOrderByPaymentNoDesc(bookingNo)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "예약 확정 전 결제 정보가 필요합니다."));
+
+		if (payment.getPaymentStatus() == PaymentStatus.READY) {
+			paymentService.complete(payment.getPaymentNo());
+			return entityToDTO(bookingNo);
+		}
+		if (payment.getPaymentStatus() == PaymentStatus.PAID) {
+			booking.confirm();
+			repository.save(booking);
+			return entityToDTO(bookingNo);
+		}
+		throw new ResponseStatusException(HttpStatus.CONFLICT, "예약 확정과 연결할 수 없는 결제 상태입니다.");
+
 	}
 
 	public List<BookingDTO> entityToDTO(Page<Booking> result) {
 		return result.getContent().stream().map(booking -> BookingDTO.builder().bookingNo(booking.getBookingNo())
-				.userNo(booking.getUser().getUserNo()).roomNo(booking.getRoom().getRoomNo()).userName(booking.getUser().getUserName())
-				.lodgingName(booking.getRoom().getLodging().getLodgingName())
+				.userNo(booking.getUser().getUserNo()).roomNo(booking.getRoom().getRoomNo())
+				.userName(booking.getUser().getUserName()).lodgingName(booking.getRoom().getLodging().getLodgingName())
 				.userCouponNo(booking.getUserCoupon() != null ? booking.getUserCoupon().getUserCouponNo() : null)
 				.roomName(booking.getRoom().getRoomName()).checkInDate(booking.getCheckInDate())
 				.checkOutDate(booking.getCheckOutDate()).guestCount(booking.getGuestCount())
