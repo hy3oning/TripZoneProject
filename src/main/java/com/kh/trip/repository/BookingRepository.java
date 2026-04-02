@@ -42,6 +42,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 	@Query("select b.bookingNo from Booking b where b.checkOutDate <= :today and b.status = :status")
 	List<Long> findBookingNosToComplete(@Param("today") LocalDateTime today, @Param("status") BookingStatus status);
 
+	// 비관적 잠금은 단순히 데이터를 수정할 때뿐만 아니라, "내가 읽은 상태가 변하지 않음을 보장받아야 할 때" 사용
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select count(b) > 0 from Booking b where b.room.roomNo = :roomNo and b.status != :status and b.checkInDate < :checkOutDate and b.checkOutDate > :checkInDate")
 	boolean existsAlreadyBooking(@Param("roomNo") Long roomNo, @Param("status") BookingStatus status,
