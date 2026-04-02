@@ -2,6 +2,7 @@ package com.kh.trip.service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,6 +34,8 @@ import com.kh.trip.domain.enums.RoomStatus;
 import com.kh.trip.dto.BookingDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
+import com.kh.trip.dto.SellerLodgingSalesDTO;
+import com.kh.trip.dto.SellerSalesSummaryDTO;
 import com.kh.trip.repository.BookingRepository;
 import com.kh.trip.repository.MemberGradeRepository;
 import com.kh.trip.repository.MileageHistoryRepository;
@@ -341,4 +344,29 @@ public class BookingServiceImpl implements BookingService {
 		user.changeMemberGrade(memberGrade);
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public SellerSalesSummaryDTO getSellerSalesSummary(Long hostNo) {
+		List<Object[]> rows = repository.getSellerSalesSummary(hostNo);
+
+		long totalSalesAmount = 0L;
+		long totalBookingCount = 0L;
+		List<SellerLodgingSalesDTO> lodgingSales = new ArrayList<>();
+
+		for (Object[] row : rows) {
+			Long lodgingNo = ((Number) row[0]).longValue();
+			String lodgingName = (String) row[1];
+			Long salesAmount = ((Number) row[2]).longValue();
+			Long bookingCount = ((Number) row[3]).longValue();
+
+			totalSalesAmount += salesAmount;
+			totalBookingCount += bookingCount;
+
+			lodgingSales.add(SellerLodgingSalesDTO.builder().lodgingNo(lodgingNo).lodgingName(lodgingName)
+					.salesAmount(salesAmount).bookingCount(bookingCount).build());
+		}
+
+		return SellerSalesSummaryDTO.builder().totalSalesAmount(totalSalesAmount).totalBookingCount(totalBookingCount)
+				.lodgingSales(lodgingSales).build();
+	}
 }

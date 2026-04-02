@@ -2,6 +2,7 @@ package com.kh.trip.controller;
 
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -55,7 +56,7 @@ public class ReviewController {
 	@PostMapping("/images")
 	@PreAuthorize("hasRole('USER')")
 	public Map<String, List<String>> uploadReviewImages(@AuthenticationPrincipal AuthUserPrincipal authUser,
-			@RequestParam("files") List<MultipartFile> files) {
+			@RequestParam List<MultipartFile> files) {
 
 		if (authUser == null) {
 			throw new IllegalArgumentException("로그인한 사용자만 리뷰 이미지를 업로드할 수 있습니다.");

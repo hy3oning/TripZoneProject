@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -19,6 +20,7 @@ import com.kh.trip.dto.HostProfileDTO;
 import com.kh.trip.dto.LodgingDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
+import com.kh.trip.dto.SellerSalesSummaryDTO;
 import com.kh.trip.security.AuthUserPrincipal;
 import com.kh.trip.service.BookingService;
 import com.kh.trip.service.HostProfileService;
@@ -36,7 +38,7 @@ public class SellerController {
 	private final BookingService bookingService;
 	private final HostProfileService hostProfileService;
 	private final LodgingService lodgingService;
-	
+
 	@GetMapping("/lodgings")
 	@PreAuthorize("hasRole('HOST')")
 	public List<LodgingDTO> getMyLodgings(@AuthenticationPrincipal AuthUserPrincipal authUser) {
@@ -80,4 +82,16 @@ public class SellerController {
 		}
 		return hostProfile;
 	}
+
+	@GetMapping("/sales-summary")
+	@PreAuthorize("hasRole('HOST')")
+	public SellerSalesSummaryDTO getSalesSummary(@AuthenticationPrincipal AuthUserPrincipal authUser) {
+		HostProfileDTO hostProfile = requireHostProfile(authUser);
+		return bookingService.getSellerSalesSummary(hostProfile.getHostNo());
+	}
+
+	public String getMethodName(@RequestParam String param) {
+		return new String();
+	}
+
 }
