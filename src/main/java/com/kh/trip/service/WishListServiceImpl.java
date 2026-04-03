@@ -42,7 +42,7 @@ public class WishListServiceImpl implements WishListService {
 		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, pageRequestDTO.getSize(),
 				Sort.by("wishListNo").descending());
 
-		Page<WishList> result = wishListRepository.findByUserId(userNo, pageable);
+		Page<WishList> result = wishListRepository.findByUserUserNo(userNo, pageable);
 
 		List<WishListDTO> dtoList = result.getContent().stream().map(wishList -> {
 			// 1. 숙소 정보 조회
