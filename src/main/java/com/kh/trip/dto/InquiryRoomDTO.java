@@ -20,6 +20,7 @@ public class InquiryRoomDTO {
 	private Long userNo;
 	private Long hostNo;
 	private Long lodgingNo;
+	private Long bookingNo;
 	private InquiryRoomStatus status;
 	private String lodgingName;
 	private String hostName;

@@ -3,14 +3,18 @@ package com.kh.trip.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import com.kh.trip.domain.Booking;
 import com.kh.trip.domain.InquiryMessage;
 import com.kh.trip.domain.InquiryRoom;
 import com.kh.trip.domain.User;
+import com.kh.trip.domain.enums.BookingStatus;
 import com.kh.trip.domain.enums.InquiryRoomStatus;
 import com.kh.trip.domain.enums.SenderType;
 import com.kh.trip.dto.InquiryMessageDTO;
+import com.kh.trip.repository.BookingRepository;
 import com.kh.trip.repository.InquiryMessageRepository;
 import com.kh.trip.repository.InquiryRoomRepository;
 import com.kh.trip.repository.UserRepository;
@@ -26,6 +30,7 @@ public class InquiryMessageServiceImpl implements InquiryMessageService {
 	private final InquiryMessageRepository repository;
 	private final InquiryRoomRepository roomRepository;
 	private final UserRepository userRepository;
+	private final BookingRepository bookingRepository;
 
 	@Override
 	public List<InquiryMessageDTO> findByRoomNo(Long roomNo) {
@@ -65,6 +70,23 @@ public class InquiryMessageServiceImpl implements InquiryMessageService {
 			senderType = SenderType.HOST;
 		} else {
 			throw new IllegalArgumentException("이 채팅방의 참여자가 아닙니다.");
+		}
+		
+		if (room.getBookingNo() == null) {
+			List<Booking> bookings = bookingRepository
+		        .findForInquiryRoom(
+		            room.getUser().getUserNo(),
+		            room.getLodging().getLodgingNo(),
+		            List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.COMPLETED),
+		            PageRequest.of(0, 1) // 1건만 조회해 오고 싶어서
+		        );
+
+			Booking booking = bookings.isEmpty() ? null : bookings.get(0);
+			
+		    if (booking != null) {
+		        room.changeBookingNo(booking.getBookingNo());
+		        roomRepository.save(room);
+		    }
 		}
 
 		InquiryMessage message = InquiryMessage.builder()

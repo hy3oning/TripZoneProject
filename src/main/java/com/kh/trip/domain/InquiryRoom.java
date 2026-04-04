@@ -46,6 +46,9 @@ public class InquiryRoom extends BaseTimeEntity {
 	@JoinColumn(name = "LODGING_NO", nullable = false)
 	private Lodging lodging;
 
+	@Column(name = "BOOKING_NO")
+	private Long bookingNo;
+	
 	@Enumerated(EnumType.STRING)
 	@Column(name = "STATUS", nullable = false)
 	@Builder.Default
@@ -53,5 +56,9 @@ public class InquiryRoom extends BaseTimeEntity {
 
 	public void changeStatus(InquiryRoomStatus status) {
 		this.status = status;
+	}
+	
+	public void changeBookingNo(Long bookingNo) {
+		this.bookingNo = bookingNo;
 	}
 }

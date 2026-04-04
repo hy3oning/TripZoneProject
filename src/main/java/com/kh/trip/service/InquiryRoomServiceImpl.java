@@ -61,6 +61,7 @@ public class InquiryRoomServiceImpl implements InquiryRoomService {
 							.user(user)
 							.host(host)
 							.lodging(lodging)
+							.bookingNo(roomDTO.getBookingNo())
 							.status(InquiryRoomStatus.OPEN)
 							.build();
 
@@ -135,6 +136,7 @@ public class InquiryRoomServiceImpl implements InquiryRoomService {
 				.userNo(room.getUser().getUserNo())
 				.hostNo(room.getHost().getHostNo())
 				.lodgingNo(room.getLodging().getLodgingNo())
+				.bookingNo(room.getBookingNo())
 				.status(room.getStatus())
 				.lodgingName(room.getLodging().getLodgingName())
 				.hostName(room.getHost().getBusinessName())
