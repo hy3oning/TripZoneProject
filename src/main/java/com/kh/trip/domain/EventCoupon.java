@@ -1,5 +1,7 @@
 package com.kh.trip.domain;
 
+import com.kh.trip.domain.common.BaseTimeEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,7 +24,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class EventCoupon {
+public class EventCoupon extends BaseTimeEntity{
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_EVENT_COUPONS")
 	@SequenceGenerator(name = "SEQ_EVENT_COUPONS", sequenceName = "SEQ_EVENT_COUPONS", allocationSize = 1)
