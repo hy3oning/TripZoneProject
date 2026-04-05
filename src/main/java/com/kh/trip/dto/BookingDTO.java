@@ -21,6 +21,7 @@ public class BookingDTO {
 	private String userName;
 	private Long roomNo;
 	private Long userCouponNo;
+	private Long mileage;
 	private LocalDateTime checkInDate;
 	private LocalDateTime checkOutDate;
 	private Long guestCount;

@@ -69,11 +69,6 @@ public class UserCoupon extends BaseTimeEntity{
 	        return this.status; 
 	    }
 	    
-	    // 이미 USED 상태라면 그대로 유지(Enum == 비교 사용)
-	    if (this.status == CouponStatus.USED) {
-	        return this.status;
-	    }
-
 	    // 기간 및 원본 쿠폰 상태 확인 로직
 	    LocalDateTime now = LocalDateTime.now();
 	    if (this.coupon != null && this.coupon.getEndDate().isBefore(now)) {
