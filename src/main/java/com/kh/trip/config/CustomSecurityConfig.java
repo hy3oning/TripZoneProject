@@ -32,7 +32,8 @@ public class CustomSecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
 						// 로그인/로그아웃/재발급/웹소켓 핸드셰이크/이미지 경로는 인증 없이 접근 가능하다.
-						.requestMatchers("/", "/ws/**", "/api/view/**", "/error", "/api/auth/register", "/api/auth/login",
+						.requestMatchers("/", "/ws/**", "/api/view/**", "/api/lodgings/view/**",
+							    "/api/rooms/view/**", "/api/event/view/**", "/error", "/api/auth/register", "/api/auth/login",
 								"/api/auth/logout", "/api/auth/refresh", "/api/auth/google", "/api/auth/kakao",
 								"/api/auth/naver")
 						.permitAll()
