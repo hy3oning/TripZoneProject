@@ -50,6 +50,9 @@ public class Booking extends BaseTimeEntity {
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
 	@JoinColumn(name = "USER_COUPON_NO") // 실제 DB의 FK 컬럼명
 	private UserCoupon userCoupon;
+	
+	@Column(name = "MILEAGE")
+	private Long mileage;
 
 	@Column(name = "CHECK_IN_DATE", nullable = false)
 	private LocalDateTime checkInDate;

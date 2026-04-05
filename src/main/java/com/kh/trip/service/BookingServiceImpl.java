@@ -92,6 +92,8 @@ public class BookingServiceImpl implements BookingService {
 		Long discountAmount = 0L;
 
 		UserCoupon userCoupon = null;
+		Long couponDiscountAmount = 0L;
+
 		if (bookingDTO.getUserCouponNo() != null) {
 			userCoupon = userCouponRepository.findById(bookingDTO.getUserCouponNo())
 					.orElseThrow(() -> new IllegalArgumentException("회원이 갖고 있지 않는 쿠폰번호입니다."));
@@ -102,26 +104,42 @@ public class BookingServiceImpl implements BookingService {
 			DiscountType type = userCoupon.getCoupon().getDiscountType();
 			Long discountValue = userCoupon.getCoupon().getDiscountValue();
 
-			totalPrice = type.calculate(roomPrice, discountValue);
+			Long discountedPrice = type.calculate(roomPrice, discountValue);
+			if (discountedPrice < 0) {
+				discountedPrice = 0L;
+			}
 
-			// 0원 미만으로 떨어지는 것을 방지하는 안전장치
-			if (totalPrice < 0)
-				totalPrice = 0L;
-
-			discountAmount = roomPrice - totalPrice;
+			couponDiscountAmount = roomPrice - discountedPrice;
+			totalPrice = discountedPrice;
 		}
 
-		Booking booking = Booking.builder().user(user).userCoupon(userCoupon).room(room)
+		Long requestedMileage = bookingDTO.getMileage() == null ? 0L : bookingDTO.getMileage();
+		if (requestedMileage < 0) {
+			throw new IllegalArgumentException("마일리지는 0 이상이어야 합니다.");
+		}
+
+		if (requestedMileage > user.getMileage()) {
+			throw new IllegalArgumentException("보유 마일리지를 초과하여 사용할 수 없습니다.");
+		}
+
+		// 입력된 마일리지가 총 가격보다 많으면 총 가격만큼만 사용하도록 로직구성
+		Long mileageUsed = Math.min(requestedMileage, totalPrice);
+		totalPrice -= mileageUsed;
+
+		discountAmount = couponDiscountAmount + mileageUsed;
+		Booking booking = Booking.builder().user(user).userCoupon(userCoupon).room(room).mileage(mileageUsed)
 				.checkInDate(bookingDTO.getCheckInDate()).checkOutDate(bookingDTO.getCheckOutDate())
 				.guestCount(bookingDTO.getGuestCount()).pricePerNight(Long.valueOf(room.getPricePerNight()))
-				.discountAmount(discountAmount).totalPrice(totalPrice).status(BookingStatus.PENDING).build();
-		Long bookingNo = repository.save(booking).getBookingNo();
+				.discountAmount(discountAmount).totalPrice(totalPrice)
+				.requestMessage(bookingDTO.getRequestMessage()).status(BookingStatus.PENDING).build();
+		Booking savedBooking = repository.save(booking);
 
 		if (userCoupon != null) {
 			userCoupon.changeUsedAt(LocalDateTime.now());
 			userCoupon.changeStatus(CouponStatus.USED);
 		}
-		return bookingNo;
+		
+		return savedBooking.getBookingNo();
 	}
 
 	@Override
@@ -206,7 +224,7 @@ public class BookingServiceImpl implements BookingService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "숙박 완료된 예약은 취소할 수 없습니다. bookingNo=" + bookingNo);
 		}
 
-		if (booking.getStatus() == BookingStatus.CONFIRMED) {
+		if (booking.getStatus() == BookingStatus.CONFIRMED || booking.getStatus() == BookingStatus.PENDING) {
 			Payment payment = paymentRepository.findFirstByBooking_BookingNoOrderByPaymentNoDesc(bookingNo)
 					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
 							"예약에 대한 결제 정보가 없습니다. bookingNo=" + bookingNo));
@@ -214,12 +232,6 @@ public class BookingServiceImpl implements BookingService {
 			paymentService.cancel(payment.getPaymentNo(), booking.getUser().getUserNo());
 			return;
 		}
-
-		if (booking.getStatus() == BookingStatus.PENDING) {
-			booking.cancel();
-			repository.save(booking);
-		}
-
 	}
 
 	private BookingDTO confirmBooking(Long bookingNo) {
@@ -271,7 +283,7 @@ public class BookingServiceImpl implements BookingService {
 	public BookingDTO entityToDTO(Long bookingNo) {
 		Optional<Booking> result = repository.findById(bookingNo);
 		Booking booking = result.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예약번호입니다."));
-		return BookingDTO.builder().bookingNo(booking.getBookingNo()).userNo(booking.getUser().getUserNo())
+		return BookingDTO.builder().bookingNo(booking.getBookingNo()).userNo(booking.getUser().getUserNo()).userName(booking.getUser().getUserName())
 				.roomNo(booking.getRoom().getRoomNo()).lodgingName(booking.getRoom().getLodging().getLodgingName())
 				.userCouponNo(booking.getUserCoupon() != null ? booking.getUserCoupon().getUserCouponNo() : null)
 				.roomName(booking.getRoom().getRoomName()).checkInDate(booking.getCheckInDate())

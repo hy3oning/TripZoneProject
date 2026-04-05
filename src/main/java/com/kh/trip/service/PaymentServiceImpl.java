@@ -64,6 +64,34 @@ public class PaymentServiceImpl implements PaymentService {
 		}
 		Payment payment = dtoToEntity(paymentDTO);
 		Payment result = paymentRepository.save(payment);
+		
+		// Booking에 마일리지 사용흔적이 있으면 결제시점에 마일리지 사용내역저장
+		Long usedMileage = booking.getMileage() == null ? 0L : booking.getMileage();
+
+		if (usedMileage > 0) {
+			boolean alreadyUsed = mileageHistoryRepository.existsByPayment_PaymentNoAndChangeTypeAndStatus(
+					result.getPaymentNo(), MileageChangeType.USE, MileageStatus.NORMAL);
+
+			if (!alreadyUsed) {
+				User user = booking.getUser();
+				user.useMileage(usedMileage);
+
+				MileageHistory mileageHistory = MileageHistory.builder()
+						.user(user)
+						.booking(booking)
+						.payment(result)
+						.changeType(MileageChangeType.USE)
+						.changeAmount(usedMileage)
+						.balanceAfter(user.getMileage())
+						.reason("예약 결제 시 마일리지 사용")
+						.status(MileageStatus.NORMAL)
+						.build();
+
+				mileageHistoryRepository.save(mileageHistory);
+				userRepository.save(user);
+			}
+		}
+		
 		return result.getPaymentNo();
 	}
 
@@ -150,6 +178,27 @@ public class PaymentServiceImpl implements PaymentService {
 				User user = history.getUser();
 				user.useMileage(history.getChangeAmount());
 				history.changeStatus(MileageStatus.CANCELED);
+				userRepository.save(user);
+			}
+			
+			// 결제시 사용했던 마일리지 복구
+			if (history.getChangeType() == MileageChangeType.USE && history.getStatus() == MileageStatus.NORMAL) {
+				User user = history.getUser();
+				user.addMileage(history.getChangeAmount());
+				history.changeStatus(MileageStatus.CANCELED);
+
+				MileageHistory restoreHistory = MileageHistory.builder()
+						.user(user)
+						.booking(history.getBooking())
+						.payment(payment)
+						.changeType(MileageChangeType.CANCEL_USE)
+						.changeAmount(history.getChangeAmount())
+						.balanceAfter(user.getMileage())
+						.reason("결제 취소로 사용 마일리지 복구")
+						.status(MileageStatus.NORMAL)
+						.build();
+
+				mileageHistoryRepository.save(restoreHistory);
 				userRepository.save(user);
 			}
 		}
