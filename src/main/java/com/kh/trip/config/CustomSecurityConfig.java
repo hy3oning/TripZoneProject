@@ -32,11 +32,13 @@ public class CustomSecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
 						// 로그인/로그아웃/재발급/웹소켓 핸드셰이크 경로는 인증 없이 접근 가능하다.
-						.requestMatchers("/", "ws/**","/error", "/api/auth/register", "/api/auth/login", "/api/auth/logout",
-								"/api/auth/refresh", "/api/auth/google", "/api/auth/kakao", "/api/auth/naver")
+						.requestMatchers("/", "/ws/**", "/error", "/api/auth/register", "/api/auth/login",
+								"/api/auth/logout", "/api/auth/refresh", "/api/auth/google", "/api/auth/kakao",
+								"/api/auth/naver")
 						.permitAll()
-						// JWT 필터 적용 전이므로 현재는 전체 요청을 임시 허용한다.
+						// 그 외 요청은 인증된 사용자만 접근 가능.
 						.anyRequest().authenticated())
+				// security 기본 로그인 필터보다 먼저 JWT 필터를 실행시킨다.
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
