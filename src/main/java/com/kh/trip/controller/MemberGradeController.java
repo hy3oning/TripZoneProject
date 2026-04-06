@@ -3,6 +3,7 @@ package com.kh.trip.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -35,12 +36,14 @@ public class MemberGradeController {
 	}
 
 	@GetMapping("/list")
+	 @PreAuthorize("isAuthenticated()")
 	public List<MemberGradeDTO> findAll() {
 		log.info("MemberGradeFindAll()");
 		return service.findAll();
 	}
 
 	@GetMapping("/{gradeName}")
+	 @PreAuthorize("isAuthenticated()")
 	public MemberGradeDTO findById(@PathVariable MemberGradeName gradeName) {
 		log.info("MemberGradeFindById()" + gradeName);
 		return service.findById(gradeName);

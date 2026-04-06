@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import com.kh.trip.dto.InquiryDTO;
@@ -29,6 +30,7 @@ public class InquiryController {
 	private final InquiryService service;
 
 	@PostMapping
+	@PreAuthorize("hasAnyRole('USER','HOST')")
 	public Map<String, Long> save(@AuthenticationPrincipal AuthUserPrincipal authUser, @RequestBody InquiryDTO inquiryDTO) {
 		log.info("inquiry:save()" + inquiryDTO);
 		if (authUser == null) {
@@ -40,30 +42,35 @@ public class InquiryController {
 	}
 
 	@GetMapping("/list")
+	@PreAuthorize("hasRole('ADMIN')")
 	public PageResponseDTO<InquiryDTO> findAll(PageRequestDTO pageRequestDTO) {
 		log.info("inquiry:findByAll()");
 		return service.findAll(pageRequestDTO);
 	}
 
 	@GetMapping("/list/{userNo}")
-	public PageResponseDTO<InquiryDTO> findByUserId(@PathVariable Long userNo, PageRequestDTO pageRequestDTO) {
-		log.info("inquiry:findByUserId(userNo) = " + userNo);
-		return service.findByUserId(userNo, pageRequestDTO);
+	@PreAuthorize("hasAnyRole('USER','HOST')")
+	public PageResponseDTO<InquiryDTO> findByUserId(@AuthenticationPrincipal AuthUserPrincipal authUser, PageRequestDTO pageRequestDTO) {
+		log.info("inquiry:findByUserId(userNo) = " + authUser.getUserNo());
+		return service.findByUserId(authUser.getUserNo(), pageRequestDTO);
 	}
 
 	@GetMapping("/{inquiryNo}")
+	 @PreAuthorize("isAuthenticated()")
 	public InquiryDTO findById(@PathVariable Long inquiryNo) {
 		log.info("inquiry:findById(inquiryNo) = " + inquiryNo);
 		return service.findById(inquiryNo);
 	}
 
 	@PatchMapping("/{inquiryNo}")
+	@PreAuthorize("hasAnyRole('USER','HOST')")
 	public void update(@PathVariable Long inquiryNo, @RequestBody InquiryDTO inquiryDTO) {
 		log.info("inquiry:update(inquiryNo) = " + inquiryNo);
 		service.update(inquiryNo, inquiryDTO);
 	}
 
 	@DeleteMapping("/{inquiryNo}")
+	 @PreAuthorize("isAuthenticated()")
 	public void delete(@PathVariable Long inquiryNo) {
 		log.info("inquiry:delete(inquiryNo) = " + inquiryNo);
 		service.delete(inquiryNo);

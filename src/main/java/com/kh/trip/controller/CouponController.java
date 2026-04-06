@@ -28,6 +28,7 @@ public class CouponController {
 	private final CouponService service;
 
 	@PostMapping
+	@PreAuthorize("hasRole('ADMIN')")
 	public Map<String, Long> save(@RequestBody CouponDTO couponDTO) {
 		log.info("couponSave() = " + couponDTO);
 		Long couponNo = service.save(couponDTO);
@@ -35,7 +36,7 @@ public class CouponController {
 	}
 
 	@GetMapping("/list")
-	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@PreAuthorize("hasRole('ADMIN')")
 	public List<CouponDTO> findAll() {
 		log.info("CouponDTOFindAll()");
 		return service.findAll();
