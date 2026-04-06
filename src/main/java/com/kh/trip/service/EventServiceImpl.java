@@ -1,5 +1,7 @@
 package com.kh.trip.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -80,9 +82,18 @@ public class EventServiceImpl implements EventService {
 		User user = userRepository.findById(eventDTO.getAdminUser())
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 관리자 번호입니다."));
 
+		LocalDate today = LocalDate.now();
+		LocalDate start = eventDTO.getStartDate().toLocalDate();
+		LocalDate end = eventDTO.getEndDate().toLocalDate();
+
+		EventStatus status =
+		    today.isBefore(start) ? EventStatus.DRAFT :
+		    today.isAfter(end) ? EventStatus.ENDED :
+		    EventStatus.ONGOING;
+		
 		Event event = Event.builder().title(eventDTO.getTitle()).content(eventDTO.getContent())
 				.thumbnailUrl(eventDTO.getThumbnailUrl()).startDate(eventDTO.getStartDate())
-				.endDate(eventDTO.getEndDate()).viewCount(0L).adminUser(user).status(EventStatus.DRAFT).build();
+				.endDate(eventDTO.getEndDate()).viewCount(0L).adminUser(user).status(status).build();
 		// [추가] 2. 중복 검사 (방어 코드)
 		// 같은 제목의 이벤트가 이미 있는지 확인합니다.
 		boolean isExist = eventRepository.existsByTitle(eventDTO.getTitle());
@@ -98,8 +109,7 @@ public class EventServiceImpl implements EventService {
 				return EventCoupon.builder().event(savedEvent).coupon(coupon).build();
 			}).collect(Collectors.toList());
 			eventCouponRepository.saveAll(eventCouponList);
-		}
-		;
+		};
 		return savedEvent.getEventNo();
 	}
 
