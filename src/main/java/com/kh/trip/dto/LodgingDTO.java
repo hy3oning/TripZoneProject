@@ -39,26 +39,36 @@ public class LodgingDTO {
 	private Double reviewAverage; // 리뷰 평균 평점
 	private Long reviewCount; // 공개 리뷰 수
 
-	// 업로드 받을 파일들
+	// 새로 업로드할 파일 목록
+	// 등록/수정 요청 시 MultipartFile 형태로 전달받는다.
 	@Builder.Default
 	private List<MultipartFile> files = new ArrayList<>();
 
-	// 실제 저장된 파일명 목록
+	// 실제 서버에 저장된 파일명 목록
+	// DB 저장 시 LodgingImage와 연결되거나,
+	// 조회 응답 시 프론트에 이미지 목록으로 내려줄 때 사용한다.
 	@Builder.Default
 	private List<String> uploadFileNames = new ArrayList<>();
 
-	// 상세조회 시 같이 내려줄 객실 목록
+	// 숙소 상세조회 시 함께 내려줄 객실 목록
+	// 상세 페이지나 판매자 관리 화면에서 사용된다.
 	@Builder.Default
 	private List<RoomDTO> rooms = new ArrayList<>();
 
+	// 프론트나 외부 입력에서 postCode라는 이름으로 들어와도
+	// 내부적으로는 zipCode 필드에 매핑되도록 만든 보조 setter
 	public void setPostCode(String postCode) {
 		this.zipCode = postCode;
 	}
 
+	// 프론트나 외부 입력에서 checkIn이라는 이름으로 들어온 값을
+	// checkInTime 필드에 매핑하기 위한 보조 setter
 	public void setCheckIn(String checkIn) {
 		this.checkInTime = checkIn;
 	}
 
+	// 프론트나 외부 입력에서 checkOut이라는 이름으로 들어온 값을
+	// checkOutTime 필드에 매핑하기 위한 보조 setter
 	public void setCheckOut(String checkOut) {
 		this.checkOutTime = checkOut;
 	}
