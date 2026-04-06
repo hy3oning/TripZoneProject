@@ -68,16 +68,14 @@ public class EventController {
 		String oldFileName = oldEventDTO.getThumbnailUrl();
 		MultipartFile file = eventDTO.getFile();
 		String currentUploadFileName = null;
-		if (file != null && !file.isEmpty())
+		if (file != null && !file.isEmpty()) {
 			currentUploadFileName = fileUtil.saveFile(file);
-		String uploadedFileName = eventDTO.getThumbnailUrl();
-		if (currentUploadFileName != null && !currentUploadFileName.isEmpty())
-			uploadedFileName = currentUploadFileName;
-		eventDTO.setThumbnailUrl(uploadedFileName);
+		}
+		eventDTO.setThumbnailUrl(currentUploadFileName);
 
 		service.update(eventDTO);
 
-		if (oldFileName != null && !oldFileName.isEmpty() && !oldFileName.equals(uploadedFileName)) {
+		if (oldFileName != null && !oldFileName.isEmpty() && !oldFileName.equals(currentUploadFileName)) {
 			fileUtil.deleteFile(oldFileName);
 		}
 		return Map.of("RESULT", "SUCCESS");
