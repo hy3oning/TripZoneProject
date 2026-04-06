@@ -28,10 +28,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-//DB 테이블과 매핑되는 클래스
+// DB의 LODGINGS 테이블과 매핑되는 숙소 엔티티 클래스
+// 숙소의 기본 정보, 상태, 이미지 목록 등을 관리한다.
 @Entity
-
-//LODGINGS 테이블과 매핑된다.
 @Table(name = "LODGINGS")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -39,39 +38,37 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Lodging extends BaseTimeEntity {
 
-	// 숙소 번호 (Primary Key)
-	// DB에서 숙소를 구분하는 고유한 ID 값
+	// 숙소 번호(PK)
+	// Oracle 시퀀스 SEQ_LODGINGS를 이용해서 자동 생성된다.
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_lodgings")
 	@SequenceGenerator(name = "seq_lodgings", sequenceName = "SEQ_LODGINGS", allocationSize = 1)
 	@Column(name = "LODGING_NO")
 	private Long lodgingNo;
 
-	// 숙소를 등록한 호스트(판매자)의 번호
-	// USERS 테이블의 USER_NO와 연결될 수 있는 값
-	@ManyToOne(fetch = FetchType.LAZY) // 여러 숙소가 하나의 사용자(호스트)에 속할 수 있으므로 다대일 관계
-	@JoinColumn(name = "HOST_NO", nullable = false) // 실제 DB의 FK 컬럼명 HOST_NO
+	// 이 숙소를 등록한 판매자(호스트) 정보
+	// 여러 숙소가 하나의 호스트에 속할 수 있으므로 ManyToOne 관계이다.
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "HOST_NO", nullable = false)
 	private HostProfile host;
 
 	// 숙소 이름
-	// 최대 200자까지 저장 가능
-	// 반드시 값이 있어야 한다
+	// 예: 제주 오션 호텔, 강남 스테이
 	@Column(name = "LODGING_NAME", nullable = false, length = 200)
 	private String lodgingName;
 
 	// 숙소 유형
-	// 예: HOTEL, PENSION, GUESTHOUSE, MOTEL 등
+	// 예: HOTEL, PENSION, GUESTHOUSE, MOTEL
 	@Enumerated(EnumType.STRING)
 	@Column(name = "LODGING_TYPE", nullable = false, length = 50)
 	private LodgingType lodgingType;
 
-	// 숙소 지역
+	// 숙소가 위치한 지역
 	// 예: 서울, 부산, 제주
 	@Column(name = "REGION", nullable = false, length = 100)
 	private String region;
 
 	// 숙소 기본 주소
-	// 예: 서울시 강남구 테헤란로
 	@Column(name = "ADDRESS", nullable = false, length = 300)
 	private String address;
 
@@ -80,20 +77,20 @@ public class Lodging extends BaseTimeEntity {
 	@Column(name = "DETAIL_ADDRESS", length = 300)
 	private String detailAddress;
 
-	// 숙소 우편번호
+	// 우편번호
 	@Column(name = "ZIP_CODE", length = 20)
 	private String zipCode;
 
-	// 지도 표시용 위도 좌표
+	// 지도 표시용 위도
 	@Column(name = "LATITUDE")
 	private Double latitude;
 
-	// 지도 표시용 경도 좌표
+	// 지도 표시용 경도
 	@Column(name = "LONGITUDE")
 	private Double longitude;
 
 	// 숙소 설명
-	// 숙소 소개나 특징 등을 작성하는 필드
+	// 글자 수가 길어질 수 있으므로 @Lob 사용
 	@Lob
 	@Column(name = "DESCRIPTION")
 	private String description;
@@ -108,25 +105,28 @@ public class Lodging extends BaseTimeEntity {
 	@Column(name = "CHECK_OUT_TIME", length = 20)
 	private String checkOutTime;
 
-	// 숙소 상태
-	// ACTIVE : 운영중
+	// 숙소 상태값
+	// ACTIVE : 운영 중
 	// INACTIVE : 비활성화
-	// DELETED : 삭제
-	// Builder 사용 시 기본값 ACTIVE
+	// Builder로 생성할 때 값이 없으면 기본값은 ACTIVE
 	@Enumerated(EnumType.STRING)
 	@Builder.Default
 	@Column(name = "STATUS", nullable = false, length = 20)
 	private LodgingStatus status = LodgingStatus.ACTIVE;
 
+	// 숙소 이미지 목록
+	// 숙소 하나에 여러 장의 이미지가 연결될 수 있으므로 OneToMany 관계이다.
+	// cascade = ALL : 숙소 저장/수정/삭제 시 이미지도 함께 반영
+	// orphanRemoval = true : 연관관계에서 빠진 이미지는 자동 삭제
 	@OneToMany(mappedBy = "lodging", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<LodgingImage> imageList = new ArrayList<>();
 
-	// 상태 변경
+	// 숙소 상태 변경
 	public void changeStatus(LodgingStatus status) {
 		this.status = status;
 	}
-	
+
 	// 숙소명 변경
 	public void changeLodgingName(String lodgingName) {
 		this.lodgingName = lodgingName;
@@ -147,18 +147,30 @@ public class Lodging extends BaseTimeEntity {
 		this.checkOutTime = checkOutTime;
 	}
 
+	// 숙소 이미지 엔티티를 직접 추가하는 메서드
+	// 이미지 순서를 자동으로 지정하고, 양방향 연관관계도 함께 설정한다.
 	public void addImage(LodgingImage image) {
-		// 이미지 추가시 순서(ord) 자동 설정 (0, 1, 2, ...)
+		// 현재 이미지 개수 기준으로 정렬 순서를 1부터 부여
 		image.changeOrd(this.imageList.size() + 1);
+
+		// 이미지 쪽에도 현재 숙소 정보를 세팅해서 양방향 관계를 맞춘다.
 		image.changeLodging(this);
+
+		// 최종적으로 이미지 목록에 추가
 		imageList.add(image);
 	}
 
+	// 파일명만 받아서 LodgingImage 객체를 생성한 뒤 추가하는 편의 메서드
 	public void addImageString(String fileName) {
-		LodgingImage lodgingImage = LodgingImage.builder().fileName(fileName).build();
+		LodgingImage lodgingImage = LodgingImage.builder()
+				.fileName(fileName)
+				.build();
+
 		addImage(lodgingImage);
 	}
 
+	// 기존 숙소 이미지 목록 전체 비우기
+	// 수정 시 기존 이미지 삭제 후 새 이미지로 교체할 때 사용한다.
 	public void clearList() {
 		this.imageList.clear();
 	}

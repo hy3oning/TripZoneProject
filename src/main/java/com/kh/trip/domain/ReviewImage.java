@@ -18,33 +18,38 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+// 리뷰 이미지 정보를 저장하는 엔티티
+// DB의 REVIEW_IMAGES 테이블과 매핑된다.
 @Entity
 @Table(name = "REVIEW_IMAGES")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class ReviewImage extends BaseTimeEntity{
+public class ReviewImage extends BaseTimeEntity {
 
-	@Id 
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_review_images") // 시퀀스 사용
-	@SequenceGenerator(name = "seq_review_images", // JPA 내부 시퀀스 이름
-			sequenceName = "SEQ_REVIEW_IMAGES", // 실제 DB 시퀀스 이름
-			allocationSize = 1 // 1씩 증가
-	)
-	
-	@Column(name = "REVIEW_IMAGE_NO") // REVIEW_IMAGE_NO 컬럼과 연결
-	private Long reviewImageNo; // 리뷰 이미지 번호
+	// 리뷰 이미지 번호(PK)
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_review_images")
+	@SequenceGenerator(
+			name = "seq_review_images",         // JPA 내부 시퀀스 이름
+			sequenceName = "SEQ_REVIEW_IMAGES", // 실제 Oracle 시퀀스 이름
+			allocationSize = 1)
+	@Column(name = "REVIEW_IMAGE_NO")
+	private Long reviewImageNo;
 
-	// REVIEW_NO를 숫자가 아니라 Review 엔티티와의 연관관계로 매핑
-	@ManyToOne(fetch = FetchType.LAZY) // 여러 이미지가 하나의 리뷰에 속하므로 다대일 관계
-	@JoinColumn(name = "REVIEW_NO", nullable = false) // 실제 DB의 FK 컬럼명 REVIEW_NO
-	private Review review; // 어떤 리뷰에 속한 이미지인지 Review 엔티티로 참조
+	// 어떤 리뷰의 이미지인지 나타내는 연관관계
+	// 여러 이미지가 하나의 리뷰에 속할 수 있으므로 ManyToOne 관계이다.
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "REVIEW_NO", nullable = false)
+	private Review review;
 
-	@Column(name = "IMAGE_URL", nullable = false, length = 300) // 이미지 경로
-	private String imageUrl; // 리뷰 이미지 URL
+	// 리뷰 이미지 URL 또는 저장 경로
+	@Column(name = "IMAGE_URL", nullable = false, length = 300)
+	private String imageUrl;
 
-	@Column(name = "SORT_ORDER", nullable = false) // 정렬 순서
-	private Integer sortOrder; // 리뷰 이미지 순서
-
+	// 이미지 정렬 순서
+	// 상세 화면에서 이미지 표시 순서를 유지하기 위해 사용한다.
+	@Column(name = "SORT_ORDER", nullable = false)
+	private Integer sortOrder;
 }

@@ -18,31 +18,37 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+// 객실 이미지 정보를 저장하는 엔티티
+// DB의 ROOM_IMAGES 테이블과 매핑된다.
 @Entity
 @Table(name = "ROOM_IMAGES")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class RoomImage extends BaseTimeEntity{
+public class RoomImage extends BaseTimeEntity {
 
+	// 객실 이미지 번호(PK)
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_room_images")
-	@SequenceGenerator(name = "seq_room_images", // JPA 내부에서 사용할 시퀀스 이름
+	@SequenceGenerator(name = "seq_room_images", // JPA 내부 시퀀스 이름
 			sequenceName = "SEQ_ROOM_IMAGES", // 실제 Oracle 시퀀스 이름
 			allocationSize = 1)
 	@Column(name = "ROOM_IMAGE_NO")
 	private Long roomImageNo;
 
-	// ROOM_NO를 단순 숫자가 아니라 Room 엔티티와의 연관관계로 매핑
-	@ManyToOne(fetch = FetchType.LAZY) // 여러 이미지가 하나의 객실에 속하므로 다대일 관계
-	@JoinColumn(name = "ROOM_NO", nullable = false) // 실제 DB의 FK 컬럼명 ROOM_NO
-	private Room room; // 어떤 객실에 속한 이미지인지 Room 엔티티로 참조
+	// 어떤 객실의 이미지인지 나타내는 연관관계
+	// 여러 이미지가 하나의 객실에 속하므로 ManyToOne 관계이다.
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ROOM_NO", nullable = false)
+	private Room room;
 
+	// 이미지 URL 또는 저장 경로
 	@Column(name = "IMAGE_URL", nullable = false, length = 300)
-	private String imageUrl; // DB에서 VARCHAR2(300) 이므로 길이를 300으로 맞춤
+	private String imageUrl;
 
+	// 이미지 표시 순서
+	// 예: 1번 이미지, 2번 이미지, 3번 이미지
 	@Column(name = "SORT_ORDER", nullable = false)
-	private Integer sortOrder; // 이미지 정렬 순서
-
+	private Integer sortOrder;
 }

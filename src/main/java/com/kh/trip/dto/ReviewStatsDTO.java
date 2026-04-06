@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+// 숙소별 리뷰 통계를 화면에 전달하기 위한 DTO
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

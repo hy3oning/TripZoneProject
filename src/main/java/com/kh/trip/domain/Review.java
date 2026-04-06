@@ -19,6 +19,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+// 리뷰 정보를 저장하는 엔티티
+// DB의 REVIEWS 테이블과 매핑된다.
 @Entity
 @Table(name = "REVIEWS")
 @Getter
@@ -27,36 +29,47 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Review extends BaseTimeEntity {
 
+	// 리뷰 번호(PK)
+	// Oracle 시퀀스 SEQ_REVIEWS를 사용해서 자동 생성된다.
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_reviews")
 	@SequenceGenerator(name = "seq_reviews", sequenceName = "SEQ_REVIEWS", allocationSize = 1)
-	@Column(name = "REVIEW_NO") // REVIEW_NO 컬럼과 매핑
-	private Long reviewNo; // 리뷰 번호
+	@Column(name = "REVIEW_NO")
+	private Long reviewNo;
 
-	// Booking 엔티티와 연관관계로 매핑
-	@ManyToOne(fetch = FetchType.LAZY) // 여러 리뷰가 하나의 예약에 속할 수 있으므로 다대일 관계
-	@JoinColumn(name = "BOOKING_NO", nullable = false) // [추가] 실제 DB의 FK 컬럼명 BOOKING_NO
-	private Booking booking; // 어떤 예약에 대한 리뷰인지 Booking 엔티티로 참조
-
+	// 어떤 예약에 대한 리뷰인지 나타내는 연관관계
+	// 현재 구조에서는 예약 정보 검증과 중복 리뷰 방지에 사용된다.
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "USER_NO", nullable = false) // 작성 회원 번호 (필수)
-	private User user; // 리뷰 작성자 회원 번호
+	@JoinColumn(name = "BOOKING_NO", nullable = false)
+	private Booking booking;
 
+	// 리뷰 작성자 정보
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "LODGING_NO", nullable = false) // 숙소 번호 (필수)
-	private Lodging lodging; // 어떤 숙소에 대한 리뷰인지
+	@JoinColumn(name = "USER_NO", nullable = false)
+	private User user;
 
-	@Column(name = "RATING", nullable = false) // 평점 컬럼
-	private Integer rating; // 평점 (1~5)
+	// 어떤 숙소에 대한 리뷰인지 나타내는 숙소 정보
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "LODGING_NO", nullable = false)
+	private Lodging lodging;
 
+	// 평점
+	// 1점부터 5점까지의 값을 가진다.
+	@Column(name = "RATING", nullable = false)
+	private Integer rating;
+
+	// 리뷰 내용
+	// 글자 수가 길어질 수 있으므로 @Lob 사용
 	@Lob
-	@Column(name = "CONTENT", nullable = false) // 리뷰 내용
-	private String content; // 리뷰 본문
+	@Column(name = "CONTENT", nullable = false)
+	private String content;
 
+	// 평점 변경
 	public void changeRating(Integer rating) {
 		this.rating = rating;
 	}
 
+	// 리뷰 내용 변경
 	public void changeContent(String content) {
 		this.content = content;
 	}

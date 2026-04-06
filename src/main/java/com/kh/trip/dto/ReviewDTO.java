@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+// 리뷰 정보를 Controller와 Service 사이에서 주고받기 위한 DTO
 @Getter
 @Setter
 @NoArgsConstructor

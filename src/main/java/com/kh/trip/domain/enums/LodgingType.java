@@ -1,8 +1,6 @@
 package com.kh.trip.domain.enums;
 
-/**
- * 숙소 유형 Enum 숙소의 종류를 관리
- */
+// 숙소 종류 Enum
 public enum LodgingType {
 
 	HOTEL, // 호텔
