@@ -28,7 +28,8 @@ public class RoomDTO {
 	private Integer roomCount; // 객실 개수
 	private RoomStatus status; // 객실 상태
 
-	// 이미지 URL 목록
+	// 객실 이미지 URL 목록
+	// 상세조회나 목록조회 시 프론트에 함께 내려준다.
 	@Builder.Default
 	private List<String> imageUrls = new ArrayList<>();
 

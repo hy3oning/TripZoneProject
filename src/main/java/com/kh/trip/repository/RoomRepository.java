@@ -11,24 +11,26 @@ import com.kh.trip.domain.enums.RoomStatus;
 
 import jakarta.persistence.LockModeType;
 
+// 객실 엔티티 전용 Repository
 public interface RoomRepository extends JpaRepository<Room, Long> {
 
-	// 특정 숙소 번호에 해당하는 객실 목록 조회
+	// 특정 숙소 번호에 속한 객실 전체 조회
 	List<Room> findByLodging_LodgingNo(Long lodgingNo);
 
-	// roomNo 오름차순으로 전체 객실 조회
+	// 전체 객실을 roomNo 오름차순으로 조회
 	List<Room> findAllByOrderByRoomNoAsc();
 
-	// 특정 상태에 해당하는 객실 목록을 roomNo 오름차순으로 조회
+	// 상태별 객실 조회
 	List<Room> findByStatusOrderByRoomNoAsc(RoomStatus status);
 
-	// 객실명에 keyword가 포함된 객실 목록을 roomNo 오름차순으로 조회
+	// 객실명 키워드 검색
 	List<Room> findByRoomNameContainingOrderByRoomNoAsc(String keyword);
 
-	// 특정 숙소 번호 + 특정 상태에 해당하는 객실 목록을 roomNo 오름차순으로 조회
+	// 특정 숙소 번호 + 상태별 객실 조회
 	List<Room> findByLodging_LodgingNoAndStatusOrderByRoomNoAsc(Long lodgingNo, RoomStatus status);
 
+	// 특정 객실 조회 시 비관적 락 적용
+	// 동시에 여러 트랜잭션이 같은 객실을 수정할 가능성을 대비한 구조
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	Optional<Room> findByRoomNo(Long roomNo);
-
 }

@@ -22,6 +22,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+// 객실 정보를 저장하는 엔티티
+// DB의 ROOMS 테이블과 매핑된다.
 @Entity
 @Table(name = "ROOMS")
 @Getter
@@ -30,43 +32,61 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Room extends BaseTimeEntity {
 
+	// 객실 번호(PK)
+	// Oracle 시퀀스 SEQ_ROOMS를 사용해서 자동 생성된다.
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_rooms")
-	@SequenceGenerator(name = "seq_rooms", // JPA 내부 시퀀스 이름
-			sequenceName = "SEQ_ROOMS", // 실제 DB 시퀀스 이름
+	@SequenceGenerator(
+			name = "seq_rooms",          // JPA 내부에서 사용할 시퀀스 이름
+			sequenceName = "SEQ_ROOMS",  // 실제 Oracle DB 시퀀스 이름
 			allocationSize = 1)
-	@Column(name = "ROOM_NO") // ROOM_NO 컬럼
+	@Column(name = "ROOM_NO")
 	private Long roomNo;
 
-	// Lodging 엔티티와 연관관계로 매핑
-	@ManyToOne(fetch = FetchType.LAZY) // 여러 객실이 하나의 숙소에 속하므로 다대일 관계
-	@JoinColumn(name = "LODGING_NO", nullable = false) // 실제 DB의 FK 컬럼명 LODGING_NO
-	private Lodging lodging; // 어떤 숙소에 속한 객실인지 Lodging 엔티티로 참조
+	// 객실이 속한 숙소 정보
+	// 하나의 숙소에 여러 객실이 연결될 수 있으므로 ManyToOne 관계이다.
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "LODGING_NO", nullable = false)
+	private Lodging lodging;
 
-	@Column(name = "ROOM_NAME", nullable = false, length = 200) // 객실명
+	// 객실 이름
+	// 예: 디럭스 더블룸, 오션뷰 스위트
+	@Column(name = "ROOM_NAME", nullable = false, length = 200)
 	private String roomName;
 
-	@Column(name = "ROOM_TYPE", nullable = false, length = 50) // 객실 유형
+	// 객실 유형
+	// 현재 구조에서는 String으로 저장하고 있다.
+	// 예: SINGLE, DOUBLE, SUITE
+	@Column(name = "ROOM_TYPE", nullable = false, length = 50)
 	private String roomType;
 
+	// 객실 설명
+	// 설명이 길어질 수 있어서 @Lob 사용
 	@Lob
-	@Column(name = "ROOM_DESCRIPTION") // 객실 설명
+	@Column(name = "ROOM_DESCRIPTION")
 	private String roomDescription;
 
-	@Column(name = "MAX_GUEST_COUNT", nullable = false) // 최대 인원
+	// 최대 수용 인원
+	@Column(name = "MAX_GUEST_COUNT", nullable = false)
 	private Integer maxGuestCount;
 
-	@Column(name = "PRICE_PER_NIGHT", nullable = false) // 1박 가격
+	// 1박당 가격
+	@Column(name = "PRICE_PER_NIGHT", nullable = false)
 	private Integer pricePerNight;
 
-	@Column(name = "ROOM_COUNT", nullable = false) // 동일 객실 수
+	// 동일 타입 객실 수
+	@Column(name = "ROOM_COUNT", nullable = false)
 	private Integer roomCount;
 
+	// 객실 상태
+	// AVAILABLE : 예약 가능
+	// UNAVAILABLE : 예약 불가
 	@Enumerated(EnumType.STRING)
 	@Builder.Default
-	@Column(name = "STATUS", nullable = false, length = 20) // 객실 상태
+	@Column(name = "STATUS", nullable = false, length = 20)
 	private RoomStatus status = RoomStatus.AVAILABLE;
-	
+
+	// 객실이 속한 숙소 변경
 	public void changeLodging(Lodging lodging) {
 		this.lodging = lodging;
 	}
@@ -105,5 +125,4 @@ public class Room extends BaseTimeEntity {
 	public void changeMaxGuestCount(Integer maxGuestCount) {
 		this.maxGuestCount = maxGuestCount;
 	}
-
 }
