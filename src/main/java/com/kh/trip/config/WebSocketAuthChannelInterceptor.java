@@ -26,7 +26,9 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
 	private final CustomUserDetailsService customUserDetailsService;
 
 	@Override
+	// 채팅메시지 전송/구독 전에 jwt를 읽어서 웹소켓 사용자 인증정보를 세팅
 	public Message<?> preSend(Message<?> message, MessageChannel channel) {
+		// 프론트에서 보낸 STOMP 메시지의 헤더 정보를 꺼냄(헤더란 실제 채팅내용이 아닌 부가적인 정보 ex) 요청정보, 토큰 etc. )
 		StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
 		if (accessor == null) {
