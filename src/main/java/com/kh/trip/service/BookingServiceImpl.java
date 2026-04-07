@@ -114,7 +114,8 @@ public class BookingServiceImpl implements BookingService {
 		Booking booking = Booking.builder().user(user).userCoupon(userCoupon).room(room)
 				.checkInDate(bookingDTO.getCheckInDate()).checkOutDate(bookingDTO.getCheckOutDate())
 				.guestCount(bookingDTO.getGuestCount()).pricePerNight(Long.valueOf(room.getPricePerNight()))
-				.discountAmount(discountAmount).totalPrice(totalPrice).status(BookingStatus.PENDING).build();
+				.discountAmount(discountAmount).totalPrice(totalPrice)
+				.requestMessage(bookingDTO.getRequestMessage()).status(BookingStatus.PENDING).build();
 		Long bookingNo = repository.save(booking).getBookingNo();
 
 		if (userCoupon != null) {
