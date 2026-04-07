@@ -1,9 +1,12 @@
 package com.kh.trip.service;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -35,6 +38,9 @@ import com.kh.trip.dto.BookingDTO;
 import com.kh.trip.dto.PageRequestDTO;
 import com.kh.trip.dto.PageResponseDTO;
 import com.kh.trip.dto.SellerLodgingSalesDTO;
+import com.kh.trip.dto.SellerLodgingTypeSalesDTO;
+import com.kh.trip.dto.SellerLodgingTypeRatioDTO;
+import com.kh.trip.dto.SellerMonthlySalesDTO;
 import com.kh.trip.dto.SellerSalesSummaryDTO;
 import com.kh.trip.repository.BookingRepository;
 import com.kh.trip.repository.MemberGradeRepository;
@@ -114,14 +120,16 @@ public class BookingServiceImpl implements BookingService {
 		Booking booking = Booking.builder().user(user).userCoupon(userCoupon).room(room)
 				.checkInDate(bookingDTO.getCheckInDate()).checkOutDate(bookingDTO.getCheckOutDate())
 				.guestCount(bookingDTO.getGuestCount()).pricePerNight(Long.valueOf(room.getPricePerNight()))
-				.discountAmount(discountAmount).totalPrice(totalPrice).status(BookingStatus.PENDING).build();
-		Long bookingNo = repository.save(booking).getBookingNo();
+				.discountAmount(discountAmount).totalPrice(totalPrice)
+				.requestMessage(bookingDTO.getRequestMessage()).status(BookingStatus.PENDING).build();
+		Booking savedBooking = repository.save(booking);
 
 		if (userCoupon != null) {
 			userCoupon.changeUsedAt(LocalDateTime.now());
 			userCoupon.changeStatus(CouponStatus.USED);
 		}
-		return bookingNo;
+
+		return savedBooking.getBookingNo();
 	}
 
 	@Override
@@ -348,10 +356,19 @@ public class BookingServiceImpl implements BookingService {
 	@Transactional(readOnly = true)
 	public SellerSalesSummaryDTO getSellerSalesSummary(Long hostNo) {
 		List<Object[]> rows = repository.getSellerSalesSummary(hostNo);
+		long totalBookings = repository.countSellerBookings(hostNo);
+		long canceledBookings = repository.countSellerBookingsByStatus(hostNo, BookingStatus.CANCELED);
+		List<Object[]> lodgingTypeCountRows = repository.getSellerLodgingTypeCounts(hostNo);
+		List<Object[]> lodgingTypeSalesRows = repository.getSellerLodgingTypeSales(hostNo);
+		List<Object[]> monthlyRows = repository.getSellerMonthlySales(hostNo,
+				YearMonth.now().minusMonths(5).atDay(1).atStartOfDay());
 
 		long totalSalesAmount = 0L;
 		long totalBookingCount = 0L;
 		List<SellerLodgingSalesDTO> lodgingSales = new ArrayList<>();
+		List<SellerLodgingTypeRatioDTO> lodgingTypeRatios = new ArrayList<>();
+		List<SellerLodgingTypeSalesDTO> lodgingTypeSales = new ArrayList<>();
+		List<SellerMonthlySalesDTO> monthlySales = new ArrayList<>();
 
 		for (Object[] row : rows) {
 			Long lodgingNo = ((Number) row[0]).longValue();
@@ -366,7 +383,44 @@ public class BookingServiceImpl implements BookingService {
 					.salesAmount(salesAmount).bookingCount(bookingCount).build());
 		}
 
+		for (Object[] row : lodgingTypeCountRows) {
+			lodgingTypeRatios.add(SellerLodgingTypeRatioDTO.builder()
+					.lodgingType(String.valueOf(row[0]))
+					.lodgingCount(((Number) row[1]).longValue())
+					.build());
+		}
+
+		for (Object[] row : lodgingTypeSalesRows) {
+			lodgingTypeSales.add(SellerLodgingTypeSalesDTO.builder()
+					.lodgingType(String.valueOf(row[0]))
+					.salesAmount(((Number) row[1]).longValue())
+					.bookingCount(((Number) row[2]).longValue())
+					.build());
+		}
+
+		Map<String, Long> monthlySalesMap = new LinkedHashMap<>();
+		for (int i = 5; i >= 0; i--) {
+			YearMonth month = YearMonth.now().minusMonths(i);
+			monthlySalesMap.put(String.format("%d.%02d", month.getYear(), month.getMonthValue()), 0L);
+		}
+		for (Object[] row : monthlyRows) {
+			monthlySalesMap.put(String.valueOf(row[0]), ((Number) row[1]).longValue());
+		}
+		for (Map.Entry<String, Long> entry : monthlySalesMap.entrySet()) {
+			monthlySales.add(SellerMonthlySalesDTO.builder()
+					.monthLabel(entry.getKey())
+					.salesAmount(entry.getValue())
+					.build());
+		}
+
+		double canceledRatio = totalBookings == 0 ? 0D : (double) canceledBookings / (double) totalBookings;
+
 		return SellerSalesSummaryDTO.builder().totalSalesAmount(totalSalesAmount).totalBookingCount(totalBookingCount)
-				.lodgingSales(lodgingSales).build();
+				.canceledRatio(canceledRatio)
+				.lodgingTypeRatios(lodgingTypeRatios)
+				.lodgingSales(lodgingSales)
+				.lodgingTypeSales(lodgingTypeSales)
+				.monthlySales(monthlySales)
+				.build();
 	}
 }
